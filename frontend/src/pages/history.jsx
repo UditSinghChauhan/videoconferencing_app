@@ -1,88 +1,89 @@
-import React, { useContext, useEffect, useState } from 'react'
-import { AuthContext } from '../contexts/AuthContext'
-import { useNavigate } from 'react-router-dom';
-import Card from '@mui/material/Card';
-import Box from '@mui/material/Box';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
-import HomeIcon from '@mui/icons-material/Home';
+import React, { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Button from "@mui/material/Button";
+import { AuthContext } from "../contexts/AuthContext";
+import withAuth from "../utils/withAuth";
+import "../App.css";
 
-import { IconButton } from '@mui/material';
-export default function History() {
-
-
+function History() {
     const { getHistoryOfUser } = useContext(AuthContext);
-
-    const [meetings, setMeetings] = useState([])
-
-
-    const routeTo = useNavigate();
+    const [meetings, setMeetings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchHistory = async () => {
             try {
                 const history = await getHistoryOfUser();
                 setMeetings(history);
-            } catch {
-                // IMPLEMENT SNACKBAR
+            } catch (error) {
+                setErrorMessage(error?.response?.data?.message || "Unable to load meeting history.");
+            } finally {
+                setLoading(false);
             }
-        }
+        };
 
         fetchHistory();
-    }, [])
+    }, [getHistoryOfUser]);
 
-    let formatDate = (dateString) => {
-
+    const formatDate = (dateString) => {
         const date = new Date(dateString);
-        const day = date.getDate().toString().padStart(2, "0");
-        const month = (date.getMonth() + 1).toString().padStart(2, "0")
-        const year = date.getFullYear();
 
-        return `${day}/${month}/${year}`
-
-    }
+        return new Intl.DateTimeFormat("en-IN", {
+            dateStyle: "medium",
+            timeStyle: "short"
+        }).format(date);
+    };
 
     return (
-        <div>
+        <div className="pageContainer">
+            <div className="historyShell">
+                <div className="historyHeader">
+                    <div>
+                        <span className="dashboardEyebrow">Meeting archive</span>
+                        <h1>Recent room activity</h1>
+                        <p>Review previous room codes and jump back into a conversation without hunting through messages.</p>
+                    </div>
 
-            <IconButton onClick={() => {
-                routeTo("/home")
-            }}>
-                <HomeIcon />
-            </IconButton >
-            {
-                (meetings.length !== 0) ? meetings.map((e, i) => {
-                    return (
+                    <div className="topNavActions">
+                        <button className="ghostAction" onClick={() => navigate("/home")}>
+                            Back to Dashboard
+                        </button>
+                    </div>
+                </div>
 
-                        <>
+                {loading ? <p className="historyStatus">Loading meeting history...</p> : null}
+                {errorMessage ? <p className="errorText">{errorMessage}</p> : null}
 
+                {!loading && !errorMessage && meetings.length === 0 ? (
+                    <div className="emptyState">
+                        <h2>No meetings yet</h2>
+                        <p>Create or join a room from the dashboard and it will appear here for quick reuse.</p>
+                        <Button variant="contained" onClick={() => navigate("/home")}>
+                            Go to Dashboard
+                        </Button>
+                    </div>
+                ) : null}
 
-                            <Card key={i} variant="outlined">
-
-
-                                <CardContent>
-                                    <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-                                        Code: {e.meetingCode}
-                                    </Typography>
-
-                                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
-                                        Date: {formatDate(e.date)}
-                                    </Typography>
-
-                                </CardContent>
-
-
-                            </Card>
-
-
-                        </>
-                    )
-                }) : <></>
-
-            }
-
+                {!loading && !errorMessage && meetings.length > 0 ? (
+                    <div className="historyGrid">
+                        {meetings.map((meeting) => (
+                            <div key={meeting._id || `${meeting.meetingCode}-${meeting.date}`} className="historyCard">
+                                <div>
+                                    <strong>{meeting.meetingCode}</strong>
+                                    <p className="historyMeta">{formatDate(meeting.date)}</p>
+                                </div>
+                                <Button variant="outlined" onClick={() => navigate(`/room/${meeting.meetingCode}`)}>
+                                    Rejoin Room
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                ) : null}
+            </div>
         </div>
-    )
+    );
 }
+
+export default withAuth(History);

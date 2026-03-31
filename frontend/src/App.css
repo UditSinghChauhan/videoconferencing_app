@@ -1,96 +1,515 @@
+.appShell {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(42, 67, 101, 0.25), transparent 35%),
+    linear-gradient(135deg, #0b1120 0%, #111b33 48%, #1c2f52 100%);
+  color: #f8fafc;
+}
+
 .landingPageContainer {
-  width: 100vw;
-  height: 100vh;
-  background: url("/public/background.png");
-  background-repeat: no-repeat;
-  background-size: cover;
-  color: white;
+  min-height: 100vh;
+  padding: 1.5rem clamp(1.25rem, 2vw, 2.75rem) 3rem;
 }
 
 .landingPageContainer nav {
-  padding-inline: 1.2rem;
-  padding-block: 1.6rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-
+  gap: 1rem;
+  margin-bottom: 3rem;
 }
 
-.landingPageContainer nav h2 {
-  font-size: 1.8rem;
-  font-weight: 500;
-}
-
-.landingPageContainer nav .navlist {
+.navHeader {
   display: flex;
-  gap: 1.6rem;
-  cursor: pointer;
+  flex-direction: column;
+  gap: 0.15rem;
+}
 
+.navHeader h2,
+.brandMark {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.brandTagline {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+
+.navlist {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.navButton,
+.primaryAction,
+.secondaryAction,
+.meetingAction,
+.historyAction,
+.ghostAction {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.navButton:hover,
+.primaryAction:hover,
+.secondaryAction:hover,
+.meetingAction:hover,
+.historyAction:hover,
+.ghostAction:hover {
+  transform: translateY(-1px);
+}
+
+.navButton {
+  padding: 0.8rem 1.2rem;
+  background: transparent;
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.navButton.primary {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+  color: #fff7ed;
+  border-color: transparent;
+  box-shadow: 0 14px 30px rgba(249, 115, 22, 0.25);
 }
 
 .landingMainContainer {
-  display: flex;
-  justify-content: space-between;
-  padding-inline: 3rem;
-  height: 80vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 440px);
+  gap: 2.5rem;
   align-items: center;
 }
 
-.landingMainContainer>div:nth-child(1) {
-  font-size: 2.2rem;
+.heroSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.landingMainContainer>div:nth-child(1) div[role='button'] {
-  background: #D97500;
+.heroBadge {
   width: fit-content;
-  padding: 1rem;
-  border-radius: 20px;
-  margin-top: 1.9rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  color: #cbd5e1;
+  font-size: 0.92rem;
 }
 
-.landingMainContainer>div:nth-child(1) div[role='button'] a {
+.heroSection h1 {
+  margin: 0;
+  font-size: clamp(2.6rem, 5vw, 4.8rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.heroSection p {
+  margin: 0;
+  max-width: 42rem;
+  color: #cbd5e1;
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.heroActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.primaryAction,
+.secondaryAction,
+.meetingAction,
+.historyAction,
+.ghostAction {
+  padding: 0.95rem 1.35rem;
   text-decoration: none;
-  color: white;
-  font-size: 1.7rem;
 }
 
-.landingMainContainer>div:nth-child(2) img {
-  height: 70vh;
-  width: auto;
+.primaryAction,
+.meetingAction {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+  color: #fff7ed;
+  box-shadow: 0 18px 34px rgba(249, 115, 22, 0.24);
 }
 
-.navBar {
+.secondaryAction,
+.ghostAction {
+  background: rgba(15, 23, 42, 0.35);
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+.heroHighlights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.heroHighlight {
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.heroHighlight strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 1rem;
+}
+
+.heroHighlight span {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.heroVisual {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-inline: 20px;
-  text-align: center;
-
-}
-.meetContainer {
-  display: flex;
-  padding-inline: 20px;
-  height: 80vh;
-  gap: 10vw;
   justify-content: center;
 }
 
-
-
-.leftPanel {
-  height: 100%;
-  display: flex;
-  align-items: center;
-
+.heroCard {
+  width: min(100%, 420px);
+  padding: 1.4rem;
+  border-radius: 2rem;
+  background: rgba(15, 23, 42, 0.58);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 30px 60px rgba(2, 6, 23, 0.35);
+  backdrop-filter: blur(12px);
 }
 
-.rightPanel {
-  display: flex;
-  align-items: center;
-}
-
-.rightPanel > img {
-  width: 30vw;
+.heroPreviewImage {
+  width: 100%;
   height: auto;
-  border-radius: 20px;
+  border-radius: 1.3rem;
+  margin-bottom: 1rem;
+}
+
+.heroMetricRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.heroMetric {
+  flex: 1;
+  padding: 0.9rem;
+  border-radius: 1.1rem;
+  background: rgba(30, 41, 59, 0.75);
+}
+
+.heroMetric strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 1.2rem;
+}
+
+.heroMetric span {
+  color: #cbd5e1;
+  font-size: 0.92rem;
+}
+
+.pageContainer {
+  min-height: 100vh;
+  padding: 1.5rem clamp(1rem, 2vw, 2rem) 2rem;
+  background:
+    radial-gradient(circle at top, rgba(251, 146, 60, 0.18), transparent 30%),
+    linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #0f172a;
+}
+
+.topNav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.topNavActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dashboardPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  gap: 2rem;
+  align-items: center;
+}
+
+.dashboardCard,
+.previewCard,
+.historyShell,
+.emptyState {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 1.5rem;
+  box-shadow: 0 22px 40px rgba(15, 23, 42, 0.08);
+}
+
+.dashboardCard {
+  padding: 2rem;
+}
+
+.dashboardEyebrow {
+  display: inline-flex;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.dashboardCard h1,
+.historyShell h1 {
+  margin: 0 0 0.85rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.1;
+}
+
+.dashboardCard p,
+.historyShell p,
+.emptyState p {
+  color: #475569;
+  line-height: 1.7;
+}
+
+.meetingForm {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  margin: 1.5rem 0 1rem;
+  flex-wrap: wrap;
+}
+
+.meetingInput {
+  min-width: min(100%, 320px);
+  flex: 1;
+}
+
+.helperText,
+.errorText {
+  margin-top: 0.35rem;
+  min-height: 1.25rem;
+  font-size: 0.92rem;
+}
+
+.helperText {
+  color: #64748b;
+}
+
+.errorText {
+  color: #b91c1c;
+}
+
+.dashboardPoints {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-top: 1.5rem;
+}
+
+.dashboardPoint {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.dashboardPoint strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.previewCard {
+  padding: 1.25rem;
+}
+
+.previewCard img {
+  width: 100%;
+  height: auto;
+  border-radius: 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.previewMeta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.previewMeta span {
+  padding: 0.45rem 0.75rem;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  font-size: 0.88rem;
+}
+
+.authPanel {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(280px, 1.05fr) minmax(320px, 460px);
+  background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 100%);
+}
+
+.authIntro {
+  padding: clamp(2rem, 5vw, 4rem);
+  background:
+    radial-gradient(circle at top left, rgba(251, 146, 60, 0.22), transparent 32%),
+    linear-gradient(180deg, #0f172a 0%, #172554 100%);
+  color: #eff6ff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.authIntro h1 {
+  margin: 0.7rem 0 1rem;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  line-height: 1.04;
+}
+
+.authIntro p {
+  max-width: 34rem;
+  color: #cbd5e1;
+  line-height: 1.75;
+}
+
+.authStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.authStat {
+  padding: 1rem;
+  border-radius: 1.2rem;
+  background: rgba(15, 23, 42, 0.38);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.authStat strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+
+.authCardWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+}
+
+.authToggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.authToggle button {
+  border-radius: 999px;
+}
+
+.historyShell {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.historyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.historyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.historyCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.2rem;
+  border-radius: 1.2rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.historyMeta {
+  color: #64748b;
+  font-size: 0.94rem;
+}
+
+.emptyState {
+  padding: 2rem;
+  text-align: center;
+}
+
+.historyStatus {
+  margin-bottom: 1rem;
+  color: #475569;
+}
+
+@media (max-width: 900px) {
+  .landingMainContainer,
+  .dashboardPanel,
+  .authPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .heroHighlights,
+  .dashboardPoints,
+  .authStats {
+    grid-template-columns: 1fr;
+  }
+
+  .topNav,
+  .landingPageContainer nav {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .landingPageContainer,
+  .pageContainer {
+    padding-inline: 1rem;
+  }
+
+  .meetingForm,
+  .heroActions,
+  .previewMeta,
+  .topNavActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .meetingInput {
+    min-width: 100%;
+  }
 }
