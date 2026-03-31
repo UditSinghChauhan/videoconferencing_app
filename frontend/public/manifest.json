@@ -1,6 +1,6 @@
 {
   "short_name": "Bridge",
-  "name": "Bridge - Video Conferencing",
+  "name": "Bridge | Professional Video Collaboration",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +20,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#0f172a",
+  "background_color": "#eff6ff"
 }
