@@ -1,77 +1,78 @@
 # Bridge
 
-Bridge is a full-stack video collaboration platform built with React, Node.js, Express, MongoDB, Socket.IO, and WebRTC. It supports authenticated access, room-based meetings, chat, screen sharing, and persistent meeting history.
+Bridge is a deployed video collaboration application for quick room-based meetings. It focuses on fast joining, clean controls, persistent meeting history, and a simple workflow for real-time conversations.
 
-This project is designed to demonstrate product thinking as well as implementation skills: real-time communication, protected frontend routes, backend API design, environment-based configuration, and deployment readiness.
+## Live Links
 
-## Live Product
+- App: [bridgefrontend.onrender.com](https://bridgefrontend.onrender.com)
+- Repository: [github.com/UditSinghChauhan/videoconferencing_app](https://github.com/UditSinghChauhan/videoconferencing_app)
 
-- Frontend: add your deployed frontend URL here
-- Backend: add your deployed backend URL here
-
-## Why This Project Matters
-
-Bridge was built as a portfolio-quality clone of a modern video meeting platform with a focus on:
-
-- Real-time peer-to-peer communication using WebRTC
-- Socket-based room signaling and chat
-- Secure user registration and login
-- Persistent activity history for authenticated users
-- Production-aware deployment and environment configuration
-
-## Core Features
+## What It Does
 
 - User registration and login
-- Token-based session handling
-- Protected routes for dashboard and history
-- Join meetings by room code
-- Lobby flow before entering a room
-- Real-time video and audio communication
-- Screen sharing support
-- In-room chat messaging
-- Meeting history with quick rejoin
-- Health check endpoint for backend monitoring
+- Protected dashboard and history routes
+- Join meetings with reusable room codes
+- Lobby before entering a meeting
+- Video, audio, chat, and screen sharing controls
+- Persistent meeting history with quick rejoin
+- Backend health endpoint for deployment checks
 
-## Tech Stack
+## Why I Built It
 
-### Frontend
+I built Bridge to practice the kind of end-to-end product work expected from a full-stack developer: designing frontend flows, building backend APIs, handling real-time communication, and deploying a working application that can actually be used from the browser.
+
+## Stack
 
 - React
 - React Router
 - Material UI
-- Axios
-- Socket.IO Client
-
-### Backend
-
 - Node.js
 - Express
 - MongoDB with Mongoose
 - Socket.IO
-- bcrypt
+- WebRTC
 
-### Real-Time Layer
-
-- WebRTC for peer-to-peer media streaming
-- Socket.IO for signaling and room events
-
-## Architecture Overview
+## Key Engineering Areas
 
 ### Frontend
 
-- `frontend/src/pages/landing.jsx`: landing page and showcase entry point
-- `frontend/src/pages/authentication.jsx`: login and registration flow
-- `frontend/src/pages/home.jsx`: authenticated dashboard
-- `frontend/src/pages/history.jsx`: meeting history and quick rejoin
-- `frontend/src/pages/VideoMeet.jsx`: real-time meeting room
-- `frontend/src/contexts/AuthContext.jsx`: auth and meeting activity API calls
+- Landing, authentication, dashboard, history, and meeting room flows
+- Protected navigation with local session persistence
+- Responsive layouts for desktop and mobile
+- Error, empty, and loading states for the main user journey
 
 ### Backend
 
-- `backend/src/app.js`: Express app, MongoDB connection, and health endpoint
-- `backend/src/routes/users.routes.js`: auth and activity routes
-- `backend/src/controllers/user.controller.js`: registration, login, and history logic
-- `backend/src/controllers/socketManager.js`: Socket.IO room coordination
+- Express API for registration, login, and meeting history
+- MongoDB models for users and room activity
+- Health check endpoint for runtime verification
+- Socket-based signaling layer for room coordination and chat
+
+### Real-Time Collaboration
+
+- Peer-to-peer media exchange with WebRTC
+- Socket-driven room join, leave, and messaging events
+- Lobby flow before connecting to a room
+- Screen sharing and device toggle support
+
+## Project Structure
+
+```text
+backend/
+  src/
+    app.js
+    controllers/
+    middlewares/
+    models/
+    routes/
+
+frontend/
+  src/
+    contexts/
+    pages/
+    styles/
+    utils/
+```
 
 ## Local Setup
 
@@ -79,7 +80,7 @@ Bridge was built as a portfolio-quality clone of a modern video meeting platform
 
 - Node.js 18+
 - npm
-- MongoDB Atlas connection string or local MongoDB instance
+- MongoDB connection string
 
 ### Backend
 
@@ -88,7 +89,7 @@ cd backend
 npm install
 ```
 
-Create a `.env` file:
+Create `backend/.env`:
 
 ```env
 PORT=8000
@@ -111,7 +112,7 @@ cd frontend
 npm install
 ```
 
-Create a `.env` file:
+Create `frontend/.env`:
 
 ```env
 REACT_APP_ENV=development
@@ -124,39 +125,29 @@ Start the client:
 npm start
 ```
 
-## API Endpoints
-
-### Authentication
+## API Overview
 
 - `POST /api/v1/users/register`
 - `POST /api/v1/users/login`
-
-### Meeting Activity
-
 - `GET /api/v1/users/get_all_activity`
 - `POST /api/v1/users/add_to_activity`
-
-### Health Check
-
 - `GET /api/v1/health`
 
-## Engineering Improvements Added
+## Challenges Solved
 
-- Cleaner room routing and dashboard join flow
-- Better UI structure for landing, auth, dashboard, and history pages
-- More professional app metadata and branding
-- Safer environment configuration defaults
-- Improved history handling and empty states
-- Reduced debug-style code and tutorial carryovers
+- Coordinating real-time room events across multiple users
+- Managing peer connection setup and media toggles in the browser
+- Preserving a clean user flow between authentication, dashboard, room join, and history
+- Keeping the deployed frontend configurable across local and production environments
 
-## Next Steps
+## Improvements I Would Add Next
 
-- Add unit and integration tests for auth flow and history rendering
-- Add TURN server support for stronger WebRTC reliability
-- Move from custom token storage to JWT + authorization middleware
-- Add participant names and join/leave indicators in the meeting room
-- Add recording or scheduling as advanced portfolio extensions
+- JWT-based auth middleware instead of token lookup in request payloads
+- TURN server support for more reliable connections across restrictive networks
+- Participant names and richer presence indicators inside the room
+- Additional frontend and backend automated tests
+- Better room analytics, scheduling, or recordings as advanced extensions
 
 ## Author
 
-Udit
+Udit Singh Chauhan

@@ -35,14 +35,14 @@ export default function LandingPage() {
 
                 <div className="landingMainContainer">
                     <section className="heroSection">
-                        <span className="heroBadge">Full-stack WebRTC product showcase</span>
+                        <span className="heroBadge">Built for focused conversations and fast collaboration</span>
                         <h1>
                             Run fast, reliable meetings without the noise of bloated collaboration tools.
                         </h1>
                         <p>
-                            Bridge is a deployed video meeting platform built with React, Node.js, Socket.IO, MongoDB, and
-                            WebRTC. It supports authentication, reusable room codes, meeting history, chat, and media
-                            controls in a clean interview-ready workflow.
+                            Bridge is a deployed video meeting platform designed for quick setup, clear communication, and
+                            dependable meeting controls. It supports authentication, reusable room codes, meeting history,
+                            chat, and screen sharing in a clean, professional workflow.
                         </p>
 
                         <div className="heroActions">
@@ -75,16 +75,16 @@ export default function LandingPage() {
                             <img className="heroPreviewImage" src="/mobile.png" alt="Bridge application preview" />
                             <div className="heroMetricRow">
                                 <div className="heroMetric">
-                                    <strong>WebRTC</strong>
-                                    <span>Low-latency video sessions</span>
+                                    <strong>Instant setup</strong>
+                                    <span>Join a room in seconds</span>
                                 </div>
                                 <div className="heroMetric">
-                                    <strong>Socket.IO</strong>
-                                    <span>Live room coordination</span>
+                                    <strong>Live collaboration</strong>
+                                    <span>Chat, audio, video, and screen share</span>
                                 </div>
                                 <div className="heroMetric">
-                                    <strong>MERN</strong>
-                                    <span>Full-stack architecture</span>
+                                    <strong>Reliable workflow</strong>
+                                    <span>Saved history for faster rejoin</span>
                                 </div>
                             </div>
                         </div>

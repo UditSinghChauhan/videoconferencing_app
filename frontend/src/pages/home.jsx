@@ -50,7 +50,7 @@ function HomeComponent() {
                     <span className="dashboardEyebrow">Ready to collaborate</span>
                     <h1>Start a professional meeting in seconds.</h1>
                     <p>
-                        Use a room code to launch a focused interview, project sync, or peer discussion. Your recent
+                        Use a room code to launch a quick team sync, project discussion, or one-on-one call. Your recent
                         sessions are automatically saved so you can revisit them from the history page.
                     </p>
 
@@ -79,7 +79,7 @@ function HomeComponent() {
                             <span>Participants can join with only a room code and display name.</span>
                         </div>
                         <div className="dashboardPoint">
-                            <strong>Interview ready</strong>
+                            <strong>Reliable controls</strong>
                             <span>Chat, audio, video, and screen sharing are available during sessions.</span>
                         </div>
                         <div className="dashboardPoint">
@@ -96,9 +96,9 @@ function HomeComponent() {
                 <aside className="previewCard">
                     <img src="/logo3.png" alt="Bridge dashboard illustration" />
                     <div className="previewMeta">
-                        <span>React + MUI frontend</span>
-                        <span>Express + MongoDB backend</span>
-                        <span>Socket.IO signaling</span>
+                        <span>Quick room joins</span>
+                        <span>Saved meeting history</span>
+                        <span>Live collaboration tools</span>
                     </div>
                 </aside>
             </div>

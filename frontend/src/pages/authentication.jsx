@@ -75,7 +75,7 @@ export default function Authentication() {
                 <section className="authIntro">
                     <div>
                         <span className="heroBadge">Authentication and access control</span>
-                        <h1>Sign in to launch meetings with a cleaner, recruiter-ready workflow.</h1>
+                        <h1>Sign in to launch meetings with a clean, dependable workflow.</h1>
                         <p>
                             Bridge demonstrates a complete authentication flow for a real-time collaboration product,
                             including registration, protected routes, persistent meeting history, and production-aware
