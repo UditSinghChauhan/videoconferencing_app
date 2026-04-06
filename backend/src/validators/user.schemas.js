@@ -14,10 +14,6 @@ const loginSchema = z.object({
     password: z.string().min(1, "Password is required")
 });
 
-const meetingHistorySchema = z.object({
-    meeting_code: z.string().trim().min(3, "Meeting code must be at least 3 characters long").max(100, "Meeting code is too long")
-});
-
 const csrfHeaderSchema = z.object({
     "x-csrf-token": z.string().trim().min(1, "CSRF token is required")
 });
@@ -25,6 +21,5 @@ const csrfHeaderSchema = z.object({
 export {
     csrfHeaderSchema,
     loginSchema,
-    meetingHistorySchema,
     registerSchema
 };

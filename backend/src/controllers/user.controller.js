@@ -1,5 +1,4 @@
 import httpStatus from "http-status";
-import { addMeetingToHistory, getMeetingHistory } from "../services/meeting.service.js";
 import {
     clearRefreshTokenCookie,
     loginUser,
@@ -76,34 +75,8 @@ const getCurrentUser = async (req, res) => {
     });
 };
 
-const getUserHistory = async (req, res) => {
-    const meetings = await getMeetingHistory(req.user.username);
-
-    return sendSuccess(res, {
-        statusCode: httpStatus.OK,
-        message: "Meeting history fetched successfully",
-        data: {
-            meetings
-        }
-    });
-};
-
-const addToHistory = async (req, res) => {
-    await addMeetingToHistory({
-        meetingCode: req.body.meeting_code,
-        username: req.user.username
-    });
-
-    return sendSuccess(res, {
-        statusCode: httpStatus.CREATED,
-        message: "Meeting added to history"
-    });
-};
-
 export {
-    addToHistory,
     getCurrentUser,
-    getUserHistory,
     login,
     logout,
     logoutAllSessions,

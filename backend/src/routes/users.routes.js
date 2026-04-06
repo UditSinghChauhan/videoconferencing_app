@@ -1,8 +1,6 @@
 import { Router } from "express";
 import {
-    addToHistory,
     getCurrentUser,
-    getUserHistory,
     login,
     logout,
     logoutAllSessions,
@@ -10,9 +8,9 @@ import {
     register
 } from "../controllers/user.controller.js";
 import { verifyAuthToken } from "../middlewares/auth.js";
-import { authRateLimiter, meetingRateLimiter, refreshRateLimiter } from "../middlewares/rateLimit.js";
+import { authRateLimiter, refreshRateLimiter } from "../middlewares/rateLimit.js";
 import { validate } from "../middlewares/validate.js";
-import { csrfHeaderSchema, loginSchema, meetingHistorySchema, registerSchema } from "../validators/user.schemas.js";
+import { csrfHeaderSchema, loginSchema, registerSchema } from "../validators/user.schemas.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = Router();
@@ -23,7 +21,5 @@ router.route("/refresh").post(refreshRateLimiter, validate(csrfHeaderSchema, "he
 router.route("/logout").post(validate(csrfHeaderSchema, "headers"), asyncHandler(logout));
 router.route("/logout-all").post(verifyAuthToken, asyncHandler(logoutAllSessions));
 router.route("/me").get(verifyAuthToken, asyncHandler(getCurrentUser));
-router.route("/add_to_activity").post(verifyAuthToken, meetingRateLimiter, validate(meetingHistorySchema), asyncHandler(addToHistory));
-router.route("/get_all_activity").get(verifyAuthToken, meetingRateLimiter, asyncHandler(getUserHistory));
 
 export default router;
