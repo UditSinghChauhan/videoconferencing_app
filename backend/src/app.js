@@ -29,9 +29,16 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
 const corsOptions = {
     origin: NODE_ENV === "production"
         ? CORS_ORIGIN
-        : ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
+        : [
+            "http://localhost:3000",
+            "http://localhost:3100",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3100",
+            "http://127.0.0.1:5173"
+        ],
     methods: ["GET", "POST", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "X-Forwarded-For"],
     credentials: true
 };
 

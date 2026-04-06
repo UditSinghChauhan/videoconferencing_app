@@ -4,6 +4,8 @@ backend/node_modules
 
 # Build artifacts
 frontend/build
+frontend/playwright-report
+frontend/test-results
 
 # Environment files
 .env

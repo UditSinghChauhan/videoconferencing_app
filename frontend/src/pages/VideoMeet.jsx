@@ -43,9 +43,10 @@ export default function VideoMeetComponent() {
     const socketIdRef = useRef();
     const localVideoRef = useRef();
     const videoRef = useRef([]);
+    const participantDirectoryRef = useRef({});
     const navigate = useNavigate();
     const { roomId } = useParams();
-    const { endMeeting, joinMeeting, leaveMeeting, token, user } = useContext(AuthContext);
+    const { endMeeting, joinMeeting, leaveMeeting, removeParticipantFromMeeting, token, user } = useContext(AuthContext);
 
     const [videoAvailable, setVideoAvailable] = useState(true);
     const [audioAvailable, setAudioAvailable] = useState(true);
@@ -64,7 +65,27 @@ export default function VideoMeetComponent() {
     const [meeting, setMeeting] = useState(null);
     const [isJoining, setIsJoining] = useState(false);
     const [isSendingMessage, setIsSendingMessage] = useState(false);
+    const [removingParticipantId, setRemovingParticipantId] = useState(null);
     const chatOpenRef = useRef(false);
+
+    const syncParticipantDirectory = useCallback((participants = []) => {
+        const nextDirectory = participants.reduce((directory, participant) => {
+            if (participant?.socketId) {
+                directory[participant.socketId] = participant;
+            }
+            return directory;
+        }, {});
+
+        participantDirectoryRef.current = {
+            ...participantDirectoryRef.current,
+            ...nextDirectory
+        };
+
+        setVideos((currentVideos) => currentVideos.map((participantVideo) => ({
+            ...participantVideo,
+            ...participantDirectoryRef.current[participantVideo.socketId]
+        })));
+    }, []);
 
     const cleanupConnections = useCallback(() => {
         Object.keys(connections).forEach((key) => {
@@ -78,6 +99,7 @@ export default function VideoMeetComponent() {
         });
 
         videoRef.current = [];
+        participantDirectoryRef.current = {};
         setVideos([]);
     }, []);
 
@@ -233,6 +255,7 @@ export default function VideoMeetComponent() {
             socketRef.current.on("chat-message", addMessage);
 
             socketRef.current.on("meeting:joined", (payload) => {
+                syncParticipantDirectory(payload.socketParticipants || []);
                 setMeeting((currentMeeting) => ({
                     ...(currentMeeting || {}),
                     ...payload.meeting
@@ -289,32 +312,44 @@ export default function VideoMeetComponent() {
                 setVideos((currentVideos) => currentVideos.filter((participantVideo) => participantVideo.socketId !== id));
             });
 
-            socketRef.current.on("user-joined", (id, clients) => {
+            socketRef.current.on("user-joined", (id, clients, socketParticipants = []) => {
+                syncParticipantDirectory(socketParticipants);
+
                 clients.forEach((socketListId) => {
-                    if (!connections[socketListId]) {
-                        connections[socketListId] = new RTCPeerConnection(peerConfigConnections);
+                    const targetSocketId = typeof socketListId === "string" ? socketListId : socketListId.socketId;
+
+                    if (!targetSocketId) {
+                        return;
                     }
 
-                    connections[socketListId].onicecandidate = (event) => {
+                    if (!connections[targetSocketId]) {
+                        connections[targetSocketId] = new RTCPeerConnection(peerConfigConnections);
+                    }
+
+                    connections[targetSocketId].onicecandidate = (event) => {
                         if (event.candidate != null) {
-                            socketRef.current.emit("signal", socketListId, JSON.stringify({ ice: event.candidate }));
+                            socketRef.current.emit("signal", targetSocketId, JSON.stringify({ ice: event.candidate }));
                         }
                     };
 
-                    connections[socketListId].onaddstream = (event) => {
-                        const existingVideo = videoRef.current.find((participantVideo) => participantVideo.socketId === socketListId);
+                    connections[targetSocketId].onaddstream = (event) => {
+                        const participantIdentity = participantDirectoryRef.current[targetSocketId] || {};
+                        const existingVideo = videoRef.current.find((participantVideo) => participantVideo.socketId === targetSocketId);
 
                         if (existingVideo) {
                             setVideos((currentVideos) => {
                                 const updatedVideos = currentVideos.map((participantVideo) =>
-                                    participantVideo.socketId === socketListId ? { ...participantVideo, stream: event.stream } : participantVideo
+                                    participantVideo.socketId === targetSocketId
+                                        ? { ...participantVideo, ...participantIdentity, stream: event.stream }
+                                        : participantVideo
                                 );
                                 videoRef.current = updatedVideos;
                                 return updatedVideos;
                             });
                         } else {
                             const newVideo = {
-                                socketId: socketListId,
+                                socketId: targetSocketId,
+                                ...participantIdentity,
                                 stream: event.stream,
                                 autoplay: true,
                                 playsInline: true
@@ -329,11 +364,11 @@ export default function VideoMeetComponent() {
                     };
 
                     if (window.localStream) {
-                        connections[socketListId].addStream(window.localStream);
+                        connections[targetSocketId].addStream(window.localStream);
                     } else {
                         const fallbackStream = createSilentStream();
                         attachLocalStream(fallbackStream);
-                        connections[socketListId].addStream(window.localStream);
+                        connections[targetSocketId].addStream(window.localStream);
                     }
                 });
 
@@ -551,6 +586,22 @@ export default function VideoMeetComponent() {
         }
     };
 
+    const handleRemoveParticipant = async (participantUserId) => {
+        if (!participantUserId) {
+            return;
+        }
+
+        try {
+            setRemovingParticipantId(participantUserId);
+            await removeParticipantFromMeeting(roomId, participantUserId);
+            setRoomError("");
+        } catch (error) {
+            setRoomError(error?.response?.data?.message || "Unable to remove this participant right now.");
+        } finally {
+            setRemovingParticipantId(null);
+        }
+    };
+
     const toggleChat = () => {
         setModal((currentValue) => {
             const nextValue = !currentValue;
@@ -611,7 +662,7 @@ export default function VideoMeetComponent() {
                             <span>{screenAvailable ? "Screen share supported" : "Screen share unavailable"}</span>
                         </div>
 
-                        <Button className="buttonGlow" variant="contained" onClick={connect} disabled={isJoining}>
+                        <Button className="buttonGlow" variant="contained" onClick={connect} disabled={isJoining} data-testid="join-meeting-button">
                             {isJoining ? "Joining..." : "Join Meeting"}
                         </Button>
                     </div>
@@ -634,12 +685,14 @@ export default function VideoMeetComponent() {
                                             setAskForUsername(true);
                                         }}
                                         className="buttonGlow"
+                                        data-testid="retry-join-button"
                                     >
                                         Try Again
                                     </button>
                                     <button 
                                         onClick={() => handleEndCall("/home")}
                                         className="ghostAction"
+                                        data-testid="back-home-button"
                                     >
                                         Back to Home
                                     </button>
@@ -655,6 +708,40 @@ export default function VideoMeetComponent() {
                         </div>
                         {roomError ? <p className={styles.roomError}>{roomError}</p> : null}
                     </div>
+
+                    {meeting?.participants?.length ? (
+                        <section className={styles.participantRoster} data-testid="participant-roster">
+                            <div className={styles.participantRosterHeader}>
+                                <h3>Participants</h3>
+                                <span>{meeting.participants.length} live</span>
+                            </div>
+                            <div className={styles.participantRosterList}>
+                                {meeting.participants.map((participant) => {
+                                    const isCurrentUser = String(participant.userId) === String(user?.id);
+                                    const canRemoveParticipant = meeting.currentUserRole === "host" && participant.role !== "host" && !isCurrentUser;
+
+                                    return (
+                                        <div className={styles.participantRosterItem} key={`${participant.userId}-${participant.joinedAt}`}>
+                                            <div>
+                                                <strong data-testid="roster-name">{participant.username}</strong>
+                                                <span>{participant.role === "host" ? "Host" : isCurrentUser ? "You" : "Participant"}</span>
+                                            </div>
+                                            {canRemoveParticipant ? (
+                                                <button
+                                                    type="button"
+                                                    className={styles.removeParticipantButton}
+                                                    onClick={() => handleRemoveParticipant(participant.userId)}
+                                                    disabled={removingParticipantId === participant.userId}
+                                                >
+                                                    {removingParticipantId === participant.userId ? "Removing..." : "Remove"}
+                                                </button>
+                                            ) : null}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    ) : null}
 
                     {showModal ? (
                         <div className={styles.chatRoom}>
@@ -697,24 +784,24 @@ export default function VideoMeetComponent() {
                     ) : null}
 
                     <div className={styles.buttonContainers}>
-                        <IconButton onClick={() => setVideo((currentVideo) => !currentVideo)} style={{ color: "white" }}>
+                        <IconButton aria-label="Toggle camera" onClick={() => setVideo((currentVideo) => !currentVideo)} style={{ color: "white" }}>
                             {video ? <VideocamIcon /> : <VideocamOffIcon />}
                         </IconButton>
-                        <IconButton onClick={handleMeetingExit} style={{ color: "#f87171" }}>
+                        <IconButton aria-label={meeting?.currentUserRole === "host" ? "End meeting" : "Leave meeting"} onClick={handleMeetingExit} style={{ color: "#f87171" }}>
                             <CallEndIcon />
                         </IconButton>
-                        <IconButton onClick={() => setAudio((currentAudio) => !currentAudio)} style={{ color: "white" }}>
+                        <IconButton aria-label="Toggle microphone" onClick={() => setAudio((currentAudio) => !currentAudio)} style={{ color: "white" }}>
                             {audio ? <MicIcon /> : <MicOffIcon />}
                         </IconButton>
 
                         {screenAvailable ? (
-                            <IconButton onClick={handleScreen} style={{ color: "white" }}>
+                            <IconButton aria-label="Toggle screen share" onClick={handleScreen} style={{ color: "white" }}>
                                 {screen ? <StopScreenShareIcon /> : <ScreenShareIcon />}
                             </IconButton>
                         ) : null}
 
                         <Badge badgeContent={newMessages} max={99} color="primary">
-                            <IconButton onClick={toggleChat} style={{ color: "white" }}>
+                            <IconButton aria-label="Open chat" onClick={toggleChat} style={{ color: "white" }}>
                                 <ChatIcon />
                             </IconButton>
                         </Badge>
@@ -735,7 +822,7 @@ export default function VideoMeetComponent() {
                                     autoPlay
                                     playsInline
                                 />
-                                <div className={styles.participantLabel}>
+                                <div className={styles.participantLabel} data-testid="participant-label">
                                     {participantVideo.name || participantVideo.username || `Guest ${participantVideo.socketId.substring(0, 5)}`}
                                 </div>
                             </div>

@@ -136,6 +136,88 @@
     line-height: 1.5;
 }
 
+.participantRoster {
+    margin-bottom: 1rem;
+    padding: 1rem 1.2rem;
+    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(8, 15, 31, 0.62);
+    box-shadow:
+        0 20px 46px rgba(2, 6, 23, 0.32),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(14px);
+}
+
+.participantRosterHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.participantRosterHeader h3 {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 1rem;
+}
+
+.participantRosterHeader span {
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.participantRosterList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.participantRosterItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 0.95rem;
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.58);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.participantRosterItem strong {
+    display: block;
+    color: #f8fafc;
+    margin-bottom: 0.2rem;
+}
+
+.participantRosterItem span {
+    color: #94a3b8;
+    font-size: 0.88rem;
+}
+
+.removeParticipantButton {
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    border-radius: 999px;
+    background: rgba(127, 29, 29, 0.22);
+    color: #fecaca;
+    padding: 0.55rem 0.9rem;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.removeParticipantButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: rgba(127, 29, 29, 0.32);
+    border-color: rgba(248, 113, 113, 0.48);
+}
+
+.removeParticipantButton:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
 .meetUserVideo {
     position: fixed;
     bottom: 7rem;
@@ -428,5 +510,9 @@
         position: static;
         width: 100%;
         margin-top: 1rem;
+    }
+
+    .participantRosterList {
+        grid-template-columns: 1fr;
     }
 }

@@ -9,6 +9,12 @@ let ioInstance = null;
 const messages = new Map();
 
 const getRoomKey = (meetingId) => `meeting:${meetingId}`;
+const serializeSocketParticipant = (socket) => ({
+    socketId: socket.id,
+    userId: socket.data.user._id.toString(),
+    username: socket.data.user.username,
+    name: socket.data.user.name
+});
 
 const getActiveParticipants = (meeting) => {
     return meeting.participants.filter((participant) => !participant.leftAt && !participant.removedAt);
@@ -48,6 +54,11 @@ const getSocketsForMeeting = async (meetingId) => {
 const getSocketParticipantIds = async (meetingId) => {
     const sockets = await getSocketsForMeeting(meetingId);
     return sockets.map((socket) => socket.id);
+};
+
+const getSocketParticipants = async (meetingId) => {
+    const sockets = await getSocketsForMeeting(meetingId);
+    return sockets.map(serializeSocketParticipant);
 };
 
 const ensureSocketCanAccessMeeting = async (socket, meetingId) => {
@@ -143,9 +154,16 @@ const connectToSocket = (server) => {
     const corsOptions = {
         origin: NODE_ENV === "production"
             ? CORS_ORIGIN
-            : ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
+            : [
+                "http://localhost:3000",
+                "http://localhost:3100",
+                "http://localhost:5173",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:3100",
+                "http://127.0.0.1:5173"
+            ],
         methods: ["GET", "POST", "PATCH"],
-        allowedHeaders: ["Authorization"],
+        allowedHeaders: ["Authorization", "X-Forwarded-For"],
         credentials: true
     };
 
@@ -218,19 +236,21 @@ const connectToSocket = (server) => {
                 socket.data.meetingId = meetingId;
 
                 const participantIds = await getSocketParticipantIds(meetingId);
+                const socketParticipants = await getSocketParticipants(meetingId);
                 const roomMessages = messages.get(meetingId) || [];
 
                 socket.emit("meeting:joined", {
                     meeting: serializeMeetingRealtimeState(meeting),
                     socketId: socket.id,
-                    participants: participantIds
+                    participants: participantIds,
+                    socketParticipants
                 });
 
                 roomMessages.forEach((entry) => {
                     socket.emit("chat-message", entry.data, entry.sender, entry.socketIdSender);
                 });
 
-                socket.to(roomKey).emit("user-joined", socket.id, participantIds);
+                socket.to(roomKey).emit("user-joined", socket.id, participantIds, socketParticipants);
                 await emitMeetingParticipantsUpdated(meetingId);
             } catch (error) {
                 socket.emit("meeting:error", {
