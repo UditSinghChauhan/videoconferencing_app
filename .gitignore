@@ -8,3 +8,21 @@ frontend/build
 # Environment files
 .env
 *.local
+
+# Local certification and test artifacts
+AUTH_CERT_TEST_GUIDE.md
+AUTH_TEST_HELPER.js
+BACKEND_VALIDATION_REPORT.md
+BUG_REPORT_AND_FIXES.md
+CERTIFICATION_COMPLETE.md
+FINAL_CERT_RESULTS.md
+MEETING_SYSTEM_ANALYSIS.md
+PHASE_3_CERTIFICATION_REPORT.md
+PHASE_3_POSTMAN_GUIDE.md
+PHASE_3_README.md
+auth_tests.py
+backend_validation_test.py
+final_cert_test.py
+phase_3_certification_test.py
+phase_3_simple_test.py
+test-auth.sh
