@@ -55,21 +55,39 @@ function History() {
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
+        const userLocale = navigator.language || "en-US";
 
-        return new Intl.DateTimeFormat("en-IN", {
+        return new Intl.DateTimeFormat(userLocale, {
             dateStyle: "medium",
             timeStyle: "short"
         }).format(date);
     };
+
+    const renderSkeletons = () => (
+        <div className="loadingCard">
+            <div className="loadingHeader">
+                <div className="loadingSpinner" />
+                <div className="loadingCopy">
+                    <div className="skeletonLine short" />
+                    <div className="skeletonLine medium" />
+                </div>
+            </div>
+            <div className="skeletonGrid">
+                {[0, 1, 2].map((item) => (
+                    <div key={item} className="skeletonCard" />
+                ))}
+            </div>
+        </div>
+    );
 
     return (
         <div className="pageContainer">
             <div className="historyShell">
                 <div className="historyHeader">
                     <div>
-                        <span className="dashboardEyebrow">Meeting archive</span>
-                        <h1>Recent room activity</h1>
-                        <p>Review previous room codes and jump back into a conversation without hunting through messages.</p>
+                        <span className="dashboardEyebrow">Your meetings</span>
+                        <h1>Your recent meetings</h1>
+                        <p>See all your past meetings. Click one to view a summary or rejoin.</p>
                     </div>
 
                     <div className="topNavActions">
@@ -80,53 +98,74 @@ function History() {
                 </div>
 
                 {selectedMeetingId ? (
-                    <div className="historyCard" style={{ marginBottom: "1rem" }}>
+                    <div className="summaryCard">
                         <div>
                             <strong>Meeting Summary: {selectedMeetingId}</strong>
                             {summaryLoading ? <p className="historyMeta">Generating summary view...</p> : null}
                         </div>
 
                         {!summaryLoading && meetingSummary ? (
-                            <div style={{ marginTop: "1rem" }}>
-                                <p><strong>Key Points:</strong></p>
-                                {meetingSummary.summary.keyPoints.length ? (
-                                    meetingSummary.summary.keyPoints.map((point, index) => (
-                                        <p key={`${point}-${index}`} className="historyMeta">{index + 1}. {point}</p>
-                                    ))
-                                ) : (
-                                    <p className="historyMeta">No key points were captured.</p>
-                                )}
+                            <div className="summaryGrid">
+                                <div className="summaryBlock">
+                                    <span className="summarySectionTitle">Key Points</span>
+                                    {meetingSummary.summary.keyPoints.length ? (
+                                        <ol className="summaryList">
+                                            {meetingSummary.summary.keyPoints.map((point, index) => (
+                                                <li key={`${point}-${index}`}>{point}</li>
+                                            ))}
+                                        </ol>
+                                    ) : (
+                                        <p className="summaryParagraph">No key points were captured.</p>
+                                    )}
+                                </div>
 
-                                <p style={{ marginTop: "1rem" }}><strong>Highlights:</strong></p>
-                                {meetingSummary.summary.highlights.length ? (
-                                    meetingSummary.summary.highlights.map((highlight, index) => (
-                                        <p key={`${highlight}-${index}`} className="historyMeta">{index + 1}. {highlight}</p>
-                                    ))
-                                ) : (
-                                    <p className="historyMeta">No major highlights were captured.</p>
-                                )}
+                                <div className="summaryBlock">
+                                    <span className="summarySectionTitle">Highlights</span>
+                                    {meetingSummary.summary.highlights.length ? (
+                                        <ol className="summaryList">
+                                            {meetingSummary.summary.highlights.map((highlight, index) => (
+                                                <li key={`${highlight}-${index}`}>{highlight}</li>
+                                            ))}
+                                        </ol>
+                                    ) : (
+                                        <p className="summaryParagraph">No major highlights were captured.</p>
+                                    )}
+                                </div>
 
-                                <p style={{ marginTop: "1rem" }}><strong>Participants:</strong> {meetingSummary.summary.participantsInvolved.join(", ") || "No participant activity recorded"}</p>
-                                <p><strong>Keywords:</strong> {meetingSummary.summary.keywords.join(", ") || "No dominant keywords"}</p>
-                                <p><strong>Conclusion:</strong> {meetingSummary.summary.conclusion || "No conclusion available."}</p>
+                                <div className="summaryBlock">
+                                    <span className="summarySectionTitle">Participants</span>
+                                    <p className="summaryParagraph">{meetingSummary.summary.participantsInvolved.join(", ") || "No participant activity recorded"}</p>
+                                </div>
+
+                                <div className="summaryBlock">
+                                    <span className="summarySectionTitle">Keywords</span>
+                                    <p className="summaryParagraph">{meetingSummary.summary.keywords.join(", ") || "No dominant keywords"}</p>
+                                </div>
+
+                                <div className="summaryBlock">
+                                    <span className="summarySectionTitle">Conclusion</span>
+                                    <p className="summaryParagraph">{meetingSummary.summary.conclusion || "No conclusion available."}</p>
+                                </div>
                             </div>
                         ) : null}
 
-                        <Button variant="outlined" onClick={() => setSearchParams({})}>
+                        <div className="summaryActions">
+                            <Button className="ghostAction" variant="outlined" onClick={() => setSearchParams({})}>
                             Hide Summary
-                        </Button>
+                            </Button>
+                        </div>
                     </div>
                 ) : null}
 
-                {loading ? <p className="historyStatus">Loading meeting history...</p> : null}
+                {loading ? renderSkeletons() : null}
                 {errorMessage ? <p className="errorText">{errorMessage}</p> : null}
 
                 {!loading && !errorMessage && meetings.length === 0 ? (
-                    <div className="emptyState">
+                    <div className="emptyHistoryState">
                         <h2>No meetings yet</h2>
-                        <p>Create or join a room from the dashboard and it will appear here for quick reuse.</p>
-                        <Button variant="contained" onClick={() => navigate("/home")}>
-                            Go to Dashboard
+                        <p>Start your first meeting to see it appear here.</p>
+                        <Button className="buttonGlow" variant="contained" onClick={() => navigate("/home")}>
+                            Create Meeting
                         </Button>
                     </div>
                 ) : null}
@@ -135,16 +174,19 @@ function History() {
                     <div className="historyGrid">
                         {meetings.map((meeting) => (
                             <div key={meeting.id || `${meeting.meetingId}-${meeting.createdAt}`} className="historyCard">
-                                <div>
-                                    <strong>{meeting.meetingId}</strong>
-                                    <p className="historyMeta">{formatDate(meeting.updatedAt || meeting.createdAt)}</p>
+                                <div className="historyCardTop">
+                                    <div>
+                                        <strong>{meeting.meetingId}</strong>
+                                        <p className="historyMeta">{formatDate(meeting.updatedAt || meeting.createdAt)}</p>
+                                    </div>
+                                    <span className="historyTag">{meeting.hasSummary ? "Summary available" : "Saved"}</span>
                                 </div>
-                                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                                    <Button variant="outlined" onClick={() => navigate(`/room/${meeting.meetingId}`)}>
+                                <div className="historyActions">
+                                    <Button className="ghostAction" variant="outlined" onClick={() => navigate(`/room/${meeting.meetingId}`)}>
                                         Rejoin Room
                                     </Button>
                                     {meeting.hasSummary ? (
-                                        <Button variant="contained" onClick={() => setSearchParams({ summary: meeting.meetingId })}>
+                                        <Button className="buttonGlow" variant="contained" onClick={() => setSearchParams({ summary: meeting.meetingId })}>
                                             View Summary
                                         </Button>
                                     ) : null}

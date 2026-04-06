@@ -9,6 +9,7 @@ function HomeComponent() {
     const navigate = useNavigate();
     const [meetingCode, setMeetingCode] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
+    const [isJoining, setIsJoining] = useState(false);
     const { logout, logoutAllSessions } = useContext(AuthContext);
 
     const handleJoinVideoCall = async () => {
@@ -20,9 +21,12 @@ function HomeComponent() {
         }
 
         try {
+            setIsJoining(true);
             navigate(`/room/${trimmedMeetingCode}`);
         } catch (error) {
             setErrorMessage(error?.response?.data?.message || "Unable to join the room right now. Please try again.");
+        } finally {
+            setIsJoining(false);
         }
     };
 
@@ -68,8 +72,8 @@ function HomeComponent() {
                             variant="outlined"
                             placeholder="Enter room code"
                         />
-                        <Button className="meetingAction" onClick={handleJoinVideoCall} variant="contained">
-                            Join Room
+                        <Button className="meetingAction buttonGlow" onClick={handleJoinVideoCall} variant="contained" disabled={isJoining}>
+                            {isJoining ? "Joining..." : "Join Room"}
                         </Button>
                     </div>
 

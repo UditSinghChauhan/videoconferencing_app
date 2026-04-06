@@ -62,6 +62,8 @@ export default function VideoMeetComponent() {
     const [videos, setVideos] = useState([]);
     const [roomError, setRoomError] = useState("");
     const [meeting, setMeeting] = useState(null);
+    const [isJoining, setIsJoining] = useState(false);
+    const [isSendingMessage, setIsSendingMessage] = useState(false);
     const chatOpenRef = useRef(false);
 
     const cleanupConnections = useCallback(() => {
@@ -516,8 +518,12 @@ export default function VideoMeetComponent() {
             return;
         }
 
+        setIsSendingMessage(true);
         socketRef.current.emit("chat-message", trimmedMessage, username);
         setMessage("");
+        window.setTimeout(() => {
+            setIsSendingMessage(false);
+        }, 180);
     };
 
     const connect = async () => {
@@ -529,6 +535,7 @@ export default function VideoMeetComponent() {
         }
 
         try {
+            setIsJoining(true);
             const meetingDetails = await joinMeeting(roomId);
             setMeeting(meetingDetails);
             setUsername(displayName);
@@ -539,6 +546,8 @@ export default function VideoMeetComponent() {
             connectToSocketServer();
         } catch (error) {
             setRoomError(error?.response?.data?.message || "Unable to join this meeting.");
+        } finally {
+            setIsJoining(false);
         }
     };
 
@@ -558,6 +567,22 @@ export default function VideoMeetComponent() {
         <div>
             {askForUsername ? (
                 <div className={styles.lobbyContainer}>
+                    {roomError && (
+                        <div className={styles.errorOverlay}>
+                            <div className={styles.errorContent}>
+                                <h2>Setup Error</h2>
+                                <p>{roomError}</p>
+                                <div className={styles.errorActions}>
+                                    <button 
+                                        onClick={() => setRoomError("")}
+                                        className="buttonGlow"
+                                    >
+                                        Got It
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <div className={styles.lobbyCard}>
                         <span className={styles.roomBadge}>Room: {roomId}</span>
                         <h1>Prepare your setup before joining.</h1>
@@ -567,6 +592,7 @@ export default function VideoMeetComponent() {
                         </p>
 
                         <TextField
+                            className={styles.lobbyField}
                             label="Display Name"
                             value={username}
                             onChange={(event) => {
@@ -585,8 +611,8 @@ export default function VideoMeetComponent() {
                             <span>{screenAvailable ? "Screen share supported" : "Screen share unavailable"}</span>
                         </div>
 
-                        <Button variant="contained" onClick={connect}>
-                            Join Meeting
+                        <Button className="buttonGlow" variant="contained" onClick={connect} disabled={isJoining}>
+                            {isJoining ? "Joining..." : "Join Meeting"}
                         </Button>
                     </div>
 
@@ -596,6 +622,31 @@ export default function VideoMeetComponent() {
                 </div>
             ) : (
                 <div className={styles.meetVideoContainer}>
+                    {roomError && (
+                        <div className={styles.errorOverlay}>
+                            <div className={styles.errorContent}>
+                                <h2>Couldn't join meeting</h2>
+                                <p>{roomError}</p>
+                                <div className={styles.errorActions}>
+                                    <button 
+                                        onClick={() => {
+                                            setRoomError("");
+                                            setAskForUsername(true);
+                                        }}
+                                        className="buttonGlow"
+                                    >
+                                        Try Again
+                                    </button>
+                                    <button 
+                                        onClick={() => handleEndCall("/home")}
+                                        className="ghostAction"
+                                    >
+                                        Back to Home
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <div className={styles.roomHeader}>
                         <div>
                             <span className={styles.roomBadge}>Live room</span>
@@ -630,14 +681,15 @@ export default function VideoMeetComponent() {
 
                                 <div className={styles.chattingArea}>
                                     <TextField
+                                        className="chatField"
                                         value={message}
                                         onChange={(event) => setMessage(event.target.value)}
                                         label="Message"
                                         variant="outlined"
                                         fullWidth
                                     />
-                                    <Button variant="contained" onClick={sendMessage}>
-                                        Send
+                                    <Button className={isSendingMessage ? "ghostAction" : "buttonGlow"} variant="contained" onClick={sendMessage}>
+                                        {isSendingMessage ? "Sent" : "Send"}
                                     </Button>
                                 </div>
                             </div>
@@ -683,6 +735,9 @@ export default function VideoMeetComponent() {
                                     autoPlay
                                     playsInline
                                 />
+                                <div className={styles.participantLabel}>
+                                    {participantVideo.name || participantVideo.username || `Guest ${participantVideo.socketId.substring(0, 5)}`}
+                                </div>
                             </div>
                         ))}
                     </div>

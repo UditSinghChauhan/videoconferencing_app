@@ -14,7 +14,15 @@ const withAuth = (WrappedComponent) => {
         }, [isAuthenticated, isCheckingAuth, navigate]);
 
         if (isCheckingAuth) {
-            return <p className="historyStatus">Checking your session...</p>;
+            return (
+                <div className="sessionLoading">
+                    <div className="sessionLoadingCard">
+                        <div className="loadingSpinner" />
+                        <h2>Checking your session</h2>
+                        <p>We are securely restoring your workspace and verifying your access.</p>
+                    </div>
+                </div>
+            );
         }
 
         if (!isAuthenticated) {
