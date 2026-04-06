@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import { Badge, Button, IconButton, TextField } from "@mui/material";
 import VideocamIcon from "@mui/icons-material/Videocam";
@@ -12,6 +12,7 @@ import ChatIcon from "@mui/icons-material/Chat";
 import { useNavigate, useParams } from "react-router-dom";
 import styles from "../styles/videoComponent.module.css";
 import server from "../environment";
+import { AuthContext } from "../contexts/AuthContext";
 
 const connections = {};
 
@@ -44,6 +45,7 @@ export default function VideoMeetComponent() {
     const videoRef = useRef([]);
     const navigate = useNavigate();
     const { roomId } = useParams();
+    const { endMeeting, joinMeeting, leaveMeeting, user } = useContext(AuthContext);
 
     const [videoAvailable, setVideoAvailable] = useState(true);
     const [audioAvailable, setAudioAvailable] = useState(true);
@@ -59,6 +61,7 @@ export default function VideoMeetComponent() {
     const [username, setUsername] = useState("");
     const [videos, setVideos] = useState([]);
     const [roomError, setRoomError] = useState("");
+    const [meeting, setMeeting] = useState(null);
     const chatOpenRef = useRef(false);
 
     const attachLocalStream = useCallback((stream) => {
@@ -348,6 +351,20 @@ export default function VideoMeetComponent() {
         navigate("/home");
     };
 
+    const handleMeetingExit = async () => {
+        try {
+            if (meeting?.currentUserRole === "host") {
+                await endMeeting(roomId);
+            } else {
+                await leaveMeeting(roomId);
+            }
+        } catch (error) {
+            setRoomError(error?.response?.data?.message || "Unable to update meeting status right now.");
+        } finally {
+            handleEndCall();
+        }
+    };
+
     const sendMessage = () => {
         const trimmedMessage = message.trim();
 
@@ -359,17 +376,26 @@ export default function VideoMeetComponent() {
         setMessage("");
     };
 
-    const connect = () => {
-        if (!username.trim()) {
+    const connect = async () => {
+        const displayName = username.trim() || user?.username || "";
+
+        if (!displayName) {
             setRoomError("Enter a display name before joining the room.");
             return;
         }
 
-        setRoomError("");
-        setAskForUsername(false);
-        setVideo(videoAvailable);
-        setAudio(audioAvailable);
-        connectToSocketServer();
+        try {
+            const meetingDetails = await joinMeeting(roomId);
+            setMeeting(meetingDetails);
+            setUsername(displayName);
+            setRoomError("");
+            setAskForUsername(false);
+            setVideo(videoAvailable);
+            setAudio(audioAvailable);
+            connectToSocketServer();
+        } catch (error) {
+            setRoomError(error?.response?.data?.message || "Unable to join this meeting.");
+        }
     };
 
     const toggleChat = () => {
@@ -430,6 +456,7 @@ export default function VideoMeetComponent() {
                         <div>
                             <span className={styles.roomBadge}>Live room</span>
                             <h2>{roomId}</h2>
+                            {meeting?.currentUserRole ? <p>{meeting.currentUserRole === "host" ? "You are the host" : "You joined as a participant"}</p> : null}
                         </div>
                         {roomError ? <p className={styles.roomError}>{roomError}</p> : null}
                     </div>
@@ -477,7 +504,7 @@ export default function VideoMeetComponent() {
                         <IconButton onClick={() => setVideo((currentVideo) => !currentVideo)} style={{ color: "white" }}>
                             {video ? <VideocamIcon /> : <VideocamOffIcon />}
                         </IconButton>
-                        <IconButton onClick={handleEndCall} style={{ color: "#f87171" }}>
+                        <IconButton onClick={handleMeetingExit} style={{ color: "#f87171" }}>
                             <CallEndIcon />
                         </IconButton>
                         <IconButton onClick={() => setAudio((currentAudio) => !currentAudio)} style={{ color: "white" }}>

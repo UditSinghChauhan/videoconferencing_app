@@ -14,6 +14,11 @@ const client = axios.create({
     withCredentials: true
 });
 
+const meetingClient = axios.create({
+    baseURL: `${server}/api/v1/meetings`,
+    withCredentials: true
+});
+
 const getStoredToken = () => localStorage.getItem(TOKEN_STORAGE_KEY);
 const getStoredCsrfToken = () => localStorage.getItem(CSRF_STORAGE_KEY);
 
@@ -129,7 +134,7 @@ export const AuthProvider = ({ children }) => {
             async (error) => {
                 const originalRequest = error.config;
                 const status = error?.response?.status;
-                const code = error?.response?.data?.code;
+                const code = error?.response?.data?.error?.code;
                 const shouldRefresh = status === httpStatus.UNAUTHORIZED
                     && !originalRequest?._retry
                     && code === "TOKEN_EXPIRED"
@@ -160,6 +165,49 @@ export const AuthProvider = ({ children }) => {
     }, [refreshSession]);
 
     useEffect(() => {
+        const requestInterceptor = meetingClient.interceptors.request.use((config) => {
+            const activeToken = getStoredToken();
+
+            if (activeToken) {
+                config.headers.Authorization = `Bearer ${activeToken}`;
+            }
+
+            return config;
+        });
+
+        const responseInterceptor = meetingClient.interceptors.response.use(
+            (response) => response,
+            async (error) => {
+                const originalRequest = error.config;
+                const status = error?.response?.status;
+                const code = error?.response?.data?.error?.code;
+                const shouldRefresh = status === httpStatus.UNAUTHORIZED
+                    && !originalRequest?._retry
+                    && code === "TOKEN_EXPIRED";
+
+                if (!shouldRefresh) {
+                    return Promise.reject(error);
+                }
+
+                originalRequest._retry = true;
+
+                try {
+                    const nextToken = await refreshSession();
+                    originalRequest.headers.Authorization = `Bearer ${nextToken}`;
+                    return meetingClient(originalRequest);
+                } catch (refreshError) {
+                    return Promise.reject(refreshError);
+                }
+            }
+        );
+
+        return () => {
+            meetingClient.interceptors.request.eject(requestInterceptor);
+            meetingClient.interceptors.response.eject(responseInterceptor);
+        };
+    }, [refreshSession]);
+
+    useEffect(() => {
         const bootstrapAuth = async () => {
             const storedToken = getStoredToken();
 
@@ -172,7 +220,7 @@ export const AuthProvider = ({ children }) => {
                 const currentUser = await fetchCurrentUser(storedToken);
                 applySession(getStoredToken() || storedToken, currentUser, getStoredCsrfToken());
             } catch (error) {
-                const code = error?.response?.data?.code;
+                const code = error?.response?.data?.error?.code;
 
                 if (code === "TOKEN_EXPIRED") {
                     try {
@@ -250,7 +298,7 @@ export const AuthProvider = ({ children }) => {
 
     const getHistoryOfUser = useCallback(async () => {
         try {
-            const request = await client.get("/get_all_activity");
+            const request = await meetingClient.get("/");
             return request.data.data.meetings || [];
         } catch (error) {
             if (error?.response?.status === httpStatus.UNAUTHORIZED || error?.response?.status === httpStatus.FORBIDDEN) {
@@ -262,11 +310,12 @@ export const AuthProvider = ({ children }) => {
         }
     }, [clearSession, redirectToAuth]);
 
-    const addToUserHistory = useCallback(async (meetingCode) => {
+    const createMeeting = useCallback(async (meetingId) => {
         try {
-            return await client.post("/add_to_activity", {
-                meeting_code: meetingCode
+            const request = await meetingClient.post("/", {
+                meetingId
             });
+            return request.data.data.meeting;
         } catch (error) {
             if (error?.response?.status === httpStatus.UNAUTHORIZED || error?.response?.status === httpStatus.FORBIDDEN) {
                 clearSession();
@@ -277,12 +326,49 @@ export const AuthProvider = ({ children }) => {
         }
     }, [clearSession, redirectToAuth]);
 
+    const joinMeeting = useCallback(async (meetingId) => {
+        try {
+            const request = await meetingClient.post(`/${meetingId}/join`);
+            return request.data.data.meeting;
+        } catch (error) {
+            if (error?.response?.status === httpStatus.NOT_FOUND) {
+                return createMeeting(meetingId);
+            }
+
+            if (error?.response?.status === httpStatus.UNAUTHORIZED || error?.response?.status === httpStatus.FORBIDDEN) {
+                clearSession();
+                redirectToAuth();
+            }
+
+            throw error;
+        }
+    }, [clearSession, createMeeting, redirectToAuth]);
+
+    const leaveMeeting = useCallback(async (meetingId) => {
+        const request = await meetingClient.post(`/${meetingId}/leave`);
+        return request.data.data.meeting;
+    }, []);
+
+    const endMeeting = useCallback(async (meetingId) => {
+        const request = await meetingClient.post(`/${meetingId}/end`);
+        return request.data.data.meeting;
+    }, []);
+
+    const getMeetingDetails = useCallback(async (meetingId) => {
+        const request = await meetingClient.get(`/${meetingId}`);
+        return request.data.data.meeting;
+    }, []);
+
     const value = useMemo(() => ({
-        addToUserHistory,
+        createMeeting,
         csrfToken,
         getHistoryOfUser,
+        getMeetingDetails,
         handleRegister,
         handleLogin,
+        joinMeeting,
+        leaveMeeting,
+        endMeeting,
         isAuthenticated: Boolean(token && user),
         isCheckingAuth,
         logout,
@@ -290,7 +376,7 @@ export const AuthProvider = ({ children }) => {
         refreshSession,
         token,
         user
-    }), [addToUserHistory, csrfToken, getHistoryOfUser, handleRegister, handleLogin, isCheckingAuth, logout, logoutAllSessions, refreshSession, token, user]);
+    }), [createMeeting, csrfToken, endMeeting, getHistoryOfUser, getMeetingDetails, handleRegister, handleLogin, isCheckingAuth, joinMeeting, leaveMeeting, logout, logoutAllSessions, refreshSession, token, user]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

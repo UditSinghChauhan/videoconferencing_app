@@ -69,12 +69,12 @@ function History() {
                 {!loading && !errorMessage && meetings.length > 0 ? (
                     <div className="historyGrid">
                         {meetings.map((meeting) => (
-                            <div key={meeting._id || `${meeting.meetingCode}-${meeting.date}`} className="historyCard">
+                            <div key={meeting.id || `${meeting.meetingId}-${meeting.createdAt}`} className="historyCard">
                                 <div>
-                                    <strong>{meeting.meetingCode}</strong>
-                                    <p className="historyMeta">{formatDate(meeting.date)}</p>
+                                    <strong>{meeting.meetingId}</strong>
+                                    <p className="historyMeta">{formatDate(meeting.updatedAt || meeting.createdAt)}</p>
                                 </div>
-                                <Button variant="outlined" onClick={() => navigate(`/room/${meeting.meetingCode}`)}>
+                                <Button variant="outlined" onClick={() => navigate(`/room/${meeting.meetingId}`)}>
                                     Rejoin Room
                                 </Button>
                             </div>

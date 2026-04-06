@@ -9,7 +9,7 @@ function HomeComponent() {
     const navigate = useNavigate();
     const [meetingCode, setMeetingCode] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
-    const { addToUserHistory, logout, logoutAllSessions } = useContext(AuthContext);
+    const { logout, logoutAllSessions } = useContext(AuthContext);
 
     const handleJoinVideoCall = async () => {
         const trimmedMeetingCode = meetingCode.trim();
@@ -20,7 +20,6 @@ function HomeComponent() {
         }
 
         try {
-            await addToUserHistory(trimmedMeetingCode);
             navigate(`/room/${trimmedMeetingCode}`);
         } catch (error) {
             setErrorMessage(error?.response?.data?.message || "Unable to join the room right now. Please try again.");
