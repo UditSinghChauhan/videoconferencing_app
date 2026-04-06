@@ -4,10 +4,13 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import helmet from "helmet";
+import httpStatus from "http-status";
 import mongoose from "mongoose";
 
 import { connectToSocket } from "./controllers/socketManager.js";
+import { errorHandler, notFoundHandler } from "./middlewares/errorHandler.js";
 import userRoutes from "./routes/users.routes.js";
+import { sendSuccess } from "./utils/apiResponse.js";
 import { logger } from "./utils/logger.js";
 
 dotenv.config();
@@ -44,7 +47,32 @@ app.use(express.urlencoded({ limit: "40kb", extended: true }));
 app.use("/api/v1/users", userRoutes);
 
 app.get("/api/v1/health", (req, res) => {
-    res.status(200).json({ status: "OK", message: "Server is running" });
+    return sendSuccess(res, {
+        statusCode: httpStatus.OK,
+        message: "Server is running",
+        data: {
+            status: "OK"
+        }
+    });
+});
+
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+const shutdown = (signal, error = null) => {
+    logger.error("Process shutdown triggered", {
+        signal,
+        error: error?.message
+    });
+};
+
+process.on("unhandledRejection", (reason) => {
+    shutdown("unhandledRejection", reason instanceof Error ? reason : new Error(String(reason)));
+});
+
+process.on("uncaughtException", (error) => {
+    shutdown("uncaughtException", error);
+    process.exit(1);
 });
 
 const start = async () => {
