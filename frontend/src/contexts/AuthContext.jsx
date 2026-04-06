@@ -359,6 +359,23 @@ export const AuthProvider = ({ children }) => {
         return request.data.data.meeting;
     }, []);
 
+    const getMeetingSummary = useCallback(async (meetingId) => {
+        const request = await meetingClient.get(`/${meetingId}/summary`);
+        return request.data.data.meetingSummary;
+    }, []);
+
+    const removeParticipantFromMeeting = useCallback(async (meetingId, participantUserId) => {
+        const request = await meetingClient.post(`/${meetingId}/remove-participant`, {
+            participantUserId
+        });
+        return request.data.data.meeting;
+    }, []);
+
+    const updateMeetingSettings = useCallback(async (meetingId, settings) => {
+        const request = await meetingClient.patch(`/${meetingId}/settings`, settings);
+        return request.data.data.meeting;
+    }, []);
+
     const value = useMemo(() => ({
         createMeeting,
         csrfToken,
@@ -369,6 +386,9 @@ export const AuthProvider = ({ children }) => {
         joinMeeting,
         leaveMeeting,
         endMeeting,
+        removeParticipantFromMeeting,
+        updateMeetingSettings,
+        getMeetingSummary,
         isAuthenticated: Boolean(token && user),
         isCheckingAuth,
         logout,
@@ -376,7 +396,7 @@ export const AuthProvider = ({ children }) => {
         refreshSession,
         token,
         user
-    }), [createMeeting, csrfToken, endMeeting, getHistoryOfUser, getMeetingDetails, handleRegister, handleLogin, isCheckingAuth, joinMeeting, leaveMeeting, logout, logoutAllSessions, refreshSession, token, user]);
+    }), [createMeeting, csrfToken, endMeeting, getHistoryOfUser, getMeetingDetails, getMeetingSummary, handleRegister, handleLogin, isCheckingAuth, joinMeeting, leaveMeeting, logout, logoutAllSessions, refreshSession, removeParticipantFromMeeting, token, updateMeetingSettings, user]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
