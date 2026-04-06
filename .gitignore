@@ -26,3 +26,21 @@ final_cert_test.py
 phase_3_certification_test.py
 phase_3_simple_test.py
 test-auth.sh
+
+# Additional local phase artifacts
+PHASE_4_ANALYSIS_COMPLETE.md
+PHASE_4_CODE_FIXES.md
+PHASE_4_IMPLEMENTATION_GUIDE.md
+PHASE_4_IMPLEMENTATION_RESULTS.md
+PHASE_4_QUICK_START.md
+PHASE_4_READY_TO_TEST.md
+PHASE_4_TEST_RESULTS.md
+PHASE_5_CERTIFICATION_RESULTS.md
+PHASE_5_FINAL_STATUS.md
+PHASE_5_QUICK_REFERENCE.md
+PHASE_5_VERIFICATION_GUIDE.md
+SOCKET_IO_ANALYSIS.md
+phase_4_quick_test.py
+phase_4_test_runner.py
+phase_5_certification_test.py
+nul
