@@ -1,15 +1,25 @@
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext";
 
 const withAuth = (WrappedComponent) => {
     const AuthComponent = (props) => {
         const navigate = useNavigate();
+        const { isAuthenticated, isCheckingAuth } = useContext(AuthContext);
 
         useEffect(() => {
-            if (!localStorage.getItem("token")) {
+            if (!isCheckingAuth && !isAuthenticated) {
                 navigate("/auth");
             }
-        }, [navigate]);
+        }, [isAuthenticated, isCheckingAuth, navigate]);
+
+        if (isCheckingAuth) {
+            return <p className="historyStatus">Checking your session...</p>;
+        }
+
+        if (!isAuthenticated) {
+            return null;
+        }
 
         return <WrappedComponent {...props} />;
     };

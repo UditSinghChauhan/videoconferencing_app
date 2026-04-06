@@ -1,44 +1,48 @@
 import express from "express";
 import { createServer } from "node:http";
-import { Server } from "socket.io";
-import mongoose from "mongoose";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import helmet from "helmet";
+import mongoose from "mongoose";
 
 import { connectToSocket } from "./controllers/socketManager.js";
 import userRoutes from "./routes/users.routes.js";
+import { logger } from "./utils/logger.js";
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 const server = createServer(app);
-const io = connectToSocket(server);
+
+connectToSocket(server);
 
 const PORT = process.env.PORT || 8000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
+const NODE_ENV = process.env.NODE_ENV || "development";
 const MONGODB_URI = process.env.MONGODB_URI;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
 
-// CORS configuration
 const corsOptions = {
-    origin: NODE_ENV === 'production' 
-        ? CORS_ORIGIN 
-        : ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000"],
+    origin: NODE_ENV === "production"
+        ? CORS_ORIGIN
+        : ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
     methods: ["GET", "POST"],
-    allowedHeaders: ["*"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
     credentials: true
 };
 
 app.set("port", PORT);
+app.set("trust proxy", 1);
+app.use(helmet({
+    crossOriginResourcePolicy: false
+}));
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(express.json({ limit: "40kb" }));
 app.use(express.urlencoded({ limit: "40kb", extended: true }));
 
 app.use("/api/v1/users", userRoutes);
-//app.use("api/v2/users",newUserRoutes);
 
-// Health check endpoint
 app.get("/api/v1/health", (req, res) => {
     res.status(200).json({ status: "OK", message: "Server is running" });
 });
@@ -50,13 +54,16 @@ const start = async () => {
         }
 
         const connectionDb = await mongoose.connect(MONGODB_URI);
-        console.log(`✓ MongoDB Connected: ${connectionDb.connection.host}`);
-        
+        logger.info("MongoDB connected", { host: connectionDb.connection.host });
+
         server.listen(PORT, () => {
-            console.log(`✓ Server running on PORT ${PORT} in ${NODE_ENV} mode`);
+            logger.info("Server started", {
+                port: PORT,
+                environment: NODE_ENV
+            });
         });
     } catch (error) {
-        console.error("✗ Failed to start server:", error.message);
+        logger.error("Failed to start server", { error: error.message });
         process.exit(1);
     }
 };

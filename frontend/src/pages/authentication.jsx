@@ -9,6 +9,7 @@ import Box from "@mui/material/Box";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import "../App.css";
 
@@ -27,6 +28,7 @@ const defaultTheme = createTheme({
 });
 
 export default function Authentication() {
+    const navigate = useNavigate();
     const [username, setUsername] = React.useState("");
     const [password, setPassword] = React.useState("");
     const [name, setName] = React.useState("");
@@ -36,7 +38,13 @@ export default function Authentication() {
     const [open, setOpen] = React.useState(false);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-    const { handleRegister, handleLogin } = React.useContext(AuthContext);
+    const { handleRegister, handleLogin, isAuthenticated, isCheckingAuth } = React.useContext(AuthContext);
+
+    React.useEffect(() => {
+        if (!isCheckingAuth && isAuthenticated) {
+            navigate("/home");
+        }
+    }, [isAuthenticated, isCheckingAuth, navigate]);
 
     const isSignUp = formState === 1;
 

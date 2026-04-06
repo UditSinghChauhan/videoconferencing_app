@@ -9,7 +9,7 @@ function HomeComponent() {
     const navigate = useNavigate();
     const [meetingCode, setMeetingCode] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
-    const { addToUserHistory, logout } = useContext(AuthContext);
+    const { addToUserHistory, logout, logoutAllSessions } = useContext(AuthContext);
 
     const handleJoinVideoCall = async () => {
         const trimmedMeetingCode = meetingCode.trim();
@@ -38,6 +38,9 @@ function HomeComponent() {
                 <div className="topNavActions">
                     <button className="historyAction ghostAction" onClick={() => navigate("/history")}>
                         View History
+                    </button>
+                    <button className="ghostAction" onClick={logoutAllSessions}>
+                        Log Out All
                     </button>
                     <button className="ghostAction" onClick={logout}>
                         Log Out
