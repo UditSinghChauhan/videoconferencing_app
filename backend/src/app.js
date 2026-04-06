@@ -30,7 +30,7 @@ const corsOptions = {
     origin: NODE_ENV === "production"
         ? CORS_ORIGIN
         : ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
     credentials: true
 };

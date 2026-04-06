@@ -1,9 +1,16 @@
 import httpStatus from "http-status";
 import {
+    emitMeetingEnded,
+    emitMeetingParticipantsUpdated,
+    emitMeetingSettingsUpdated,
+    emitParticipantRemoved
+} from "./socketManager.js";
+import {
     createMeeting,
     endMeeting,
     getMeetingDetails,
     getMeetingHistory,
+    getMeetingSummary,
     joinMeeting,
     leaveMeeting,
     removeParticipant,
@@ -30,6 +37,8 @@ const joinMeetingController = async (req, res) => {
         user: req.user
     });
 
+    await emitMeetingParticipantsUpdated(meeting.meetingId);
+
     return sendSuccess(res, {
         statusCode: httpStatus.OK,
         message: "Joined meeting successfully",
@@ -43,6 +52,8 @@ const leaveMeetingController = async (req, res) => {
         user: req.user
     });
 
+    await emitMeetingParticipantsUpdated(meeting.meetingId);
+
     return sendSuccess(res, {
         statusCode: httpStatus.OK,
         message: "Left meeting successfully",
@@ -55,6 +66,8 @@ const endMeetingController = async (req, res) => {
         meetingId: req.params.meetingId,
         user: req.user
     });
+
+    await emitMeetingEnded(meeting);
 
     return sendSuccess(res, {
         statusCode: httpStatus.OK,
@@ -70,6 +83,12 @@ const removeParticipantController = async (req, res) => {
         user: req.user
     });
 
+    await emitParticipantRemoved({
+        meeting,
+        participantUserId: req.body.participantUserId
+    });
+    await emitMeetingParticipantsUpdated(meeting.meetingId);
+
     return sendSuccess(res, {
         statusCode: httpStatus.OK,
         message: "Participant removed successfully",
@@ -83,6 +102,8 @@ const updateMeetingSettingsController = async (req, res) => {
         settings: req.body,
         user: req.user
     });
+
+    await emitMeetingSettingsUpdated(meeting);
 
     return sendSuccess(res, {
         statusCode: httpStatus.OK,
@@ -114,11 +135,25 @@ const getMeetingHistoryController = async (req, res) => {
     });
 };
 
+const getMeetingSummaryController = async (req, res) => {
+    const meetingSummary = await getMeetingSummary({
+        meetingId: req.params.meetingId,
+        user: req.user
+    });
+
+    return sendSuccess(res, {
+        statusCode: httpStatus.OK,
+        message: "Meeting summary fetched successfully",
+        data: { meetingSummary }
+    });
+};
+
 export {
     createMeetingController,
     endMeetingController,
     getMeetingDetailsController,
     getMeetingHistoryController,
+    getMeetingSummaryController,
     joinMeetingController,
     leaveMeetingController,
     removeParticipantController,

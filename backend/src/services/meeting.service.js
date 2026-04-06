@@ -1,12 +1,38 @@
 import httpStatus from "http-status";
 import { Meeting } from "../models/meeting.model.js";
 import { AppError } from "../utils/appError.js";
+import { generateMeetingSummary } from "../utils/meetingSummary.js";
 
 const getActiveParticipant = (meeting, userId) => {
     return meeting.participants.find(
         (participant) => participant.userId.toString() === userId.toString() && !participant.leftAt && !participant.removedAt
     );
 };
+
+const getAnyParticipant = (meeting, userId) => {
+    return meeting.participants.find(
+        (participant) => participant.userId.toString() === userId.toString()
+    );
+};
+
+const appendActivityLog = (meeting, { type, userId = null, username = null, content = "" }) => {
+    meeting.activityLogs.push({
+        type,
+        userId,
+        username,
+        content,
+        createdAt: new Date()
+    });
+};
+
+const serializeSummary = (summary = {}) => ({
+    generatedAt: summary.generatedAt || null,
+    keyPoints: summary.keyPoints || [],
+    highlights: summary.highlights || [],
+    keywords: summary.keywords || [],
+    participantsInvolved: summary.participantsInvolved || [],
+    conclusion: summary.conclusion || ""
+});
 
 const serializeMeeting = (meeting, currentUserId = null) => {
     const activeParticipants = meeting.participants.filter((participant) => !participant.leftAt && !participant.removedAt);
@@ -22,13 +48,15 @@ const serializeMeeting = (meeting, currentUserId = null) => {
         createdAt: meeting.createdAt,
         updatedAt: meeting.updatedAt,
         endedAt: meeting.endedAt,
+        hasSummary: Boolean(meeting.summary?.generatedAt),
         currentUserRole: currentParticipant?.role || null,
         participants: activeParticipants.map((participant) => ({
             userId: participant.userId,
             username: participant.username,
             role: participant.role,
             joinedAt: participant.joinedAt
-        }))
+        })),
+        summary: meeting.status === "ended" ? serializeSummary(meeting.summary) : null
     };
 };
 
@@ -78,6 +106,19 @@ const ensureParticipant = (meeting, userId) => {
     return participant;
 };
 
+const ensureMeetingMember = (meeting, userId) => {
+    const participant = getAnyParticipant(meeting, userId);
+
+    if (!participant) {
+        throw new AppError("User does not have access to this meeting", {
+            statusCode: httpStatus.FORBIDDEN,
+            code: "MEETING_ACCESS_DENIED"
+        });
+    }
+
+    return participant;
+};
+
 const createMeeting = async ({ meetingId, user }) => {
     const existingMeeting = await Meeting.findOne({ meetingId });
 
@@ -105,6 +146,15 @@ const createMeeting = async ({ meetingId, user }) => {
                 username: user.username,
                 role: "host",
                 joinedAt: new Date()
+            }
+        ],
+        activityLogs: [
+            {
+                type: "join",
+                userId: user._id,
+                username: user.username,
+                content: "created and joined the meeting",
+                createdAt: new Date()
             }
         ]
     });
@@ -138,6 +188,13 @@ const joinMeeting = async ({ meetingId, user }) => {
             meeting.participants.push(participantRecord);
         }
 
+        appendActivityLog(meeting, {
+            type: "join",
+            userId: user._id,
+            username: user.username,
+            content: "joined the meeting"
+        });
+
         await meeting.save();
     }
 
@@ -157,6 +214,12 @@ const leaveMeeting = async ({ meetingId, user }) => {
     }
 
     participant.leftAt = new Date();
+    appendActivityLog(meeting, {
+        type: "leave",
+        userId: user._id,
+        username: user.username,
+        content: "left the meeting"
+    });
     await meeting.save();
 
     return serializeMeeting(meeting, user._id);
@@ -174,6 +237,14 @@ const endMeeting = async ({ meetingId, user }) => {
         leftAt: participant.leftAt || new Date()
     }));
 
+    appendActivityLog(meeting, {
+        type: "ended",
+        userId: user._id,
+        username: user.username,
+        content: "ended the meeting"
+    });
+
+    meeting.summary = generateMeetingSummary(meeting);
     await meeting.save();
 
     return serializeMeeting(meeting, user._id);
@@ -202,6 +273,12 @@ const removeParticipant = async ({ meetingId, participantUserId, user }) => {
 
     participant.removedAt = new Date();
     participant.leftAt = participant.leftAt || new Date();
+    appendActivityLog(meeting, {
+        type: "removed",
+        userId: participant.userId,
+        username: participant.username,
+        content: "was removed from the meeting"
+    });
     await meeting.save();
 
     return serializeMeeting(meeting, user._id);
@@ -217,6 +294,13 @@ const updateMeetingSettings = async ({ meetingId, settings, user }) => {
         ...settings
     };
 
+    appendActivityLog(meeting, {
+        type: "settings-updated",
+        userId: user._id,
+        username: user.username,
+        content: `updated meeting settings: ${Object.keys(settings).join(", ")}`
+    });
+
     await meeting.save();
 
     return serializeMeeting(meeting, user._id);
@@ -224,9 +308,25 @@ const updateMeetingSettings = async ({ meetingId, settings, user }) => {
 
 const getMeetingDetails = async ({ meetingId, user }) => {
     const meeting = await findMeetingByMeetingId(meetingId);
-    ensureParticipant(meeting, user._id);
+
+    if (meeting.status === "active") {
+        ensureParticipant(meeting, user._id);
+    } else {
+        ensureMeetingMember(meeting, user._id);
+    }
 
     return serializeMeeting(meeting, user._id);
+};
+
+const getMeetingSummary = async ({ meetingId, user }) => {
+    const meeting = await findMeetingByMeetingId(meetingId);
+    ensureMeetingMember(meeting, user._id);
+
+    return {
+        meetingId: meeting.meetingId,
+        status: meeting.status,
+        summary: serializeSummary(meeting.summary)
+    };
 };
 
 const getMeetingHistory = async (user) => {
@@ -241,13 +341,59 @@ const getMeetingHistory = async (user) => {
     return meetings.map((meeting) => serializeMeeting(meeting, user._id));
 };
 
+const addMeetingChatMessage = async ({ meetingId, userId, username, content }) => {
+    const meeting = await Meeting.findOne({ meetingId });
+
+    if (!meeting || meeting.status !== "active") {
+        return null;
+    }
+
+    appendActivityLog(meeting, {
+        type: "chat",
+        userId,
+        username,
+        content
+    });
+
+    await meeting.save();
+    return meeting;
+};
+
+const markParticipantDisconnected = async ({ meetingId, user }) => {
+    const meeting = await Meeting.findOne({ meetingId });
+
+    if (!meeting || meeting.status !== "active") {
+        return null;
+    }
+
+    const participant = getActiveParticipant(meeting, user._id);
+
+    if (!participant || participant.role === "host") {
+        return meeting;
+    }
+
+    participant.leftAt = new Date();
+    appendActivityLog(meeting, {
+        type: "leave",
+        userId: user._id,
+        username: user.username,
+        content: "disconnected from the meeting"
+    });
+    await meeting.save();
+
+    return meeting;
+};
+
 export {
+    addMeetingChatMessage,
     createMeeting,
     endMeeting,
     getMeetingDetails,
     getMeetingHistory,
+    getMeetingSummary,
     joinMeeting,
     leaveMeeting,
+    markParticipantDisconnected,
     removeParticipant,
     updateMeetingSettings
 };

@@ -4,6 +4,7 @@ import {
     endMeetingController,
     getMeetingDetailsController,
     getMeetingHistoryController,
+    getMeetingSummaryController,
     joinMeetingController,
     leaveMeetingController,
     removeParticipantController,
@@ -25,6 +26,9 @@ router.route("/")
 
 router.route("/:meetingId")
     .get(validate(meetingIdSchema, "params"), asyncHandler(getMeetingDetailsController));
+
+router.route("/:meetingId/summary")
+    .get(validate(meetingIdSchema, "params"), asyncHandler(getMeetingSummaryController));
 
 router.route("/:meetingId/join")
     .post(validate(meetingIdSchema, "params"), asyncHandler(joinMeetingController));

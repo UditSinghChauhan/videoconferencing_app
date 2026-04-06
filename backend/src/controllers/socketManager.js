@@ -1,126 +1,315 @@
-import { Server } from "socket.io"
+import { Server } from "socket.io";
+import { Meeting } from "../models/meeting.model.js";
+import { User } from "../models/user.model.js";
+import { addMeetingChatMessage, markParticipantDisconnected } from "../services/meeting.service.js";
+import { logger } from "../utils/logger.js";
+import { verifyAccessToken } from "../utils/tokens.js";
 
-let connections = {}
-let messages = {}
-let timeOnline = {}
+let ioInstance = null;
+const messages = new Map();
 
-export const connectToSocket = (server) => {
-    const NODE_ENV = process.env.NODE_ENV || 'development';
+const getRoomKey = (meetingId) => `meeting:${meetingId}`;
+
+const getActiveParticipants = (meeting) => {
+    return meeting.participants.filter((participant) => !participant.leftAt && !participant.removedAt);
+};
+
+const serializeMeetingRealtimeState = (meeting) => ({
+    meetingId: meeting.meetingId,
+    status: meeting.status,
+    settings: meeting.settings,
+    summary: meeting.summary || null,
+    participants: getActiveParticipants(meeting).map((participant) => ({
+        userId: participant.userId,
+        username: participant.username,
+        role: participant.role,
+        joinedAt: participant.joinedAt
+    }))
+});
+
+const getMeetingRealtimeState = async (meetingId) => {
+    const meeting = await Meeting.findOne({ meetingId });
+
+    if (!meeting) {
+        return null;
+    }
+
+    return serializeMeetingRealtimeState(meeting);
+};
+
+const getSocketsForMeeting = async (meetingId) => {
+    if (!ioInstance) {
+        return [];
+    }
+
+    return ioInstance.in(getRoomKey(meetingId)).fetchSockets();
+};
+
+const getSocketParticipantIds = async (meetingId) => {
+    const sockets = await getSocketsForMeeting(meetingId);
+    return sockets.map((socket) => socket.id);
+};
+
+const ensureSocketCanAccessMeeting = async (socket, meetingId) => {
+    const meeting = await Meeting.findOne({ meetingId });
+
+    if (!meeting || meeting.status !== "active") {
+        throw new Error("Meeting is unavailable");
+    }
+
+    const participant = meeting.participants.find(
+        (entry) => entry.userId.toString() === socket.data.user._id.toString() && !entry.leftAt && !entry.removedAt
+    );
+
+    if (!participant) {
+        throw new Error("User is not an active participant");
+    }
+
+    return { meeting, participant };
+};
+
+const emitMeetingParticipantsUpdated = async (meetingId) => {
+    if (!ioInstance) {
+        return;
+    }
+
+    const state = await getMeetingRealtimeState(meetingId);
+
+    if (state) {
+        ioInstance.to(getRoomKey(meetingId)).emit("meeting:participants-updated", state);
+    }
+};
+
+const emitMeetingEnded = async (meeting) => {
+    if (!ioInstance) {
+        return;
+    }
+
+    const roomKey = getRoomKey(meeting.meetingId);
+    const sockets = await getSocketsForMeeting(meeting.meetingId);
+
+    ioInstance.to(roomKey).emit("meeting:ended", {
+        meetingId: meeting.meetingId,
+        status: meeting.status,
+        summary: meeting.summary || null
+    });
+
+    setTimeout(() => {
+        sockets.forEach((socket) => socket.disconnect(true));
+    }, 50);
+};
+
+const emitParticipantRemoved = async ({ meeting, participantUserId }) => {
+    if (!ioInstance) {
+        return;
+    }
+
+    const roomKey = getRoomKey(meeting.meetingId);
+    const sockets = await getSocketsForMeeting(meeting.meetingId);
+    const targetSockets = sockets.filter((socket) => socket.data.user._id.toString() === participantUserId.toString());
+
+    targetSockets.forEach((socket) => {
+        socket.emit("meeting:removed", {
+            meetingId: meeting.meetingId,
+            participantUserId
+        });
+    });
+
+    ioInstance.to(roomKey).emit("meeting:participant-removed", {
+        meetingId: meeting.meetingId,
+        participantUserId
+    });
+
+    setTimeout(() => {
+        targetSockets.forEach((socket) => socket.disconnect(true));
+    }, 50);
+};
+
+const emitMeetingSettingsUpdated = async (meeting) => {
+    if (!ioInstance) {
+        return;
+    }
+
+    ioInstance.to(getRoomKey(meeting.meetingId)).emit("meeting:settings-updated", {
+        meetingId: meeting.meetingId,
+        settings: meeting.settings
+    });
+};
+
+const connectToSocket = (server) => {
+    const NODE_ENV = process.env.NODE_ENV || "development";
     const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
 
     const corsOptions = {
-        origin: NODE_ENV === 'production' 
-            ? CORS_ORIGIN 
-            : ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000"],
-        methods: ["GET", "POST"],
-        allowedHeaders: ["*"],
+        origin: NODE_ENV === "production"
+            ? CORS_ORIGIN
+            : ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
+        methods: ["GET", "POST", "PATCH"],
+        allowedHeaders: ["Authorization"],
         credentials: true
     };
 
-    const io = new Server(server, {//node http server
+    ioInstance = new Server(server, {
         cors: corsOptions,
-        secure: NODE_ENV === 'production',
-        transports: ['websocket', 'polling']
+        secure: NODE_ENV === "production",
+        transports: ["websocket", "polling"]
     });
 
-    io.on("connection", (socket) => {
-        console.log("New connection:", socket.id);
+    ioInstance.use(async (socket, next) => {
+        try {
+            const token = socket.handshake.auth?.token;
 
-        socket.on("join-call", (path) => {
-
-            if (connections[path] === undefined) {
-                connections[path] = []
-            }
-            connections[path].push(socket.id)
-
-            timeOnline[socket.id] = new Date();
-
-            // connections[path].forEach(elem => {
-            //     io.to(elem)
-            // })
-
-            for (let a = 0; a < connections[path].length; a++) {
-                io.to(connections[path][a]).emit("user-joined", socket.id, connections[path])
+            if (!token) {
+                return next(new Error("Authentication token is required"));
             }
 
-            if (messages[path] !== undefined) {
-                for (let a = 0; a < messages[path].length; ++a) {
-                    io.to(socket.id).emit("chat-message", messages[path][a]['data'],
-                        messages[path][a]['sender'], messages[path][a]['socket-id-sender'])
+            const decoded = verifyAccessToken(token);
+            const user = await User.findById(decoded.userId).select("-password");
+
+            if (!user) {
+                return next(new Error("Socket authentication failed"));
+            }
+
+            const session = user.sessions?.find((candidate) => candidate.sessionId === decoded.sessionId);
+
+            if (!decoded.sessionId || !session || session.expiresAt <= new Date()) {
+                return next(new Error("Socket session is inactive"));
+            }
+
+            socket.data.user = {
+                _id: user._id,
+                username: user.username,
+                name: user.name
+            };
+            socket.data.sessionId = decoded.sessionId;
+            next();
+        } catch (error) {
+            logger.warn("Socket authentication failed", {
+                error: error.message
+            });
+            next(new Error("Socket authentication failed"));
+        }
+    });
+
+    ioInstance.on("connection", (socket) => {
+        logger.info("Socket connected", {
+            socketId: socket.id,
+            userId: socket.data.user._id.toString()
+        });
+
+        socket.on("join-call", async (meetingId) => {
+            try {
+                const { meeting } = await ensureSocketCanAccessMeeting(socket, meetingId);
+                const roomKey = getRoomKey(meetingId);
+
+                const roomSockets = await getSocketsForMeeting(meetingId);
+                const existingSocket = roomSockets.find(
+                    (roomSocket) => roomSocket.data.user?._id?.toString() === socket.data.user._id.toString() && roomSocket.id !== socket.id
+                );
+
+                if (existingSocket) {
+                    existingSocket.emit("meeting:error", {
+                        message: "You are now connected from another tab. This connection will be terminated."
+                    });
+                    existingSocket.disconnect(true);
                 }
-            }
 
-        })
+                socket.join(roomKey);
+                socket.data.meetingId = meetingId;
+
+                const participantIds = await getSocketParticipantIds(meetingId);
+                const roomMessages = messages.get(meetingId) || [];
+
+                socket.emit("meeting:joined", {
+                    meeting: serializeMeetingRealtimeState(meeting),
+                    socketId: socket.id,
+                    participants: participantIds
+                });
+
+                roomMessages.forEach((entry) => {
+                    socket.emit("chat-message", entry.data, entry.sender, entry.socketIdSender);
+                });
+
+                socket.to(roomKey).emit("user-joined", socket.id, participantIds);
+                await emitMeetingParticipantsUpdated(meetingId);
+            } catch (error) {
+                socket.emit("meeting:error", {
+                    message: error.message
+                });
+            }
+        });
 
         socket.on("signal", (toId, message) => {
-            io.to(toId).emit("signal", socket.id, message);
-        })
+            ioInstance.to(toId).emit("signal", socket.id, message);
+        });
 
         socket.on("chat-message", (data, sender) => {
+            const meetingId = socket.data.meetingId;
 
-            const [matchingRoom, found] = Object.entries(connections)
-                .reduce(([room, isFound], [roomKey, roomValue]) => {
-
-
-                    if (!isFound && roomValue.includes(socket.id)) {
-                        return [roomKey, true];
-                    }
-
-                    return [room, isFound];
-
-                }, ['', false]);
-
-            if (found === true) {
-                if (messages[matchingRoom] === undefined) {
-                    messages[matchingRoom] = []
-                }
-
-                messages[matchingRoom].push({ 'sender': sender, "data": data, "socket-id-sender": socket.id })
-                console.log("message", matchingRoom, ":", sender, data)
-
-                connections[matchingRoom].forEach((elem) => {
-                    io.to(elem).emit("chat-message", data, sender, socket.id)
-                })
+            if (!meetingId) {
+                return;
             }
 
-        })
+            const roomMessages = messages.get(meetingId) || [];
+            const entry = {
+                sender,
+                data,
+                socketIdSender: socket.id
+            };
 
-        socket.on("disconnect", () => {
+            roomMessages.push(entry);
+            messages.set(meetingId, roomMessages);
 
-            var diffTime = Math.abs(timeOnline[socket.id] - new Date())
+            addMeetingChatMessage({
+                meetingId,
+                userId: socket.data.user._id,
+                username: sender || socket.data.user.username,
+                content: data
+            }).catch((error) => {
+                logger.warn("Failed to persist meeting chat message", {
+                    error: error.message,
+                    meetingId
+                });
+            });
 
-            var key
+            ioInstance.to(getRoomKey(meetingId)).emit("chat-message", data, sender, socket.id);
+        });
 
-            for (const [k, v] of JSON.parse(JSON.stringify(Object.entries(connections)))) {
-               //deep copy 
-                for (let a = 0; a < v.length; ++a) {
-                    if (v[a] === socket.id) {
-                        key = k
+        socket.on("disconnect", async () => {
+            const meetingId = socket.data.meetingId;
 
-                        for (let a = 0; a < connections[key].length; ++a) {
-                            io.to(connections[key][a]).emit('user-left', socket.id)
-                        }
-
-                        var index = connections[key].indexOf(socket.id)
-
-                        connections[key].splice(index, 1)
-
-
-                        if (connections[key].length === 0) {
-                            delete connections[key]
-                        }
-                    }
+            if (meetingId && socket.data.user) {
+                try {
+                    await markParticipantDisconnected({
+                        meetingId,
+                        user: socket.data.user
+                    });
+                } catch (error) {
+                    logger.warn("Error handling disconnect cleanup", {
+                        error: error.message,
+                        meetingId,
+                        userId: socket.data.user._id?.toString()
+                    });
                 }
 
+                socket.to(getRoomKey(meetingId)).emit("user-left", socket.id);
+                await emitMeetingParticipantsUpdated(meetingId);
             }
 
+            logger.info("Socket disconnected", {
+                socketId: socket.id,
+                userId: socket.data.user?._id?.toString()
+            });
+        });
+    });
 
-        })
+    return ioInstance;
+};
 
-
-    })
-
-
-    return io;
-}
-
+export {
+    connectToSocket,
+    emitMeetingEnded,
+    emitMeetingParticipantsUpdated,
+    emitMeetingSettingsUpdated,
+    emitParticipantRemoved
+};
