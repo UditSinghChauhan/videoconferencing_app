@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
             }
         });
 
-        return request.data.user;
+        return request.data.data.user;
     }, []);
 
     const refreshSession = useCallback(async () => {
@@ -68,8 +68,8 @@ export const AuthProvider = ({ children }) => {
                     "X-CSRF-Token": getStoredCsrfToken() || ""
                 }
             }).then((response) => {
-                applySession(response.data.token, response.data.user, response.data.csrfToken);
-                return response.data.token;
+                applySession(response.data.data.token, response.data.data.user, response.data.data.csrfToken);
+                return response.data.data.token;
             }).catch((error) => {
                 clearSession();
                 throw error;
@@ -243,7 +243,7 @@ export const AuthProvider = ({ children }) => {
         });
 
         if (request.status === httpStatus.OK) {
-            applySession(request.data.token, request.data.user, request.data.csrfToken);
+            applySession(request.data.data.token, request.data.data.user, request.data.data.csrfToken);
             navigate("/home");
         }
     }, [applySession, navigate]);
@@ -251,7 +251,7 @@ export const AuthProvider = ({ children }) => {
     const getHistoryOfUser = useCallback(async () => {
         try {
             const request = await client.get("/get_all_activity");
-            return request.data.data || [];
+            return request.data.data.meetings || [];
         } catch (error) {
             if (error?.response?.status === httpStatus.UNAUTHORIZED || error?.response?.status === httpStatus.FORBIDDEN) {
                 clearSession();
