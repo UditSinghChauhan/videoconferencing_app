@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import { Meeting } from "../models/meeting.model.js";
 import { User } from "../models/user.model.js";
 import { addMeetingChatMessage, markParticipantDisconnected } from "../services/meeting.service.js";
+import { buildCorsOptions } from "../utils/cors.js";
 import { logger } from "../utils/logger.js";
 import { verifyAccessToken } from "../utils/tokens.js";
 
@@ -149,23 +150,9 @@ const emitMeetingSettingsUpdated = async (meeting) => {
 
 const connectToSocket = (server) => {
     const NODE_ENV = process.env.NODE_ENV || "development";
-    const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
-
-    const corsOptions = {
-        origin: NODE_ENV === "production"
-            ? CORS_ORIGIN
-            : [
-                "http://localhost:3000",
-                "http://localhost:3100",
-                "http://localhost:5173",
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:3100",
-                "http://127.0.0.1:5173"
-            ],
-        methods: ["GET", "POST", "PATCH"],
-        allowedHeaders: ["Authorization", "X-Forwarded-For"],
-        credentials: true
-    };
+    const corsOptions = buildCorsOptions({
+        allowedHeaders: ["Authorization", "X-Forwarded-For"]
+    });
 
     ioInstance = new Server(server, {
         cors: corsOptions,
