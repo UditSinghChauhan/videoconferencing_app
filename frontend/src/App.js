@@ -6,6 +6,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import VideoMeetComponent from "./pages/VideoMeet";
 import HomeComponent from "./pages/home";
 import History from "./pages/history";
+import DemoPreviewPage from "./pages/demo";
 import withAuth from "./utils/withAuth";
 
 const ProtectedVideoMeet = withAuth(VideoMeetComponent);
@@ -16,6 +17,7 @@ function App() {
             <AuthProvider>
                 <Routes>
                     <Route path="/" element={<LandingPage />} />
+                    <Route path="/demo" element={<DemoPreviewPage />} />
                     <Route path="/auth" element={<Authentication />} />
                     <Route path="/home" element={<HomeComponent />} />
                     <Route path="/history" element={<History />} />

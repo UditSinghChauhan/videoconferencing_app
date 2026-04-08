@@ -46,13 +46,13 @@ const buildCorsOriginHandler = (allowedOrigins = getAllowedOrigins()) => (origin
 
 const buildCorsOptions = ({
     allowedHeaders = ["Content-Type", "Authorization", "X-CSRF-Token", "X-Forwarded-For"],
-    methods = ["GET", "POST", "PATCH"]
+    methods = ["GET", "POST", "PATCH", "OPTIONS"]
 } = {}) => ({
     origin: buildCorsOriginHandler(),
     methods,
     allowedHeaders,
     credentials: true,
-    optionsSuccessStatus: 204
+    optionsSuccessStatus: 200
 });
 
 export {

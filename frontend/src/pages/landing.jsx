@@ -2,13 +2,11 @@ import React from "react";
 import "../App.css";
 import { Link, useNavigate } from "react-router-dom";
 
-const createDemoRoomCode = () => `demo-${Math.random().toString(36).slice(2, 8)}`;
-
 export default function LandingPage() {
     const navigate = useNavigate();
 
     const handleDemoJoin = () => {
-        navigate(`/room/${createDemoRoomCode()}`);
+        navigate("/demo");
     };
 
     return (
@@ -22,7 +20,7 @@ export default function LandingPage() {
 
                     <div className="navlist">
                         <button className="navButton" onClick={handleDemoJoin}>
-                            Try Demo Room
+                            Try Demo
                         </button>
                         <button className="navButton" onClick={() => navigate("/auth")}>
                             Sign In
@@ -49,7 +47,7 @@ export default function LandingPage() {
                                 Launch Workspace
                             </Link>
                             <button className="secondaryAction" onClick={handleDemoJoin}>
-                                Join as Guest
+                                Open Public Demo
                             </button>
                         </div>
 

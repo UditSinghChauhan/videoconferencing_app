@@ -90,7 +90,9 @@ export default function Authentication() {
                 await handleLogin(username, password);
             }
         } catch (err) {
-            const errorMessage = err?.response?.data?.message || 
+            const errorMessage = !err?.response
+                ? "Bridge is unable to reach the backend right now. Please try again in a moment."
+                : err?.response?.data?.message || 
                 (isSignUp 
                     ? "Couldn't create account. Try a different username."
                     : "Login failed. Check your username and password.");

@@ -1,35 +1,31 @@
-const { defineConfig } = require("@playwright/test");
+const { defineConfig, devices } = require("@playwright/test");
 
 module.exports = defineConfig({
   testDir: "./tests/e2e",
-  timeout: 180000,
-  expect: {
-    timeout: 15000
-  },
   fullyParallel: false,
-  reporter: [["list"]],
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : 1,
+  reporter: "html",
+  timeout: 60000,
   use: {
     baseURL: "http://127.0.0.1:3100",
-    headless: true,
-    channel: "chrome",
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
-    video: "retain-on-failure"
+    trace: "on-first-retry",
   },
+
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
+
   webServer: [
     {
-      command: "cmd /c \"set PORT=8100&& node src/app.js\"",
-      cwd: "../backend",
-      url: "http://127.0.0.1:8100/api/v1/health",
-      reuseExistingServer: false,
-      timeout: 120000
-    },
-    {
-      command: "npm.cmd run start:e2e",
-      cwd: ".",
+      command: "npm run start:e2e",
       url: "http://127.0.0.1:3100",
-      reuseExistingServer: false,
-      timeout: 120000
-    }
-  ]
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+    },
+  ],
 });
