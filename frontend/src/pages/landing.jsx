@@ -35,7 +35,7 @@ export default function LandingPage() {
                     <section className="heroSection">
                         <span className="heroBadge">Built for focused conversations and fast collaboration</span>
                         <h1>
-                            Focused video meetings. No unnecessary features.
+                            Professional video meetings. Real‑time collaboration.
                         </h1>
                         <p>
                             Bridge makes it easy to host focused video meetings. Create a room, share the code, and start
@@ -61,8 +61,8 @@ export default function LandingPage() {
                                 <span>Find past meetings and jump back in. Everything's saved automatically.</span>
                             </div>
                             <div className="heroHighlight">
-                                <strong>Easy setup</strong>
-                                <span>Works with any backend. Just configure your API URL.</span>
+                                <strong>Production-ready architecture</strong>
+                                <span>Built with WebRTC peer connections, Socket.IO signaling, and JWT session management.</span>
                             </div>
                         </div>
                     </section>

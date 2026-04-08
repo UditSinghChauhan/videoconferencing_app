@@ -201,7 +201,7 @@ export default function Authentication() {
                                     helperText={isSignUp ? "At least 8 characters" : ""}
                                 />
 
-                                {error ? <p className="errorText">{error}</p> : <p className="helperText">Use a strong password with uppercase, lowercase, and a number.</p>}
+                                {error ? <p className="errorText">{error}</p> : isSignUp ? <p className="helperText">Use a strong password with uppercase, lowercase, and a number.</p> : null}
 
                                 <Button className="buttonGlow" type="submit" fullWidth variant="contained" sx={{ mt: 2, mb: 1.5, py: 1.4 }} disabled={isSubmitting}>
                                     {isSubmitting ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}

@@ -77,7 +77,7 @@ function HomeComponent() {
                         </Button>
                     </div>
 
-                    {errorMessage ? <p className="errorText">{errorMessage}</p> : <p className="helperText">Example: `frontend-sync` or `internship-review`</p>}
+                    {errorMessage ? <p className="errorText">{errorMessage}</p> : <p className="helperText">Example: frontend-sync or design-review</p>}
 
                     <div className="dashboardPoints">
                         <div className="dashboardPoint">
