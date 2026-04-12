@@ -2,9 +2,14 @@
 
 Bridge is a real-time video collaboration platform built for fast meetings, secure authentication, live participant sync, and persistent meeting insights. It combines a React frontend, an Express + MongoDB backend, Socket.IO for live coordination, and browser-level Playwright coverage for the full meeting lifecycle.
 
+![Bridge Landing Page](docs/bridge-landing.png)
+
+![Bridge Meeting Room — Live room with participants, chat, and controls](docs/bridge-meeting-room.png)
+
 ## Live Links
 
 - App: [bridgefrontend.onrender.com](https://bridgefrontend.onrender.com)
+- Live Demo (no sign-up needed): [bridgefrontend.onrender.com/demo](https://bridgefrontend.onrender.com/demo)
 - Repository: [github.com/UditSinghChauhan/videoconferencing_app](https://github.com/UditSinghChauhan/videoconferencing_app)
 
 ## Key Features
@@ -234,4 +239,7 @@ Health:
 
 ## Author
 
-Udit Singh Chauhan
+**Udit Singh Chauhan**
+
+- GitHub: [@UditSinghChauhan](https://github.com/UditSinghChauhan)
+- LinkedIn: [linkedin.com/in/your-profile](https://linkedin.com/in/your-profile) *(update with your actual LinkedIn URL)*

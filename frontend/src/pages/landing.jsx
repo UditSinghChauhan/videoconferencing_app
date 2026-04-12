@@ -87,6 +87,34 @@ export default function LandingPage() {
                         </div>
                     </aside>
                 </div>
+
+                <footer className="landingFooter">
+                    <div className="footerContent">
+                        <div className="footerBrand">
+                            <h3>Bridge</h3>
+                            <p>Real-time video collaboration built with React, Node.js, Socket.IO, and WebRTC.</p>
+                        </div>
+
+                        <div className="footerLinks">
+                            <div className="footerLinkGroup">
+                                <strong>Product</strong>
+                                <button onClick={handleDemoJoin}>Try Demo</button>
+                                <button onClick={() => navigate("/auth")}>Sign In</button>
+                                <button onClick={() => navigate("/auth")}>Create Account</button>
+                            </div>
+                            <div className="footerLinkGroup">
+                                <strong>Developer</strong>
+                                <a href="https://github.com/UditSinghChauhan/videoconferencing_app" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+                                <a href="https://github.com/UditSinghChauhan" target="_blank" rel="noopener noreferrer">@UditSinghChauhan</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="footerBottom">
+                        <span>© {new Date().getFullYear()} Bridge. Built by Udit Singh Chauhan.</span>
+                        <span className="footerTech">React · Node.js · MongoDB · Socket.IO · WebRTC</span>
+                    </div>
+                </footer>
             </div>
         </div>
     );

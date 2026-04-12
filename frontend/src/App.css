@@ -397,6 +397,93 @@
   font-size: 0.9rem;
 }
 
+/* ── Footer ── */
+
+.landingFooter {
+  margin-top: 4rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.footerContent {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.footerBrand h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.footerBrand p {
+  color: #64748b;
+  font-size: 0.9rem;
+  max-width: 320px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.footerLinks {
+  display: flex;
+  gap: 3rem;
+}
+
+.footerLinkGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.footerLinkGroup strong {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+}
+
+.footerLinkGroup button,
+.footerLinkGroup a {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footerLinkGroup button:hover,
+.footerLinkGroup a:hover {
+  color: #38bdf8;
+}
+
+.footerBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.25rem 0 0.5rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.footerBottom span {
+  color: #475569;
+  font-size: 0.82rem;
+}
+
+.footerTech {
+  letter-spacing: 0.04em;
+}
+
 .pageContainer {
   padding: 1.5rem clamp(1rem, 2vw, 2rem) 2rem;
 }

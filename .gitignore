@@ -11,38 +11,11 @@ frontend/test-results
 .env
 *.local
 
-# Local certification and test artifacts
-AUTH_CERT_TEST_GUIDE.md
-AUTH_TEST_HELPER.js
-BACKEND_VALIDATION_REPORT.md
-BUG_REPORT_AND_FIXES.md
-CERTIFICATION_COMPLETE.md
-FINAL_CERT_RESULTS.md
-MEETING_SYSTEM_ANALYSIS.md
-PHASE_3_CERTIFICATION_REPORT.md
-PHASE_3_POSTMAN_GUIDE.md
-PHASE_3_README.md
-auth_tests.py
-backend_validation_test.py
-final_cert_test.py
-phase_3_certification_test.py
-phase_3_simple_test.py
-test-auth.sh
-
-# Additional local phase artifacts
-PHASE_4_ANALYSIS_COMPLETE.md
-PHASE_4_CODE_FIXES.md
-PHASE_4_IMPLEMENTATION_GUIDE.md
-PHASE_4_IMPLEMENTATION_RESULTS.md
-PHASE_4_QUICK_START.md
-PHASE_4_READY_TO_TEST.md
-PHASE_4_TEST_RESULTS.md
-PHASE_5_CERTIFICATION_RESULTS.md
-PHASE_5_FINAL_STATUS.md
-PHASE_5_QUICK_REFERENCE.md
-PHASE_5_VERIFICATION_GUIDE.md
-SOCKET_IO_ANALYSIS.md
-phase_4_quick_test.py
-phase_4_test_runner.py
-phase_5_certification_test.py
+# OS artifacts
 nul
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode
+.idea
