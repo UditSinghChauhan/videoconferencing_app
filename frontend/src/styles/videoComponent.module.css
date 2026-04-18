@@ -316,15 +316,22 @@
     grid-template-columns: 1fr;
 }
 
-/* Single remote tile stretches to fill available height on desktop */
+/* Single remote tile stretches to fill available height without overflowing */
+.conferenceView:has(.remoteVideoCard:only-child) {
+    max-height: calc(100vh - 14rem);
+}
+
 .conferenceView:has(.remoteVideoCard:only-child) .remoteVideoCard {
-    min-height: min(55vh, 520px);
+    height: 100%;
+    max-height: calc(100vh - 14rem);
+    min-height: 45vh; /* reasonable minimum */
 }
 
 .conferenceView:has(.remoteVideoCard:only-child) .remoteVideoCard video {
     aspect-ratio: unset;
     height: 100%;
-    min-height: min(55vh, 480px);
+    width: 100%;
+    object-fit: contain; /* Prevents extreme zooming/overflow */
 }
 
 /* ── 2 participants ── */
@@ -629,15 +636,21 @@
         align-content: start;
     }
 
-    /* On mobile: single tile uses portrait-friendly 4:3 ratio */
+    /* On mobile: single tile just fits the available height */
+    .conferenceView:has(.remoteVideoCard:only-child) {
+        max-height: calc(100vh - 12rem);
+    }
+    
     .conferenceView:has(.remoteVideoCard:only-child) .remoteVideoCard {
         min-height: unset;
+        max-height: calc(100vh - 12rem);
     }
 
     .conferenceView:has(.remoteVideoCard:only-child) .remoteVideoCard video {
-        aspect-ratio: 4 / 3;
-        height: auto;
-        min-height: unset;
+        aspect-ratio: unset;
+        height: 100%;
+        max-height: calc(100vh - 13rem);
+        object-fit: contain;
     }
 
     /* Reset the 3-tile centering on mobile */
