@@ -256,24 +256,29 @@
 
 .conferenceView {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1rem;
-    align-items: start;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+    align-items: center;
+    justify-content: center;
 }
 
 .remoteVideoCard {
     padding: 0.75rem;
     background: linear-gradient(180deg, rgba(15, 23, 42, 0.7), rgba(8, 15, 31, 0.82));
     transition: transform 0.24s ease, box-shadow 0.24s ease;
+    width: 100%;
+    max-width: 880px;
+    margin: 0 auto;
 }
 
 .remoteVideoCard:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: 0 28px 54px rgba(2, 6, 23, 0.35);
 }
 
 .conferenceView video {
     width: 100%;
+    max-height: 65vh;
     aspect-ratio: 16 / 9;
     object-fit: cover;
     border-radius: 18px;
@@ -491,14 +496,18 @@
 }
 
 @media (max-width: 640px) {
-    .lobbyContainer,
-    .meetVideoContainer {
+    .lobbyContainer {
         padding: 1rem;
+    }
+
+    .meetVideoContainer {
+        padding: 1rem 1rem 7.5rem;
     }
 
     .buttonContainers {
         width: calc(100vw - 2rem);
-        justify-content: space-between;
+        justify-content: center;
+        flex-wrap: wrap;
     }
 
     .chattingArea {
@@ -509,7 +518,8 @@
     .meetUserVideo {
         position: static;
         width: 100%;
-        margin-top: 1rem;
+        aspect-ratio: 16 / 9;
+        margin-bottom: 1rem;
     }
 
     .participantRosterList {
