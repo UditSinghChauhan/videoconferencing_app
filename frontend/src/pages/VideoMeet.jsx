@@ -72,6 +72,7 @@ export default function VideoMeetComponent() {
     const [isJoining, setIsJoining] = useState(false);
     const [isSendingMessage, setIsSendingMessage] = useState(false);
     const [removingParticipantId, setRemovingParticipantId] = useState(null);
+    const [rosterExpanded, setRosterExpanded] = useState(false);
     const chatOpenRef = useRef(false);
     const pendingIceCandidatesRef = useRef({});
 
@@ -851,21 +852,32 @@ export default function VideoMeetComponent() {
                         </div>
                     )}
                     <div className={styles.roomHeader}>
-                        <div>
+                        <div className={styles.roomHeaderLeft}>
                             <span className={styles.roomBadge}>Live room</span>
                             <h2>{roomId}</h2>
-                            {meeting?.currentUserRole ? <p>{meeting.currentUserRole === "host" ? "You are the host" : "You joined as a participant"}</p> : null}
+                            {meeting?.currentUserRole ? (
+                                <span className={styles.roleTag}>
+                                    {meeting.currentUserRole === "host" ? "Host" : "Participant"}
+                                </span>
+                            ) : null}
                         </div>
                         {roomError ? <p className={styles.roomError}>{roomError}</p> : null}
                     </div>
 
                     {meeting?.participants?.length ? (
                         <section className={styles.participantRoster} data-testid="participant-roster">
-                            <div className={styles.participantRosterHeader}>
+                            <div
+                                className={styles.participantRosterHeader}
+                                onClick={() => setRosterExpanded((v) => !v)}
+                                style={{ cursor: "pointer", userSelect: "none" }}
+                            >
                                 <h3>Participants</h3>
-                                <span>{meeting.participants.length} live</span>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                                    <span>{meeting.participants.length} live</span>
+                                    <span style={{ color: "#94a3b8", fontSize: "0.8rem", transition: "transform 0.2s", display: "inline-block", transform: rosterExpanded ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+                                </div>
                             </div>
-                            <div className={styles.participantRosterList}>
+                            {rosterExpanded && <div className={styles.participantRosterList}>
                                 {meeting.participants.map((participant) => {
                                     const isCurrentUser = String(participant.userId) === String(user?.id);
                                     const canRemoveParticipant = meeting.currentUserRole === "host" && participant.role !== "host" && !isCurrentUser;
@@ -889,7 +901,7 @@ export default function VideoMeetComponent() {
                                         </div>
                                     );
                                 })}
-                            </div>
+                            </div>}
                         </section>
                     ) : null}
 
