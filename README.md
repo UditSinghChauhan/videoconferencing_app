@@ -12,6 +12,9 @@ Bridge is a real-time video collaboration platform built for fast meetings, secu
 - Live Demo (no sign-up needed): [bridgefrontend.onrender.com/demo](https://bridgefrontend.onrender.com/demo)
 - Repository: [github.com/UditSinghChauhan/videoconferencing_app](https://github.com/UditSinghChauhan/videoconferencing_app)
 
+> [!NOTE] 
+> The backend is hosted on a free tier instance. The initial login or meeting creation might take ~50 seconds to wake up from sleep if it has not been used recently.
+
 ## Key Features
 
 ### Secure Authentication
@@ -242,4 +245,4 @@ Health:
 **Udit Singh Chauhan**
 
 - GitHub: [@UditSinghChauhan](https://github.com/UditSinghChauhan)
-- LinkedIn: [linkedin.com/in/your-profile](https://linkedin.com/in/your-profile) *(update with your actual LinkedIn URL)*
+- LinkedIn: [linkedin.com/in/uditsinghchauhan](https://linkedin.com/in/uditsinghchauhan)

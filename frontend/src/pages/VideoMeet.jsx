@@ -411,7 +411,7 @@ export default function VideoMeetComponent() {
 
         // ✅ FIX 5: Handle reconnection attempts
         socketRef.current.on("reconnect_attempt", (attemptNumber) => {
-            console.log("Reconnection attempt #" + attemptNumber);
+            console.info("Reconnection attempt #" + attemptNumber);
         });
 
         socketRef.current.on("reconnect_failed", () => {
@@ -421,7 +421,7 @@ export default function VideoMeetComponent() {
 
         // ✅ FIX 3: Handle disconnect cleanup
         socketRef.current.on("disconnect", (_reason) => {
-            console.log("Socket disconnected:", _reason);
+            console.info("Socket disconnected:", _reason);
             // Socket.io will automatically attempt reconnection based on config above
         });
     };
@@ -493,7 +493,7 @@ export default function VideoMeetComponent() {
         // Refresh token every 10 minutes (before 15-min expiry)
         const tokenRefreshInterval = setInterval(async () => {
             try {
-                console.log("Refreshing token for socket connection...");
+                console.info("Refreshing token for socket connection...");
                 
                 // Get fresh token from context (assuming refreshSession exists)
                 // For now, we'll just wait for the next auto-refresh from AuthContext
