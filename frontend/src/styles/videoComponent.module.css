@@ -305,12 +305,26 @@
     display: grid;
     gap: 0.75rem;
     width: 100%;
+    /* Fill all available vertical space inside the room container */
+    min-height: calc(100vh - 12rem);
+    align-content: start;
     /* Reserve space for PiP + gap on the right */
     padding-right: calc(clamp(120px, 18vw, 240px) + 1.5rem);
     box-sizing: border-box;
 
     /* Default: 1 column (overridden below by :has selectors) */
     grid-template-columns: 1fr;
+}
+
+/* Single remote tile stretches to fill available height on desktop */
+.conferenceView:has(.remoteVideoCard:only-child) .remoteVideoCard {
+    min-height: min(55vh, 520px);
+}
+
+.conferenceView:has(.remoteVideoCard:only-child) .remoteVideoCard video {
+    aspect-ratio: unset;
+    height: 100%;
+    min-height: min(55vh, 480px);
 }
 
 /* ── 2 participants ── */
@@ -606,11 +620,24 @@
     }
 
     /* ── Conference view: no right padding on mobile ──
-       The PiP overlaps the corner — acceptable on mobile */
+       Single full-width column on all mobile layouts */
     .conferenceView {
         padding-right: 0;
         grid-template-columns: 1fr !important;
         gap: 0.5rem;
+        min-height: unset;
+        align-content: start;
+    }
+
+    /* On mobile: single tile uses portrait-friendly 4:3 ratio */
+    .conferenceView:has(.remoteVideoCard:only-child) .remoteVideoCard {
+        min-height: unset;
+    }
+
+    .conferenceView:has(.remoteVideoCard:only-child) .remoteVideoCard video {
+        aspect-ratio: 4 / 3;
+        height: auto;
+        min-height: unset;
     }
 
     /* Reset the 3-tile centering on mobile */
