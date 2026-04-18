@@ -15,9 +15,13 @@ import server from "../environment";
 import { AuthContext } from "../contexts/AuthContext";
 
 const connections = {};
+const trackTimers = {};
 
 const peerConfigConnections = {
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" }
+    ]
 };
 
 const silence = () => {
@@ -91,6 +95,12 @@ export default function VideoMeetComponent() {
     }, []);
 
     const cleanupConnections = useCallback(() => {
+        // Cancel any pending debounced track timers
+        Object.keys(trackTimers).forEach((key) => {
+            clearTimeout(trackTimers[key]);
+            delete trackTimers[key];
+        });
+
         Object.keys(connections).forEach((key) => {
             try {
                 connections[key].close();
@@ -204,6 +214,8 @@ export default function VideoMeetComponent() {
             }
         };
 
+        // Debounce ontrack per peer: track events fire once per track (audio + video)
+        // and again on renegotiation. Wait 80ms to coalesce before updating state.
         peerConnection.ontrack = (event) => {
             const [remoteStream] = event.streams;
 
@@ -212,7 +224,19 @@ export default function VideoMeetComponent() {
             }
 
             remoteStreamsRef.current[socketId] = remoteStream;
-            upsertRemoteVideo(socketId, remoteStream);
+
+            // Clear any pending update for this peer
+            if (trackTimers[socketId]) {
+                clearTimeout(trackTimers[socketId]);
+            }
+
+            trackTimers[socketId] = setTimeout(() => {
+                delete trackTimers[socketId];
+                const latestStream = remoteStreamsRef.current[socketId];
+                if (latestStream) {
+                    upsertRemoteVideo(socketId, latestStream);
+                }
+            }, 80);
         };
 
         syncLocalTracksToPeer(peerConnection);
@@ -941,8 +965,11 @@ export default function VideoMeetComponent() {
                                 <video
                                     data-socket={participantVideo.socketId}
                                     ref={(ref) => {
-                                        if (ref && participantVideo.stream) {
-                                            ref.srcObject = participantVideo.stream;
+                                        if (ref) {
+                                            const stream = remoteStreamsRef.current[participantVideo.socketId] || participantVideo.stream;
+                                            if (stream && ref.srcObject !== stream) {
+                                                ref.srcObject = stream;
+                                            }
                                         }
                                     }}
                                     autoPlay
