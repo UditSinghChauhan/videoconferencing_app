@@ -245,4 +245,4 @@ Health:
 **Udit Singh Chauhan**
 
 - GitHub: [@UditSinghChauhan](https://github.com/UditSinghChauhan)
-- LinkedIn: [linkedin.com/in/uditsinghchauhan](https://linkedin.com/in/uditsinghchauhan)
+- LinkedIn: [linkedin.com/in/udit-singh-31382137a](https://www.linkedin.com/in/udit-singh-31382137a/)
