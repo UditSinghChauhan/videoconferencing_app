@@ -44,6 +44,8 @@ export default function VideoMeetComponent() {
     const localVideoRef = useRef();
     const videoRef = useRef([]);
     const participantDirectoryRef = useRef({});
+    const remoteStreamsRef = useRef({});
+    const peerNegotiationStateRef = useRef({});
     const navigate = useNavigate();
     const { roomId } = useParams();
     const { endMeeting, joinMeeting, leaveMeeting, removeParticipantFromMeeting, token, user } = useContext(AuthContext);
@@ -101,6 +103,8 @@ export default function VideoMeetComponent() {
 
         videoRef.current = [];
         participantDirectoryRef.current = {};
+        remoteStreamsRef.current = {};
+        peerNegotiationStateRef.current = {};
         pendingIceCandidatesRef.current = {};
         setVideos([]);
     }, []);
@@ -112,46 +116,146 @@ export default function VideoMeetComponent() {
         }
     }, []);
 
+    const upsertRemoteVideo = useCallback((socketId, stream) => {
+        const participantIdentity = participantDirectoryRef.current[socketId] || {};
+        const nextVideo = {
+            socketId,
+            ...participantIdentity,
+            stream,
+            autoplay: true,
+            playsInline: true
+        };
+
+        const existingIndex = videoRef.current.findIndex((participantVideo) => participantVideo.socketId === socketId);
+
+        if (existingIndex >= 0) {
+            const nextVideos = [...videoRef.current];
+            nextVideos[existingIndex] = {
+                ...nextVideos[existingIndex],
+                ...nextVideo
+            };
+            videoRef.current = nextVideos;
+            setVideos([...nextVideos]);
+            return;
+        }
+
+        videoRef.current = [...videoRef.current, nextVideo];
+        setVideos([...videoRef.current]);
+    }, []);
+
+    const removeRemoteVideo = useCallback((socketId) => {
+        videoRef.current = videoRef.current.filter((participantVideo) => participantVideo.socketId !== socketId);
+        delete remoteStreamsRef.current[socketId];
+        setVideos([...videoRef.current]);
+    }, []);
+
+    const getPeerState = useCallback((socketId) => {
+        if (!peerNegotiationStateRef.current[socketId]) {
+            peerNegotiationStateRef.current[socketId] = {
+                makingOffer: false,
+                ignoreOffer: false,
+                isSettingRemoteAnswerPending: false,
+                polite: socketIdRef.current
+                    ? socketIdRef.current.localeCompare(socketId) > 0
+                    : false
+            };
+        }
+
+        return peerNegotiationStateRef.current[socketId];
+    }, []);
+
+    const syncLocalTracksToPeer = useCallback((peerConnection) => {
+        if (!window.localStream) {
+            attachLocalStream(createSilentStream());
+        }
+
+        const localStream = window.localStream;
+        const tracksByKind = new Map(localStream.getTracks().map((track) => [track.kind, track]));
+
+        ["video", "audio"].forEach((kind) => {
+            const nextTrack = tracksByKind.get(kind) || null;
+            const sender = peerConnection.getSenders().find((candidate) => candidate.track?.kind === kind);
+
+            if (sender) {
+                sender.replaceTrack(nextTrack).catch(() => {
+                    setRoomError("Unable to refresh media for another participant.");
+                });
+                return;
+            }
+
+            if (nextTrack) {
+                peerConnection.addTrack(nextTrack, localStream);
+            }
+        });
+    }, [attachLocalStream]);
+
+    const ensurePeerConnection = useCallback((socketId) => {
+        if (connections[socketId]) {
+            return connections[socketId];
+        }
+
+        const peerConnection = new RTCPeerConnection(peerConfigConnections);
+        connections[socketId] = peerConnection;
+        getPeerState(socketId);
+
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate != null) {
+                socketRef.current?.emit("signal", socketId, JSON.stringify({ ice: event.candidate }));
+            }
+        };
+
+        peerConnection.ontrack = (event) => {
+            const [remoteStream] = event.streams;
+
+            if (!remoteStream) {
+                return;
+            }
+
+            remoteStreamsRef.current[socketId] = remoteStream;
+            upsertRemoteVideo(socketId, remoteStream);
+        };
+
+        syncLocalTracksToPeer(peerConnection);
+        return peerConnection;
+    }, [getPeerState, syncLocalTracksToPeer, upsertRemoteVideo]);
+
+    const createOfferForPeer = useCallback(async (socketId) => {
+        const peerConnection = ensurePeerConnection(socketId);
+        const peerState = getPeerState(socketId);
+
+        if (peerConnection.signalingState !== "stable") {
+            return;
+        }
+
+        try {
+            peerState.makingOffer = true;
+            syncLocalTracksToPeer(peerConnection);
+
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            socketRef.current?.emit("signal", socketId, JSON.stringify({ sdp: peerConnection.localDescription }));
+        } catch (error) {
+            setRoomError("Unable to establish a peer connection.");
+        } finally {
+            peerState.makingOffer = false;
+        }
+    }, [ensurePeerConnection, getPeerState, syncLocalTracksToPeer]);
+
     const broadcastLocalStream = useCallback(() => {
         for (const id in connections) {
             if (id === socketIdRef.current) {
                 continue;
             }
 
-            const peerConnection = connections[id];
-            const localStream = window.localStream;
-
-            if (!peerConnection || !localStream) {
+            if (!connections[id]) {
                 continue;
             }
 
-            const tracksByKind = new Map(localStream.getTracks().map((track) => [track.kind, track]));
-
-            ["video", "audio"].forEach((kind) => {
-                const nextTrack = tracksByKind.get(kind) || null;
-                const sender = peerConnection.getSenders().find((candidate) => candidate.track?.kind === kind);
-
-                if (sender) {
-                    sender.replaceTrack(nextTrack).catch(() => {
-                        setRoomError("Unable to refresh media for another participant.");
-                    });
-                    return;
-                }
-
-                if (nextTrack) {
-                    peerConnection.addTrack(nextTrack, localStream);
-                }
-            });
-
-            peerConnection
-                .createOffer()
-                .then((description) => peerConnection.setLocalDescription(description))
-                .then(() => {
-                    socketRef.current.emit("signal", id, JSON.stringify({ sdp: peerConnection.localDescription }));
-                })
-                .catch(() => {});
+            syncLocalTracksToPeer(connections[id]);
+            createOfferForPeer(id);
         }
-    }, []);
+    }, [createOfferForPeer, syncLocalTracksToPeer]);
 
     const getUserMediaSuccess = useCallback((stream) => {
         try {
@@ -213,108 +317,78 @@ export default function VideoMeetComponent() {
         }
     };
 
-    const gotMessageFromServer = (fromId, payload) => {
+    const gotMessageFromServer = useCallback(async (fromId, payload) => {
         const signal = JSON.parse(payload);
 
         if (fromId === socketIdRef.current) {
             return;
         }
 
-        if (!connections[fromId]) {
-            const peerConnection = new RTCPeerConnection(peerConfigConnections);
-            connections[fromId] = peerConnection;
+        const peerConnection = ensurePeerConnection(fromId);
+        const peerState = getPeerState(fromId);
 
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate != null) {
-                    socketRef.current.emit("signal", fromId, JSON.stringify({ ice: event.candidate }));
-                }
-            };
+        try {
+            if (signal.sdp) {
+                const description = new RTCSessionDescription(signal.sdp);
+                const readyForOffer = !peerState.makingOffer
+                    && (peerConnection.signalingState === "stable" || peerState.isSettingRemoteAnswerPending);
+                const offerCollision = description.type === "offer" && !readyForOffer;
 
-            peerConnection.ontrack = (event) => {
-                const [remoteStream] = event.streams;
+                peerState.ignoreOffer = !peerState.polite && offerCollision;
 
-                if (!remoteStream) {
+                if (peerState.ignoreOffer) {
                     return;
                 }
 
-                const participantIdentity = participantDirectoryRef.current[fromId] || {};
-                const existingVideo = videoRef.current.find((participantVideo) => participantVideo.socketId === fromId);
-
-                if (existingVideo) {
-                    setVideos((currentVideos) => {
-                        const updatedVideos = currentVideos.map((participantVideo) =>
-                            participantVideo.socketId === fromId
-                                ? { ...participantVideo, ...participantIdentity, stream: remoteStream }
-                                : participantVideo
-                        );
-                        videoRef.current = updatedVideos;
-                        return updatedVideos;
-                    });
-                } else {
-                    const newVideo = {
-                        socketId: fromId,
-                        ...participantIdentity,
-                        stream: remoteStream,
-                        autoplay: true,
-                        playsInline: true
-                    };
-
-                    setVideos((currentVideos) => {
-                        const updatedVideos = [...currentVideos, newVideo];
-                        videoRef.current = updatedVideos;
-                        return updatedVideos;
-                    });
-                }
-            };
-
-            if (window.localStream) {
-                window.localStream.getTracks().forEach((track) => {
-                    peerConnection.addTrack(track, window.localStream);
-                });
-            }
-        }
-
-        const peerConnection = connections[fromId];
-
-        if (signal.sdp) {
-            peerConnection
-                .setRemoteDescription(new RTCSessionDescription(signal.sdp))
-                .then(() => {
-                    const pendingCandidates = pendingIceCandidatesRef.current[fromId] || [];
-                    pendingIceCandidatesRef.current[fromId] = [];
-
-                    return Promise.all(
-                        pendingCandidates.map((candidate) => peerConnection.addIceCandidate(new RTCIceCandidate(candidate)))
-                    );
-                })
-                .then(() => {
-                    if (signal.sdp.type === "offer") {
-                        return peerConnection.createAnswer().then((description) => {
-                            return peerConnection.setLocalDescription(description).then(() => {
-                                socketRef.current.emit("signal", fromId, JSON.stringify({ sdp: peerConnection.localDescription }));
-                            });
-                        });
+                if (offerCollision && peerState.polite && peerConnection.signalingState !== "stable") {
+                    try {
+                        await peerConnection.setLocalDescription({ type: "rollback" });
+                    } catch (error) {
+                        // Some browsers may already be stable enough to proceed without rollback.
                     }
+                }
 
-                    return null;
-                })
-                .catch(() => setRoomError("Real-time connection negotiation failed."));
-        }
+                peerState.isSettingRemoteAnswerPending = description.type === "answer";
+                await peerConnection.setRemoteDescription(description);
+                peerState.isSettingRemoteAnswerPending = false;
 
-        if (signal.ice) {
-            if (!peerConnection.remoteDescription) {
-                pendingIceCandidatesRef.current[fromId] = [
-                    ...(pendingIceCandidatesRef.current[fromId] || []),
-                    signal.ice
-                ];
+                const pendingCandidates = pendingIceCandidatesRef.current[fromId] || [];
+                pendingIceCandidatesRef.current[fromId] = [];
+
+                await Promise.all(
+                    pendingCandidates.map((candidate) => peerConnection.addIceCandidate(new RTCIceCandidate(candidate)))
+                );
+
+                if (description.type === "offer") {
+                    syncLocalTracksToPeer(peerConnection);
+                    const answer = await peerConnection.createAnswer();
+                    await peerConnection.setLocalDescription(answer);
+                    socketRef.current?.emit("signal", fromId, JSON.stringify({ sdp: peerConnection.localDescription }));
+                }
+            }
+
+            if (signal.ice) {
+                if (!peerConnection.remoteDescription) {
+                    pendingIceCandidatesRef.current[fromId] = [
+                        ...(pendingIceCandidatesRef.current[fromId] || []),
+                        signal.ice
+                    ];
+                    return;
+                }
+
+                await peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice));
+            }
+        } catch (error) {
+            peerState.isSettingRemoteAnswerPending = false;
+
+            if (signal.ice) {
+                setRoomError("Unable to add a network candidate for this participant.");
                 return;
             }
 
-            peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice)).catch(() => {
-                setRoomError("Unable to add a network candidate for this participant.");
-            });
+            setRoomError("Real-time connection negotiation failed.");
         }
-    };
+    }, [ensurePeerConnection, getPeerState, syncLocalTracksToPeer]);
 
     const connectToSocketServer = () => {
         socketRef.current = io.connect(server, {
@@ -346,218 +420,106 @@ export default function VideoMeetComponent() {
         socketRef.current.on("signal", gotMessageFromServer);
 
         socketRef.current.on("connect", () => {
-            socketRef.current.emit("join-call", roomId);
+            if (socketIdRef.current && socketIdRef.current !== socketRef.current.id) {
+                cleanupConnections();
+            }
+
             socketIdRef.current = socketRef.current.id;
+            socketRef.current.emit("join-call", roomId);
+        });
 
-            socketRef.current.on("chat-message", addMessage);
+        socketRef.current.on("chat-message", addMessage);
 
-            socketRef.current.on("meeting:joined", (payload) => {
-                syncParticipantDirectory(payload.socketParticipants || []);
-                setMeeting((currentMeeting) => ({
+        socketRef.current.on("meeting:joined", (payload) => {
+            syncParticipantDirectory(payload.socketParticipants || []);
+            setMeeting((currentMeeting) => ({
+                ...(currentMeeting || {}),
+                ...payload.meeting
+            }));
+
+            const existingParticipantSocketIds = (payload.participants || []).filter(
+                (participantSocketId) => participantSocketId && participantSocketId !== socketRef.current.id
+            );
+
+            existingParticipantSocketIds.forEach((participantSocketId) => {
+                ensurePeerConnection(participantSocketId);
+            });
+
+            existingParticipantSocketIds.forEach((participantSocketId) => {
+                createOfferForPeer(participantSocketId);
+            });
+        });
+
+        socketRef.current.on("meeting:participants-updated", (payload) => {
+            setMeeting((currentMeeting) => {
+                const updated = {
                     ...(currentMeeting || {}),
-                    ...payload.meeting
-                }));
+                    ...payload
+                };
 
-                const existingParticipantSocketIds = (payload.participants || []).filter(
-                    (participantSocketId) => participantSocketId && participantSocketId !== socketRef.current.id
-                );
-
-                existingParticipantSocketIds.forEach((participantSocketId) => {
-                    if (!connections[participantSocketId]) {
-                        const peerConnection = new RTCPeerConnection(peerConfigConnections);
-                        connections[participantSocketId] = peerConnection;
-
-                        peerConnection.onicecandidate = (event) => {
-                            if (event.candidate != null) {
-                                socketRef.current.emit("signal", participantSocketId, JSON.stringify({ ice: event.candidate }));
-                            }
-                        };
-
-                        peerConnection.ontrack = (event) => {
-                            const [remoteStream] = event.streams;
-
-                            if (!remoteStream) {
-                                return;
-                            }
-
-                            const participantIdentity = participantDirectoryRef.current[participantSocketId] || {};
-                            const existingVideo = videoRef.current.find((participantVideo) => participantVideo.socketId === participantSocketId);
-
-                            if (existingVideo) {
-                                setVideos((currentVideos) => {
-                                    const updatedVideos = currentVideos.map((participantVideo) =>
-                                        participantVideo.socketId === participantSocketId
-                                            ? { ...participantVideo, ...participantIdentity, stream: remoteStream }
-                                            : participantVideo
-                                    );
-                                    videoRef.current = updatedVideos;
-                                    return updatedVideos;
-                                });
-                            } else {
-                                const newVideo = {
-                                    socketId: participantSocketId,
-                                    ...participantIdentity,
-                                    stream: remoteStream,
-                                    autoplay: true,
-                                    playsInline: true
-                                };
-
-                                setVideos((currentVideos) => {
-                                    const updatedVideos = [...currentVideos, newVideo];
-                                    videoRef.current = updatedVideos;
-                                    return updatedVideos;
-                                });
-                            }
-                        };
-
-                        if (window.localStream) {
-                            window.localStream.getTracks().forEach((track) => {
-                                peerConnection.addTrack(track, window.localStream);
-                            });
+                if (updated.participants && Array.isArray(updated.participants)) {
+                    const seen = new Set();
+                    updated.participants = updated.participants.filter((participant) => {
+                        if (seen.has(participant.userId)) {
+                            return false;
                         }
-                    }
-                });
 
-                existingParticipantSocketIds.forEach((participantSocketId) => {
-                    const peerConnection = connections[participantSocketId];
-
-                    peerConnection
-                        .createOffer()
-                        .then((description) => peerConnection.setLocalDescription(description))
-                        .then(() => {
-                            socketRef.current.emit("signal", participantSocketId, JSON.stringify({ sdp: peerConnection.localDescription }));
-                        })
-                        .catch(() => setRoomError("Unable to establish a peer connection."));
-                });
-            });
-
-            socketRef.current.on("meeting:participants-updated", (payload) => {
-                // ✅ FIX 2B: Deduplicate participants by userId
-                setMeeting((currentMeeting) => {
-                    const updated = {
-                        ...(currentMeeting || {}),
-                        ...payload
-                    };
-                    
-                    if (updated.participants && Array.isArray(updated.participants)) {
-                        // Deduplicate by userId
-                        const seen = new Set();
-                        updated.participants = updated.participants.filter((p) => {
-                            if (seen.has(p.userId)) {
-                                console.warn("Duplicate participant detected and filtered:", p.username || p.userId);
-                                return false;
-                            }
-                            seen.add(p.userId);
-                            return true;
-                        });
-                    }
-                    
-                    return updated;
-                });
-            });
-
-            socketRef.current.on("meeting:settings-updated", ({ settings }) => {
-                setMeeting((currentMeeting) => ({
-                    ...(currentMeeting || {}),
-                    settings
-                }));
-            });
-
-            socketRef.current.on("meeting:ended", () => {
-                setRoomError("The host ended this meeting.");
-                handleEndCall(`/history?summary=${roomId}`);
-            });
-
-            socketRef.current.on("meeting:removed", () => {
-                setRoomError("You were removed from this meeting by the host.");
-                handleEndCall();
-            });
-
-            socketRef.current.on("meeting:error", ({ message: socketMessage }) => {
-                setRoomError(socketMessage || "Socket connection to the meeting failed.");
-            });
-
-            socketRef.current.on("user-left", (id) => {
-                if (connections[id]) {
-                    try {
-                        connections[id].close();
-                    } catch (error) {
-                        // Ignore stale peer cleanup failures when users leave quickly.
-                    }
-                    delete connections[id];
+                        seen.add(participant.userId);
+                        return true;
+                    });
                 }
 
-                delete pendingIceCandidatesRef.current[id];
-                setVideos((currentVideos) => currentVideos.filter((participantVideo) => participantVideo.socketId !== id));
+                return updated;
             });
+        });
 
-            socketRef.current.on("user-joined", (id, clients, socketParticipants = []) => {
-                syncParticipantDirectory(socketParticipants);
+        socketRef.current.on("meeting:settings-updated", ({ settings }) => {
+            setMeeting((currentMeeting) => ({
+                ...(currentMeeting || {}),
+                settings
+            }));
+        });
 
-                const joinedSocketId = typeof id === "string" ? id : id?.socketId;
+        socketRef.current.on("meeting:ended", () => {
+            setRoomError("The host ended this meeting.");
+            handleEndCall(`/history?summary=${roomId}`);
+        });
 
-                if (!joinedSocketId || joinedSocketId === socketRef.current.id) {
-                    return;
+        socketRef.current.on("meeting:removed", () => {
+            setRoomError("You were removed from this meeting by the host.");
+            handleEndCall();
+        });
+
+        socketRef.current.on("meeting:error", ({ message: socketMessage }) => {
+            setRoomError(socketMessage || "Socket connection to the meeting failed.");
+        });
+
+        socketRef.current.on("user-left", (id) => {
+            if (connections[id]) {
+                try {
+                    connections[id].close();
+                } catch (error) {
+                    // Ignore stale peer cleanup failures when users leave quickly.
                 }
 
-                if (connections[joinedSocketId]) {
-                    return;
-                }
+                delete connections[id];
+            }
 
-                const peerConnection = new RTCPeerConnection(peerConfigConnections);
-                connections[joinedSocketId] = peerConnection;
+            delete peerNegotiationStateRef.current[id];
+            delete pendingIceCandidatesRef.current[id];
+            removeRemoteVideo(id);
+        });
 
-                peerConnection.onicecandidate = (event) => {
-                    if (event.candidate != null) {
-                        socketRef.current.emit("signal", joinedSocketId, JSON.stringify({ ice: event.candidate }));
-                    }
-                };
+        socketRef.current.on("user-joined", (id, _clients, socketParticipants = []) => {
+            syncParticipantDirectory(socketParticipants);
 
-                peerConnection.ontrack = (event) => {
-                    const [remoteStream] = event.streams;
+            const joinedSocketId = typeof id === "string" ? id : id?.socketId;
 
-                    if (!remoteStream) {
-                        return;
-                    }
+            if (!joinedSocketId || joinedSocketId === socketRef.current.id) {
+                return;
+            }
 
-                    const participantIdentity = participantDirectoryRef.current[joinedSocketId] || {};
-                    const existingVideo = videoRef.current.find((participantVideo) => participantVideo.socketId === joinedSocketId);
-
-                    if (existingVideo) {
-                        setVideos((currentVideos) => {
-                            const updatedVideos = currentVideos.map((participantVideo) =>
-                                participantVideo.socketId === joinedSocketId
-                                    ? { ...participantVideo, ...participantIdentity, stream: remoteStream }
-                                    : participantVideo
-                            );
-                            videoRef.current = updatedVideos;
-                            return updatedVideos;
-                        });
-                    } else {
-                        const newVideo = {
-                            socketId: joinedSocketId,
-                            ...participantIdentity,
-                            stream: remoteStream,
-                            autoplay: true,
-                            playsInline: true
-                        };
-
-                        setVideos((currentVideos) => {
-                            const updatedVideos = [...currentVideos, newVideo];
-                            videoRef.current = updatedVideos;
-                            return updatedVideos;
-                        });
-                    }
-                };
-
-                if (!window.localStream) {
-                    attachLocalStream(createSilentStream());
-                }
-
-                window.localStream.getTracks().forEach((track) => {
-                    peerConnection.addTrack(track, window.localStream);
-                });
-            });
+            ensurePeerConnection(joinedSocketId);
         });
 
         // ✅ FIX 5: Handle connection errors
