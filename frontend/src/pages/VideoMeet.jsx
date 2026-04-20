@@ -547,10 +547,12 @@ export default function VideoMeetComponent() {
             ensurePeerConnection(joinedSocketId);
         });
 
-        // ✅ FIX 5: Handle connection errors
+        // Handle connection errors
         socketRef.current.on("connect_error", (error) => {
-            console.error("Socket connection error:", error.message);
-            
+            if (process.env.NODE_ENV === "development") {
+                console.error("Socket connection error:", error.message);
+            }
+
             if (error.message === "Unauthorized") {
                 setRoomError("Your session has expired. Please login again.");
             } else if (error.message === "NOT_IN_MEETING") {
@@ -560,20 +562,25 @@ export default function VideoMeetComponent() {
             }
         });
 
-        // ✅ FIX 5: Handle reconnection attempts
+        // Handle reconnection attempts
         socketRef.current.on("reconnect_attempt", (attemptNumber) => {
-            console.info("Reconnection attempt #" + attemptNumber);
+            if (process.env.NODE_ENV === "development") {
+                console.info("Reconnection attempt #" + attemptNumber);
+            }
         });
 
         socketRef.current.on("reconnect_failed", () => {
-            console.error("Failed to reconnect after 5 attempts");
+            if (process.env.NODE_ENV === "development") {
+                console.error("Failed to reconnect after 5 attempts");
+            }
             setRoomError("Could not reconnect to the meeting. Please refresh the page.");
         });
 
-        // ✅ FIX 3: Handle disconnect cleanup
+        // Handle disconnect — Socket.IO will auto-reconnect per config
         socketRef.current.on("disconnect", (_reason) => {
-            console.info("Socket disconnected:", _reason);
-            // Socket.io will automatically attempt reconnection based on config above
+            if (process.env.NODE_ENV === "development") {
+                console.info("Socket disconnected:", _reason);
+            }
         });
     };
 
@@ -637,26 +644,8 @@ export default function VideoMeetComponent() {
         chatOpenRef.current = showModal;
     }, [showModal]);
 
-    // ✅ FIX 7A: Token refresh for long-lived socket connections
-    useEffect(() => {
-        if (!socketRef.current) return;
-
-        // Refresh token every 10 minutes (before 15-min expiry)
-        const tokenRefreshInterval = setInterval(async () => {
-            try {
-                console.info("Refreshing token for socket connection...");
-                
-                // Get fresh token from context (assuming refreshSession exists)
-                // For now, we'll just wait for the next auto-refresh from AuthContext
-                // The socket will continue working with existing token
-                
-            } catch (error) {
-                console.error("Token refresh failed:", error);
-            }
-        }, 10 * 60 * 1000); // Every 10 minutes
-
-        return () => clearInterval(tokenRefreshInterval);
-    }, [socketRef]);
+    // Session tokens are silently refreshed by AuthContext on 401 responses.
+    // No additional interval is needed here.
 
     useEffect(() => {
         if (!screen) {
