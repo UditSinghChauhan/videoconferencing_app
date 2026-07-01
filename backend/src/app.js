@@ -63,6 +63,7 @@ const shutdown = (signal, error = null) => {
 
 process.on("unhandledRejection", (reason) => {
     shutdown("unhandledRejection", reason instanceof Error ? reason : new Error(String(reason)));
+    process.exit(1);
 });
 
 process.on("uncaughtException", (error) => {

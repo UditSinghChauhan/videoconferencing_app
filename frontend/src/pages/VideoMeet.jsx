@@ -14,8 +14,7 @@ import styles from "../styles/videoComponent.module.css";
 import server from "../environment";
 import { AuthContext } from "../contexts/AuthContext";
 
-const connections = {};
-const trackTimers = {};
+
 
 const peerConfigConnections = {
     iceServers: [
@@ -50,6 +49,10 @@ export default function VideoMeetComponent() {
     const participantDirectoryRef = useRef({});
     const remoteStreamsRef = useRef({});
     const peerNegotiationStateRef = useRef({});
+    const connectionsRef = useRef({});
+    const trackTimersRef = useRef({});
+    const localStreamRef = useRef(null);
+    const chatEndRef = useRef(null);
     const navigate = useNavigate();
     const { roomId } = useParams();
     const { endMeeting, joinMeeting, leaveMeeting, removeParticipantFromMeeting, token, user } = useContext(AuthContext);
@@ -97,19 +100,19 @@ export default function VideoMeetComponent() {
 
     const cleanupConnections = useCallback(() => {
         // Cancel any pending debounced track timers
-        Object.keys(trackTimers).forEach((key) => {
-            clearTimeout(trackTimers[key]);
-            delete trackTimers[key];
+        Object.keys(trackTimersRef.current).forEach((key) => {
+            clearTimeout(trackTimersRef.current[key]);
+            delete trackTimersRef.current[key];
         });
 
-        Object.keys(connections).forEach((key) => {
+        Object.keys(connectionsRef.current).forEach((key) => {
             try {
-                connections[key].close();
+                connectionsRef.current[key].close();
             } catch (error) {
                 // Ignore stale peer connection cleanup errors.
             }
 
-            delete connections[key];
+            delete connectionsRef.current[key];
         });
 
         videoRef.current = [];
@@ -121,7 +124,7 @@ export default function VideoMeetComponent() {
     }, []);
 
     const attachLocalStream = useCallback((stream) => {
-        window.localStream = stream;
+        localStreamRef.current = stream;
         if (localVideoRef.current) {
             localVideoRef.current.srcObject = stream;
         }
@@ -176,11 +179,11 @@ export default function VideoMeetComponent() {
     }, []);
 
     const syncLocalTracksToPeer = useCallback((peerConnection) => {
-        if (!window.localStream) {
+        if (!localStreamRef.current) {
             attachLocalStream(createSilentStream());
         }
 
-        const localStream = window.localStream;
+        const localStream = localStreamRef.current;
         const tracksByKind = new Map(localStream.getTracks().map((track) => [track.kind, track]));
 
         ["video", "audio"].forEach((kind) => {
@@ -201,12 +204,12 @@ export default function VideoMeetComponent() {
     }, [attachLocalStream]);
 
     const ensurePeerConnection = useCallback((socketId) => {
-        if (connections[socketId]) {
-            return connections[socketId];
+        if (connectionsRef.current[socketId]) {
+            return connectionsRef.current[socketId];
         }
 
         const peerConnection = new RTCPeerConnection(peerConfigConnections);
-        connections[socketId] = peerConnection;
+        connectionsRef.current[socketId] = peerConnection;
         getPeerState(socketId);
 
         peerConnection.onicecandidate = (event) => {
@@ -227,12 +230,12 @@ export default function VideoMeetComponent() {
             remoteStreamsRef.current[socketId] = remoteStream;
 
             // Clear any pending update for this peer
-            if (trackTimers[socketId]) {
-                clearTimeout(trackTimers[socketId]);
+            if (trackTimersRef.current[socketId]) {
+                clearTimeout(trackTimersRef.current[socketId]);
             }
 
-            trackTimers[socketId] = setTimeout(() => {
-                delete trackTimers[socketId];
+            trackTimersRef.current[socketId] = setTimeout(() => {
+                delete trackTimersRef.current[socketId];
                 const latestStream = remoteStreamsRef.current[socketId];
                 if (latestStream) {
                     upsertRemoteVideo(socketId, latestStream);
@@ -268,23 +271,23 @@ export default function VideoMeetComponent() {
     }, [ensurePeerConnection, getPeerState, syncLocalTracksToPeer]);
 
     const broadcastLocalStream = useCallback(() => {
-        for (const id in connections) {
+        for (const id in connectionsRef.current) {
             if (id === socketIdRef.current) {
                 continue;
             }
 
-            if (!connections[id]) {
+            if (!connectionsRef.current[id]) {
                 continue;
             }
 
-            syncLocalTracksToPeer(connections[id]);
+            syncLocalTracksToPeer(connectionsRef.current[id]);
             createOfferForPeer(id);
         }
     }, [createOfferForPeer, syncLocalTracksToPeer]);
 
     const getUserMediaSuccess = useCallback((stream) => {
         try {
-            window.localStream?.getTracks().forEach((track) => track.stop());
+            localStreamRef.current?.getTracks().forEach((track) => track.stop());
         } catch (error) {
             setRoomError("Unable to refresh local media stream.");
         }
@@ -311,7 +314,7 @@ export default function VideoMeetComponent() {
 
     const getDisplayMediaSuccess = useCallback((stream) => {
         try {
-            window.localStream?.getTracks().forEach((track) => track.stop());
+            localStreamRef.current?.getTracks().forEach((track) => track.stop());
         } catch (error) {
             setRoomError("Unable to switch to screen sharing.");
         }
@@ -520,14 +523,14 @@ export default function VideoMeetComponent() {
         });
 
         socketRef.current.on("user-left", (id) => {
-            if (connections[id]) {
+            if (connectionsRef.current[id]) {
                 try {
-                    connections[id].close();
+                    connectionsRef.current[id].close();
                 } catch (error) {
                     // Ignore stale peer cleanup failures when users leave quickly.
                 }
 
-                delete connections[id];
+                delete connectionsRef.current[id];
             }
 
             delete peerNegotiationStateRef.current[id];
@@ -615,7 +618,7 @@ export default function VideoMeetComponent() {
 
         return () => {
             socketRef.current?.disconnect();
-            window.localStream?.getTracks?.().forEach((track) => track.stop());
+            localStreamRef.current?.getTracks?.().forEach((track) => track.stop());
             cleanupConnections();
         };
     }, [attachLocalStream, cleanupConnections]);
@@ -643,6 +646,10 @@ export default function VideoMeetComponent() {
     useEffect(() => {
         chatOpenRef.current = showModal;
     }, [showModal]);
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
     // Session tokens are silently refreshed by AuthContext on 401 responses.
     // No additional interval is needed here.
@@ -915,6 +922,7 @@ export default function VideoMeetComponent() {
                                     ) : (
                                         <p>No messages yet. Start the conversation.</p>
                                     )}
+                                    <div ref={chatEndRef} />
                                 </div>
 
                                 <div className={styles.chattingArea}>

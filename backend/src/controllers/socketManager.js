@@ -257,9 +257,14 @@ const connectToSocket = (server) => {
                 return;
             }
 
+            if (typeof data !== "string" || data.length === 0 || data.length > 2000) {
+                return;
+            }
+
+            const authenticatedSender = socket.data.user?.username || sender;
             const roomMessages = messages.get(meetingId) || [];
             const entry = {
-                sender,
+                sender: authenticatedSender,
                 data,
                 socketIdSender: socket.id
             };
@@ -270,7 +275,7 @@ const connectToSocket = (server) => {
             addMeetingChatMessage({
                 meetingId,
                 userId: socket.data.user._id,
-                username: sender || socket.data.user.username,
+                username: authenticatedSender,
                 content: data
             }).catch((error) => {
                 logger.warn("Failed to persist meeting chat message", {
@@ -279,7 +284,7 @@ const connectToSocket = (server) => {
                 });
             });
 
-            ioInstance.to(getRoomKey(meetingId)).emit("chat-message", data, sender, socket.id);
+            ioInstance.to(getRoomKey(meetingId)).emit("chat-message", data, authenticatedSender, socket.id);
         });
 
         socket.on("disconnect", async () => {

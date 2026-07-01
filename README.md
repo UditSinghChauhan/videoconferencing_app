@@ -42,6 +42,7 @@ Bridge is a real-time video collaboration platform built for fast meetings, secu
 
 ### Smart Meeting Summaries
 
+- Summaries are generated server-side using keyword frequency analysis and activity log scoring — no external AI API required. This is a rule-based system, not AI-powered.
 - Meeting summaries are generated automatically when the host ends a meeting
 - Summaries include:
   - Key points
