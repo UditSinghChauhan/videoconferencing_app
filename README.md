@@ -102,8 +102,19 @@ Bridge now includes both API-level certification work and browser-level E2E vali
 Run E2E tests from `frontend/`:
 
 ```bash
+npx playwright install chromium   # first run only
 npm run test:e2e
 ```
+
+Playwright starts both servers itself — the backend on port `8100` and the frontend on port `3100`
+— so neither needs to be running beforehand. `backend/.env` must be populated, since the backend
+still needs `MONGODB_URI` and its JWT secrets. On Linux the browser also needs its system libraries
+once: `sudo npx playwright install-deps chromium`.
+
+The suite creates real users and meetings in whatever database `MONGODB_URI` points at. Point it at
+a scratch database if you do not want that data in your development one. Note also that the auth
+rate limiter allows 10 attempts per IP per 15 minutes, and each run spends 3 of them from
+`127.0.0.1`, so more than three runs in a 15-minute window will start failing on login.
 
 ## Tech Stack
 

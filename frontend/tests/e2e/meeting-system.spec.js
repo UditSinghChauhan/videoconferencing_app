@@ -99,9 +99,23 @@ async function goToMeetingLobby(page, meetingId) {
   await expect(page.getByTestId("join-meeting-button")).toBeVisible();
 }
 
+// The roster renders collapsed by default, so participant names and the host's Remove
+// controls are absent from the DOM until its header is clicked. Expanding is idempotent
+// because a participant who leaves and rejoins remounts the view collapsed again.
+async function expandRoster(page) {
+  const roster = page.getByTestId("participant-roster");
+
+  if ((await roster.getByTestId("roster-name").count()) === 0) {
+    await roster.getByRole("heading", { name: "Participants" }).click();
+  }
+
+  await expect(roster.getByTestId("roster-name").first()).toBeVisible({ timeout: AUTH_TIMEOUT });
+}
+
 async function joinMeetingFromLobby(page) {
   await page.getByTestId("join-meeting-button").click();
   await expect(page.getByTestId("participant-roster")).toBeVisible({ timeout: AUTH_TIMEOUT });
+  await expandRoster(page);
 }
 
 async function openChat(page) {

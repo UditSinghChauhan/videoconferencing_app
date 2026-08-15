@@ -21,7 +21,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "start:e2e": "set \"BROWSER=none\" && set \"PORT=3100\" && set \"REACT_APP_ENV=development\" && set \"REACT_APP_BACKEND_URL=http://127.0.0.1:8100\" && react-scripts start",
+    "start:e2e": "cross-env BROWSER=none PORT=3100 REACT_APP_ENV=development REACT_APP_BACKEND_URL=http://127.0.0.1:8100 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "test:e2e": "playwright test",
@@ -46,6 +46,7 @@
     ]
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1"
+    "@playwright/test": "^1.59.1",
+    "cross-env": "^10.1.0"
   }
 }
