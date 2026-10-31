@@ -17,7 +17,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 70vh;
+    min-height: 62vh;
     padding-left: var(--space-8);
 }
 
@@ -46,20 +46,21 @@
 }
 
 .title {
-    margin: var(--space-2) 0 var(--space-3);
+    margin: var(--space-2) 0 var(--space-4);
     color: var(--text-muted);
-    font-size: var(--text-xl);
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    line-height: 1.3;
+    font-family: var(--font-display);
+    font-size: var(--text-4xl);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
     transition: color var(--duration) var(--ease);
 }
 
 .body {
-    max-width: 40ch;
+    max-width: 36ch;
     margin: 0;
     color: var(--text);
-    font-size: var(--text-md);
+    font-size: var(--text-lg);
     line-height: 1.55;
 }
 
@@ -83,10 +84,11 @@
     background: var(--room-bg);
 }
 
+/* Width and left come from the step's crop (Walkthrough.tsx), so text stays near real size. */
 .paneShot {
     position: absolute;
-    inset: 0 0 auto 0;
-    width: 100%;
+    top: 0;
+    max-width: none;
     height: auto;
     opacity: 0;
     transform: translateY(8px);
@@ -100,42 +102,21 @@
 
 /* The recap is a long page: once it is in view, glide down to the transcript. */
 .paneShot[data-step="recap"][data-active] {
-    animation: read-recap 7s var(--ease) 900ms forwards;
+    animation: read-recap 9s var(--ease) 1200ms forwards;
 }
 
 @keyframes read-recap {
     from { transform: translateY(0); }
-    to { transform: translateY(-47.5%); }
+    to { transform: translateY(var(--glide)); }
 }
 
-/* 640 to 1023 px: one column, the pane sticks as a band above the text. */
+/* Below 1024 px: no sticky pane; each step is its text followed by its own capture. */
 @media (max-width: 1023px) {
     .layout {
         grid-template-columns: 1fr;
         gap: 0;
     }
 
-    .paneColumn {
-        grid-row: 1;
-        top: 64px;
-        z-index: 1;
-        width: 100%;
-        padding: var(--space-4) 0;
-        background: var(--bg);
-    }
-
-    .pane {
-        max-width: 640px;
-        margin: 0 auto;
-    }
-
-    .step {
-        min-height: 60vh;
-    }
-}
-
-/* Under 640 px: stacked steps, each with its own phone capture. No sticky pane. */
-@media (max-width: 639px) {
     .paneColumn {
         display: none;
     }
@@ -151,6 +132,11 @@
 
     .title {
         color: var(--text);
+        font-size: var(--text-2xl);
+    }
+
+    .body {
+        max-width: 60ch;
     }
 
     .number {
@@ -166,20 +152,28 @@
     .inlineShot {
         display: block;
         overflow: hidden;
-        max-width: 320px;
-        max-height: 600px;
         margin-top: var(--space-6);
         border-radius: var(--radius-xl);
         background: var(--room-bg);
     }
 
     .inlineShot img {
+        display: block;
         width: 100%;
         height: auto;
     }
 
+    /* The recap is a long page: show its top, where the key points are. */
     .inlineShot[data-step="recap"] {
+        max-height: 560px;
         background: var(--surface);
+    }
+}
+
+@media (max-width: 639px) {
+    .inlineShot {
+        max-width: 320px;
+        max-height: 600px;
     }
 }
 

@@ -41,6 +41,16 @@ async function realRoom() {
     await page.getByTestId("video-tile").first().waitFor();
     const typing = typed - start;
     console.log(`Real room: click -> usable room ${seconds(Date.now() - start)} (of which ${seconds(typing)} is the script filling the form)`);
+
+    await page.getByRole("button", { name: /^Chat/ }).click();
+    await page.getByLabel("Message everyone").fill("Next step: ship the release Thursday, I will follow up with QA.");
+    await page.keyboard.press("Enter");
+    await page.getByTestId("chat-log").getByText("ship the release").waitFor();
+    await page.getByTestId("leave-button").click();
+    const ending = Date.now();
+    await page.getByTestId("confirm-end-meeting").click();
+    await page.getByRole("heading", { name: "Key points" }).waitFor();
+    console.log(`Recap: confirm End -> key points on screen ${seconds(Date.now() - ending)}`);
     await page.context().close();
 }
 

@@ -167,7 +167,7 @@ Only transform and opacity animate, except button and step text colour. Under `p
 
 ### 1. Navigation
 
-Logo left. Links: Walkthrough, Engineering, Verified (anchors; hidden under 768 px). Right: "Sign in" text link and "GitHub" text link with the GitHub mark. Solid `--bg`, no border, no blur. No filled button in the nav, so the hero's accent action is the only one in the first viewport.
+Logo left. Links: Walkthrough, Engineering, Decisions, Verified (anchors; hidden under 768 px). Right: "Sign in" text link and "GitHub" text link with the GitHub mark. Solid `--bg`, no border, no blur. No filled button in the nav, so the hero's accent action is the only one in the first viewport.
 
 ### 2. Hero (first viewport)
 
@@ -176,8 +176,12 @@ Centred, one column at every width.
 - h1: "Meetings that end with a *recap*." (kept; italic rust "recap").
 - One support line, max 34ch, in full ink: "Video calls for small teams. When the host ends one, everyone gets the key points and the full transcript."
 - Two actions: **Try the live demo** (rust, the accent action; goes to `/demo`, no account) and **Start a meeting** (ink outline; signed in → `/home`, otherwise `/auth?mode=signup`). The demo is first because it needs nothing from the visitor.
-- Below, centred app-window frame (ToDesktop framing) holding the **20 s muted loop**, cut so the recap dominates: 0–5 s the last two messages of a live four-person call and the host pressing End; 5–20 s the recap page, holding on the key points, then gliding to the transcript. A visible Pause control (WCAG 2.2.2); the loop also pauses off screen. The poster frame, and the reduced-motion image, is the finished recap, so a still visitor still sees the outcome. Caption under the frame in 14 px muted: "Recorded from the running app. The recap is built on the server from the chat and activity log, no external AI."
+- Below, centred app-window frame (ToDesktop framing) holding the **20 s muted loop**, cut so the recap dominates: 0–5 s the last two messages of a live four-person call and the host pressing End; 5–20 s the recap page, holding on the key points, then gliding to the transcript. Recorded at 2x and encoded at 1920 × 1200 (about 540 KB, H.264 first). A Pause control sits in the window bar, never over the recording (WCAG 2.2.2); the loop also pauses off screen. The poster frame, and the reduced-motion image, is the finished recap, so a still visitor still sees the outcome. Caption under the frame in 14 px muted: "Recorded from the running app. The recap is built on the server from the chat and activity log, no external AI."
 - At 1280 × 800 the headline, support line, both actions and the top 40 % of the frame (enough to see the recap heading) are above the fold. At 375 × 812 the frame starts above the fold.
+
+### 2b. Facts
+
+Directly under the hero frame, one `--surface` panel with three facts, each a large serif value and one line: **0.4 s** from End to the recap on screen (measured with `scripts/measure-wake.mjs`), **0 bytes** of media through the server, and **N flows** tested end to end (N is counted from the Verified list in code, so the two cannot disagree). No vanity numbers: every value is measured or structural.
 
 ### 3. Walkthrough: Start, Share, Recap
 
@@ -191,11 +195,13 @@ Title: "From link to recap." Two columns at ≥ 1024 px: text left (4 of 12 colu
 
 Each pane image has real alt text describing the state, e.g. "Bridge room with four participants; Maya is speaking, Jordan is muted, chat shows three messages."
 
-Between 640 and 1023 px: the pane becomes a sticky band at the top (max 50vh) and the text scrolls beneath it. Under 640 px: no sticky behaviour; each step is text followed by its own capture, stacked, numbered 1 to 3.
+The pane zooms each capture to a crop (`crop` in `content.ts`, in capture pixels) so interface text shows near its real size: Start shows the whole new room, Share the tiles and chat, Recap the content column below the app header, gliding down to the transcript. Step titles are serif at 48 px.
+
+Below 1024 px there is no sticky pane (a band covering half a tablet screen hid the text it described): each step is its text followed by its own capture, wide on tablets and phone-size under 640 px.
 
 ### 4. Outcomes (replaces the six icon cards)
 
-Three statements, no icons. Each row is a `--surface` panel: the serif statement (outcome size) on the left, one line of supporting body text on the right (stacked below 1024 px). Rows, not a card grid.
+Three statements, no icons, no boxes: a typographic row of three columns, each a serif statement (28 px) with its supporting sentence below (stacked below 1024 px).
 
 1. **"Everyone leaves with the same notes."** Ending the call produces a recap of key points and the transcript, kept in history and copyable as Markdown.
 2. **"A host can remove anyone, and the server enforces it."** Removing someone or ending the call is checked by the API, not just hidden in the interface.
@@ -221,6 +227,10 @@ Kept on the dark surface (`--room-bg`) as the page's one change of mood. Title k
 
 Under the figure, a two-column list (one column under 640 px) of engineering detail, each with a link to the file that implements it: WebRTC mesh with perfect negotiation; Socket.IO signalling with an authenticated handshake; sessions (15-minute access tokens, rotating refresh tokens in httpOnly cookies, CSRF check, sign out everywhere); reconnects and second-tab handover; Zod-validated routes with server-side roles; a deterministic rule-based summariser (no external AI). Actions: "Read the architecture notes" (white outline on dark, not rust, so this viewport has no accent action competing with the Verified row) and "Source on GitHub" text link.
 
+### 5b. Decisions: "Why it is built this way."
+
+Three trade-offs, each stated the way it would be in a design review: the decision (serif, 28 px), then **Why.** and **Trade-off.** One `--surface` panel per decision, decision on the left, reasoning on the right. Content: peer-to-peer mesh rather than an SFU; a rule-based recap rather than an LLM; short access tokens with rotating, hashed, replay-checked refresh tokens. Every claim is checked against the code before it ships.
+
 ### 6. Verified
 
 Title: "Verified end to end." One line: "Each flow runs in a real browser against the real API in CI-style Playwright tests." Then one `--surface` panel with a row per test: the flows that test proves (pass glyph in `--success`, `aria-hidden`, with "passing" for screen readers) and the test's title in `<code>`, so each title appears once. The intro sentence links to the spec on GitHub.
@@ -242,7 +252,7 @@ Resolved in build: the missing tests were written (sign-in and reload persistenc
 
 ### 7. Closing call to action
 
-Serif line: "See a call turn into its recap." One accent action: **Try the live demo**. A text link: "or create an account". No icon.
+Serif line: "See a call turn into its recap." One accent action: **Try the live demo**. A text link: "or create an account". Then the builder's line: designed, engineered and tested end to end by Udit Singh Chauhan, with links to GitHub and LinkedIn. No icon.
 
 ### 8. Footer
 

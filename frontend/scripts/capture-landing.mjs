@@ -20,6 +20,8 @@ const OUT = new URL("../public/landing/", import.meta.url).pathname;
 const PASSWORD = "Passw0rd!";
 const DESKTOP = { width: 1280, height: 800 };
 const MOBILE = { width: 390, height: 844 };
+// Recorded at 2x and encoded at 1.5x: sharp on high-density screens, still well under 1 MB.
+const VIDEO = { width: 1920, height: 1200 };
 
 const PEOPLE = {
     host: "Maya Patel",
@@ -217,7 +219,7 @@ async function startScreencast(page, dir) {
         await writeFile(file, Buffer.from(data, "base64"));
         await cdp.send("Page.screencastFrameAck", { sessionId }).catch(() => {});
     });
-    await cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, maxWidth: DESKTOP.width, maxHeight: DESKTOP.height, everyNthFrame: 1 });
+    await cdp.send("Page.startScreencast", { format: "jpeg", quality: 90, maxWidth: DESKTOP.width * 2, maxHeight: DESKTOP.height * 2, everyNthFrame: 1 });
 
     return async () => {
         await cdp.send("Page.stopScreencast");
@@ -239,14 +241,14 @@ async function encode(frames, dir, seconds) {
 
     const input = ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", list, "-t", String(seconds), "-an",
         // Short fades either side of the loop point, so the recap does not cut hard back to the room.
-        "-vf", `scale=${DESKTOP.width}:${DESKTOP.height}:flags=lanczos,fps=30,fade=t=in:st=0:d=0.4,fade=t=out:st=${seconds - 0.5}:d=0.5`];
-    execFileSync("ffmpeg", [...input, "-c:v", "libx264", "-preset", "slow", "-crf", "24", "-pix_fmt", "yuv420p", "-movflags", "+faststart", join(OUT, "hero.mp4")]);
+        "-vf", `scale=${VIDEO.width}:${VIDEO.height}:flags=lanczos,fps=30,fade=t=in:st=0:d=0.4,fade=t=out:st=${seconds - 0.5}:d=0.5`];
+    execFileSync("ffmpeg", [...input, "-c:v", "libx264", "-preset", "slow", "-crf", "27", "-pix_fmt", "yuv420p", "-movflags", "+faststart", join(OUT, "hero.mp4")]);
     execFileSync("ffmpeg", [...input, "-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "36", "-row-mt", "1", join(OUT, "hero.webm")]);
 }
 
 async function captureRecording() {
     const dir = await mkdtemp(join(tmpdir(), "bridge-hero-"));
-    const host = await person("host", { viewport: DESKTOP });
+    const host = await person("host", { viewport: DESKTOP, scale: 2 });
     const meetingId = await startMeeting(host);
     const aarav = await person("aarav");
     const sofia = await person("sofia");

@@ -1,7 +1,3 @@
-.wrap {
-    position: relative;
-}
-
 .media {
     display: block;
     width: 100%;
@@ -11,16 +7,13 @@
 }
 
 .toggle {
-    position: absolute;
-    right: var(--space-3);
-    bottom: var(--space-3);
-    min-width: 64px;
-    height: 32px;
+    min-width: 56px;
+    height: 24px;
     padding: 0 var(--space-3);
     border: 0;
     border-radius: var(--radius-full);
-    background: var(--primary);
-    color: var(--on-primary);
+    background: var(--room-raised);
+    color: var(--room-text);
     font-size: var(--text-sm);
     font-weight: 550;
     cursor: pointer;
@@ -28,17 +21,9 @@
 }
 
 .toggle:hover {
-    background: var(--primary-hover);
+    background: var(--room-hover);
 }
 
-@media (max-width: 639px) {
-    .toggle {
-        right: var(--space-2);
-        bottom: var(--space-2);
-        min-width: 0;
-        min-height: 24px;
-        height: 24px;
-        padding: 0 var(--space-2);
-        font-size: var(--text-xs);
-    }
+.toggle:focus-visible {
+    outline-color: #ff9a5c;
 }

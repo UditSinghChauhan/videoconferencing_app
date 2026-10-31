@@ -158,39 +158,61 @@
     line-height: 1.45;
 }
 
+/* ---------- Facts ---------- */
+
+.facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-10);
+    width: 100%;
+    max-width: 1040px;
+    margin: var(--space-16) 0 0;
+    padding: var(--space-10) var(--space-12);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    text-align: left;
+}
+
+.facts dt {
+    font-family: var(--font-display);
+    font-size: var(--text-5xl);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.facts dd {
+    max-width: 28ch;
+    margin: var(--space-3) 0 0;
+    color: var(--text);
+    font-size: var(--text-md);
+    line-height: 1.5;
+}
+
 /* ---------- Outcomes ---------- */
 
 .outcomes {
     display: grid;
-    gap: var(--space-3);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-12);
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-/* Rows are filled surfaces one tone step off the page, not ruled lines. */
-.outcomes li {
-    display: grid;
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    gap: var(--space-12);
-    align-items: baseline;
-    padding: var(--space-10) var(--space-10);
-    border-radius: var(--radius-lg);
-    background: var(--surface);
-}
-
 .outcomes h3 {
     margin: 0;
     font-family: var(--font-display);
-    font-size: var(--text-3xl);
+    font-size: var(--text-2xl);
     font-weight: 400;
     letter-spacing: -0.01em;
-    line-height: 1.15;
+    line-height: 1.12;
     text-wrap: balance;
 }
 
 .outcomes p {
-    margin: 0;
+    max-width: 34ch;
+    margin: var(--space-4) 0 0;
     color: var(--text);
     font-size: var(--text-md);
     line-height: 1.55;
@@ -297,6 +319,52 @@
     outline-color: #ff9a5c;
 }
 
+/* ---------- Decisions ---------- */
+
+.decisions {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* One panel per decision: the decision set large, then why and what it costs. */
+.decisions li {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: var(--space-12);
+    padding: var(--space-10);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.decisions h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.12;
+    text-wrap: balance;
+}
+
+.decisions p {
+    margin: 0;
+    font-size: var(--text-md);
+    line-height: 1.55;
+}
+
+.decisions p + p {
+    margin-top: var(--space-4);
+    color: var(--text-muted);
+}
+
+.decisions strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
 /* ---------- Verified ---------- */
 
 .verified {
@@ -367,6 +435,20 @@
     margin: 0 auto;
     padding: var(--space-32) var(--space-10);
     text-align: center;
+}
+
+.builder {
+    max-width: 52ch;
+    margin: var(--space-16) 0 0;
+    color: var(--text);
+    font-size: var(--text-md);
+    line-height: 1.6;
+}
+
+.builder a {
+    color: var(--text);
+    font-weight: 550;
+    text-underline-offset: 3px;
 }
 
 .closingTitle {
@@ -445,9 +527,23 @@
         padding-bottom: var(--space-24);
     }
 
-    .outcomes li {
+    .outcomes {
         grid-template-columns: 1fr;
-        gap: var(--space-3);
+        gap: var(--space-10);
+    }
+
+    .decisions li {
+        grid-template-columns: 1fr;
+        gap: var(--space-5);
+    }
+
+    .facts {
+        gap: var(--space-6);
+        padding: var(--space-8);
+    }
+
+    .facts dt {
+        font-size: var(--text-4xl);
     }
 
     .verifiedGroup {
@@ -509,7 +605,21 @@
     }
 
     .sectionTitle,
-    .closingTitle {
+    .builder {
+    max-width: 52ch;
+    margin: var(--space-16) 0 0;
+    color: var(--text);
+    font-size: var(--text-md);
+    line-height: 1.6;
+}
+
+.builder a {
+    color: var(--text);
+    font-weight: 550;
+    text-underline-offset: 3px;
+}
+
+.closingTitle {
         font-size: var(--text-3xl);
     }
 
@@ -521,8 +631,18 @@
         font-size: var(--text-2xl);
     }
 
-    .outcomes li {
+    .decisions li {
         padding: var(--space-6);
+    }
+
+    .facts {
+        grid-template-columns: 1fr;
+        margin-top: var(--space-10);
+        padding: var(--space-6);
+    }
+
+    .facts dt {
+        font-size: var(--text-4xl);
     }
 
     .verified {

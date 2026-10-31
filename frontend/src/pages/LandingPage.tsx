@@ -5,9 +5,8 @@ import { useAuth } from "../auth/AuthContext";
 import { ButtonLink } from "../components/Button";
 import { GithubIcon } from "../components/GithubIcon";
 import { Logo } from "../components/Logo";
-import { AppFrame } from "../features/landing/AppFrame";
 import { ArchitectureFigure } from "../features/landing/ArchitectureFigure";
-import { E2E_SPEC_PATH, ENGINEERING, OUTCOMES, VERIFIED } from "../features/landing/content";
+import { DECISIONS, E2E_SPEC_PATH, ENGINEERING, FACTS, OUTCOMES, VERIFIED } from "../features/landing/content";
 import { HeroRecording } from "../features/landing/HeroRecording";
 import { Walkthrough } from "../features/landing/Walkthrough";
 import { wakeServer } from "../lib/api";
@@ -42,6 +41,7 @@ export default function LandingPage() {
                     <nav className={styles.navLinks} aria-label="Sections">
                         <a href="#walkthrough">Walkthrough</a>
                         <a href="#engineering">Engineering</a>
+                        <a href="#decisions">Decisions</a>
                         <a href="#verified">Verified</a>
                     </nav>
                     <div className={styles.navActions}>
@@ -70,13 +70,20 @@ export default function LandingPage() {
                     <p className={styles.heroNote}>The demo needs no account and runs in your browser.</p>
 
                     <figure className={styles.heroFigure}>
-                        <AppFrame address="bridgefrontend.onrender.com">
-                            <HeroRecording />
-                        </AppFrame>
+                        <HeroRecording address="bridgefrontend.onrender.com" />
                         <figcaption>
                             Recorded from the running app: four people, one call, and the recap the server writes when the host ends it. No external AI.
                         </figcaption>
                     </figure>
+
+                    <dl className={styles.facts}>
+                        {FACTS.map((fact) => (
+                            <div key={fact.value + fact.label}>
+                                <dt>{fact.value}</dt>
+                                <dd>{fact.label}</dd>
+                            </div>
+                        ))}
+                    </dl>
                 </section>
 
                 <section id="walkthrough" className={styles.section} aria-labelledby="walkthrough-title">
@@ -135,6 +142,26 @@ export default function LandingPage() {
                     </div>
                 </section>
 
+                <section id="decisions" className={styles.section} aria-labelledby="decisions-title">
+                    <div className={styles.intro}>
+                        <h2 id="decisions-title" className={styles.sectionTitle}>Why it is built this way.</h2>
+                        <p className={styles.sectionLede}>
+                            Three decisions that shape Bridge, each with the reason for it and what it costs.
+                        </p>
+                    </div>
+                    <ol className={styles.decisions}>
+                        {DECISIONS.map((item) => (
+                            <li key={item.decision}>
+                                <h3>{item.decision}</h3>
+                                <div>
+                                    <p><strong>Why.</strong> {item.why}</p>
+                                    <p><strong>Trade-off.</strong> {item.cost}</p>
+                                </div>
+                            </li>
+                        ))}
+                    </ol>
+                </section>
+
                 <section id="verified" className={styles.section} aria-labelledby="verified-title">
                     <div className={styles.intro}>
                         <h2 id="verified-title" className={styles.sectionTitle}>Tested end to end.</h2>
@@ -175,6 +202,12 @@ export default function LandingPage() {
                     </div>
                     <p className={styles.heroNote}>
                         Or <Link to={startHref}>{signedIn ? "go to your meetings" : "create an account"}</Link> and host a real one.
+                    </p>
+                    <p className={styles.builder}>
+                        Bridge was designed, engineered and tested end to end by{" "}
+                        <a href={AUTHOR_URL} target="_blank" rel="noreferrer">Udit Singh Chauhan</a>: product, interface, realtime
+                        backend and the test suite.{" "}
+                        <a href={LINKEDIN_URL} target="_blank" rel="noreferrer">Get in touch on LinkedIn</a>.
                     </p>
                 </section>
             </main>

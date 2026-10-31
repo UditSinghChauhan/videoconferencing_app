@@ -7,6 +7,11 @@ export interface WalkthroughStep {
     title: string;
     body: string;
     image: { desktop: string; mobile: string; alt: string; desktopHeight: number; mobileHeight: number };
+    /**
+     * The part of the 1280 px-wide desktop capture the pane shows, in capture
+     * pixels, so interface text stays near its real size instead of shrinking.
+     */
+    crop: { x: number; y?: number; width: number };
 }
 
 export const WALKTHROUGH: WalkthroughStep[] = [
@@ -20,7 +25,8 @@ export const WALKTHROUGH: WalkthroughStep[] = [
             desktopHeight: 1600,
             mobileHeight: 1688,
             alt: "A new Bridge room with only the host, Maya Patel, and the invite link just copied."
-        }
+        },
+        crop: { x: 0, width: 1280 }
     },
     {
         id: "share",
@@ -32,7 +38,8 @@ export const WALKTHROUGH: WalkthroughStep[] = [
             desktopHeight: 1600,
             mobileHeight: 1688,
             alt: "The same room with four people. Jordan Lee is muted, and the chat shows messages about the release checklist and Thursday's deadline."
-        }
+        },
+        crop: { x: 460, width: 820 }
     },
     {
         id: "recap",
@@ -44,7 +51,36 @@ export const WALKTHROUGH: WalkthroughStep[] = [
             desktopHeight: 3050,
             mobileHeight: 4326,
             alt: "The meeting recap: three key points taken from the chat, who was there, topics such as release and onboarding, and the five-message transcript."
-        }
+        },
+        crop: { x: 230, y: 64, width: 820 }
+    }
+];
+
+/** The capture width every crop above is measured against. */
+export const CAPTURE_WIDTH = 1280;
+
+export interface Decision {
+    decision: string;
+    why: string;
+    cost: string;
+}
+
+/** The trade-offs behind the build, stated the way they would be in a design review. */
+export const DECISIONS: Decision[] = [
+    {
+        decision: "A peer-to-peer mesh, not a media server.",
+        why: "Small rooms get the lowest latency, and the server never pays for media: it only authenticates, relays signalling and keeps the record.",
+        cost: "Each person uploads a stream to everyone else, so rooms top out at about six. Past that, the same signalling would front an SFU."
+    },
+    {
+        decision: "A rule-based recap, not an LLM.",
+        why: "The same call always produces the same notes, nothing leaves the server, it costs nothing per meeting, and it is tested like any other function.",
+        cost: "It selects sentences rather than writing a summary. An LLM summary is the next step, behind the same recap interface."
+    },
+    {
+        decision: "Short access tokens and rotating refresh tokens.",
+        why: "A leaked access token is useful for 15 minutes. Refresh tokens live in httpOnly cookies, are stored only as hashes, rotate on every use, and a replayed one is rejected.",
+        cost: "Rotation turns two refreshes racing in one tab into a false replay, so the client shares a single refresh request between every caller."
     }
 ];
 
@@ -98,4 +134,13 @@ export const VERIFIED: VerifiedFlow[] = [
     { flow: "Only the host can remove people", test: LIFECYCLE, step: "expect(forbidden.status()).toBe(403);" },
     { flow: "End the meeting and open its recap", test: LIFECYCLE, step: "// Host ends the meeting and lands on the recap." },
     { flow: "Outsiders get a 403 on a recap", test: "people outside a meeting cannot read its recap, and unknown codes are explained", step: "expect((await summaryResponse).status()).toBe(403);" }
+];
+
+/** Facts under the hero. Each is measured or structural, never a vanity number. */
+export const FACTS = [
+    // Measured locally with scripts/measure-wake.mjs: confirm End -> key points visible.
+    { value: "0.4 s", label: "from the host pressing End to the recap on screen" },
+    { value: "0 bytes", label: "of audio or video pass through the server: media is peer to peer" },
+    // Counted from VERIFIED, so the number and the list cannot disagree.
+    { value: `${VERIFIED.length} flows`, label: "tested end to end in real browsers, against the real API and database" }
 ];
