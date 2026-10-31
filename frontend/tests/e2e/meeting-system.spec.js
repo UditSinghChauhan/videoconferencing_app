@@ -27,6 +27,18 @@ async function signUp(browser, name) {
 
 const tiles = (page) => page.getByTestId("video-tile");
 
+const API_URL = "http://127.0.0.1:8100/api/v1";
+
+/** Calls the API directly with the access token the signed-in page holds. */
+async function apiAs(page, method, path, data) {
+    const token = await page.evaluate(() => window.localStorage.getItem("token"));
+    return page.request.fetch(`${API_URL}${path}`, {
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+        data
+    });
+}
+
 test.describe("Bridge meeting lifecycle", () => {
     test("two people meet, chat, mute, leave, get removed, and the host ends with a recap", async ({ browser }) => {
         const errors = [];
@@ -85,6 +97,15 @@ test.describe("Bridge meeting lifecycle", () => {
         await guest.page.getByTestId("join-meeting-button").click();
         await expect(tiles(host.page)).toHaveCount(2);
 
+        // A participant gets no remove control, and the API refuses them anyway.
+        await guest.page.getByRole("button", { name: /People/ }).click();
+        await expect(guest.page.getByTestId("participant-roster")).toContainText("Hannah Host");
+        await expect(guest.page.getByRole("button", { name: /^Remove / })).toHaveCount(0);
+        const meeting = await (await apiAs(guest.page, "GET", `/meetings/${meetingId}`)).json();
+        const hostUserId = meeting.data.meeting.participants.find((p) => p.role === "host").userId;
+        const forbidden = await apiAs(guest.page, "POST", `/meetings/${meetingId}/remove-participant`, { participantUserId: hostUserId });
+        expect(forbidden.status()).toBe(403);
+
         // Only the host can remove people.
         await host.page.getByRole("button", { name: /People/ }).click();
         await host.page.getByRole("button", { name: "Remove Gabe Guest from the call" }).click();
@@ -125,7 +146,9 @@ test.describe("Bridge meeting lifecycle", () => {
         await expect(host.page.getByRole("heading", { name: "Meeting recap" })).toBeVisible();
 
         const outsider = await signUp(browser, "Oscar Outsider");
+        const summaryResponse = outsider.page.waitForResponse((response) => response.url().endsWith(`/meetings/${meetingId}/summary`));
         await outsider.page.goto(`/meetings/${meetingId}`);
+        expect((await summaryResponse).status()).toBe(403);
         await expect(outsider.page.getByRole("heading", { name: "Recap not available" })).toBeVisible();
 
         await outsider.page.goto("/room/zzz-zzzz-zzz");
@@ -133,6 +156,27 @@ test.describe("Bridge meeting lifecycle", () => {
 
         await host.context.close();
         await outsider.context.close();
+    });
+
+    test("a returning user signs in and stays signed in after a reload", async ({ browser }) => {
+        const first = await signUp(browser, "Rita Returning");
+        await first.context.close();
+
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        await page.goto("/auth");
+        await page.getByLabel("Username").fill(first.username);
+        await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
+        await page.getByRole("button", { name: "Sign in" }).click();
+        await expect(page).toHaveURL(/\/home$/);
+        await expect(page.getByText(/Rita/).first()).toBeVisible();
+
+        await page.reload();
+        await expect(page).toHaveURL(/\/home$/);
+        await expect(page.getByTestId("new-meeting-button")).toBeVisible();
+        await expect(page.getByText(/Rita/).first()).toBeVisible();
+
+        await context.close();
     });
 
     test("protected pages send visitors to sign in with a return path and validate input", async ({ page }) => {
@@ -153,6 +197,8 @@ test.describe("Bridge meeting lifecycle", () => {
         await expect(page.getByTestId("chat-log")).toContainText("Hello team");
         await page.getByTestId("leave-button").click();
         await page.getByTestId("confirm-end-meeting").click();
-        await expect(page.getByRole("heading", { name: "That's the demo" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Meeting recap" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Key points" })).toBeVisible();
+        await expect(page.getByTestId("recap")).toContainText("Hello team");
     });
 });

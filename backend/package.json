@@ -9,7 +9,8 @@
     "start": "node src/app.js",
     "prod": "pm2 start src/app.js",
     "test": "node --test tests/*.test.js tests/integration/*.test.js",
-    "test:unit": "node --test tests/*.test.js"
+    "test:unit": "node --test tests/*.test.js",
+    "db:memory": "node scripts/memory-mongo.js"
   },
   "author": "Udit Singh",
   "license": "ISC",
