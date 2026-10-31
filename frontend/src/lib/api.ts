@@ -24,7 +24,9 @@ interface AuthPayload {
 const http = axios.create({
     baseURL: `${API_BASE_URL}/api/v1`,
     withCredentials: true,
-    timeout: 20_000
+    // The API runs on a free instance that sleeps when idle; a cold start was
+    // measured at about 23 s, so a 20 s timeout failed the first request.
+    timeout: 60_000
 });
 
 const AUTH_ENDPOINTS = ["/users/login", "/users/register", "/users/refresh", "/users/logout"];
@@ -89,6 +91,26 @@ http.interceptors.response.use(undefined, async (error: AxiosError<ErrorEnvelope
     config.headers = { ...config.headers, Authorization: `Bearer ${token}` };
     return http(config);
 });
+
+let wakeRequest: Promise<void> | null = null;
+
+/**
+ * Fire-and-forget health check so a sleeping API starts booting while the
+ * visitor is still reading the landing page. Runs at most once per page load.
+ */
+export const wakeServer = (): Promise<void> => {
+    if (!wakeRequest) {
+        wakeRequest = http
+            .get("/health", { timeout: 90_000 })
+            .then(() => undefined)
+            .catch((error: unknown) => {
+                // Not user-facing: the real request will surface its own error.
+                console.warn("Bridge API wake-up check failed", error instanceof Error ? error.message : error);
+            });
+    }
+
+    return wakeRequest;
+};
 
 const unwrap = <T>(promise: Promise<{ data: Envelope<T> }>): Promise<T> => promise.then(({ data }) => data.data);
 
