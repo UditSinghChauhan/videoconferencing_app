@@ -120,7 +120,13 @@ export function RoomView(props: RoomViewProps) {
                 <div className={styles.identity}>
                     <LogoMark size={24} />
                     <h1 className={styles.code}>{props.meetingId}</h1>
-                    <button type="button" className={styles.copyLink} onClick={copyInvite}>
+                    <button
+                        type="button"
+                        className={styles.copyLink}
+                        onClick={copyInvite}
+                        // The visible text is hidden on small screens; keep a name for screen readers.
+                        aria-label={copied ? "Invite link copied" : "Copy invite link"}
+                    >
                         {copied ? <Check size={14} aria-hidden="true" /> : <Link2 size={14} aria-hidden="true" />}
                         <span>{copied ? "Copied" : "Copy invite"}</span>
                     </button>

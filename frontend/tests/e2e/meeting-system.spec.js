@@ -201,4 +201,23 @@ test.describe("Bridge meeting lifecycle", () => {
         await expect(page.getByRole("heading", { name: "Key points" })).toBeVisible();
         await expect(page.getByTestId("recap")).toContainText("Hello team");
     });
+
+    test("the room grid reflows when the window narrows", async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 800 });
+        await page.goto("/demo");
+        await page.getByTestId("join-meeting-button").click();
+        await expect(tiles(page)).toHaveCount(4);
+
+        // One tile alone is wider than a phone screen, which is what used to stick.
+        await page.getByRole("button", { name: /People/ }).click();
+        for (const name of ["Maya Patel", "Jordan Lee", "Aarav Mehta"]) {
+            await page.getByRole("button", { name: `Remove ${name} from the call` }).click();
+        }
+        await expect(tiles(page)).toHaveCount(1);
+        await page.getByRole("button", { name: "Close people" }).click();
+
+        await page.setViewportSize({ width: 390, height: 844 });
+        await expect.poll(() => tiles(page).first().evaluate((tile) => tile.getBoundingClientRect().right)).toBeLessThanOrEqual(390);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+    });
 });
