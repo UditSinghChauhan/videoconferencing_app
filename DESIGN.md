@@ -84,10 +84,11 @@ Identity carried over from the app: warm off-white `--bg`, Instrument Serif head
 
 ## Rules
 
-1. **One accent action per viewport.** At any scroll position at most one rust-filled button is visible. Other actions are ink-outline (`secondary`) or text links.
-2. **No decorative icons, no decorative gradients.** An icon appears only when it carries meaning (the GitHub mark on an outbound link, the pass mark in Verified). Shadows are the existing `--shadow-*` scale.
-3. **Every product image is a capture of the running app**, saved as a file in `frontend/public/landing/`, sized, `loading="lazy"` below the fold, with `width`/`height` set to stop layout shift. Captures are re-taken by script (`frontend/scripts/capture-landing.mjs`, added in build) so they never drift from the product.
-4. **Claims are checkable.** Every outcome statement and every Verified item links or maps to code or a test that exists.
+1. **One accent action per viewport.** At any scroll position at most one rust-filled button is visible. Other actions are outline (`secondary`) or text links.
+2. **No eyebrows, no hairline dividers, no shadows at rest.** Sections open with their heading. Surfaces are separated by a tone step (`--surface` panels on `--bg`), never a 1 px rule. The app-window frame is defined by its dark fill, not a shadow. Monospace only for literal code (file names, test titles).
+3. **No decorative icons, no decorative gradients.** An icon appears only when it carries meaning (the GitHub mark on an outbound link, the pass mark in Verified). Shadows are the existing `--shadow-*` scale.
+4. **Every product image is a capture of the running app**, saved as a file in `frontend/public/landing/`, sized, `loading="lazy"` below the fold, with `width`/`height` set to stop layout shift. Captures are re-taken by script (`frontend/scripts/capture-landing.mjs`, added in build) so they never drift from the product.
+5. **Claims are checkable.** Every engineering note links to the file that does it, and every Verified flow names its Playwright test. `src/features/landing/content.test.ts` fails the build if a test title, a step inside it, or a linked file stops existing.
 
 ## Colour (landing)
 
@@ -166,22 +167,21 @@ Only transform and opacity animate, except button and step text colour. Under `p
 
 ### 1. Navigation
 
-Logo left. Links: Walkthrough, Engineering, Verified (anchors). Right: "Sign in" text link and "GitHub" text link with the GitHub mark. No filled button in the nav, so the hero's accent action is the only one in the first viewport.
+Logo left. Links: Walkthrough, Engineering, Verified (anchors; hidden under 768 px). Right: "Sign in" text link and "GitHub" text link with the GitHub mark. Solid `--bg`, no border, no blur. No filled button in the nav, so the hero's accent action is the only one in the first viewport.
 
 ### 2. Hero (first viewport)
 
 Centred, one column at every width.
 
-- Eyebrow: "Video calls for small teams" (rust text).
 - h1: "Meetings that end with a *recap*." (kept; italic rust "recap").
-- One support line, max 34ch: "Start a call, share the link, talk. When the host ends it, everyone gets the key points and the full transcript."
+- One support line, max 34ch, in full ink: "Video calls for small teams. When the host ends one, everyone gets the key points and the full transcript."
 - Two actions: **Try the live demo** (rust, the accent action; goes to `/demo`, no account) and **Start a meeting** (ink outline; signed in → `/home`, otherwise `/auth?mode=signup`). The demo is first because it needs nothing from the visitor.
-- Below, centred app-window frame (ToDesktop framing) holding the **20 s muted loop**: a live four-person room, the host presses End, the recap page appears with key points and transcript. The poster frame, and the reduced-motion image, is the finished recap, so a still visitor still sees the outcome. Caption under the frame in 14 px muted: "Recorded from the running app. The recap is built on the server from the chat and activity log, no external AI."
+- Below, centred app-window frame (ToDesktop framing) holding the **20 s muted loop**, cut so the recap dominates: 0–5 s the last two messages of a live four-person call and the host pressing End; 5–20 s the recap page, holding on the key points, then gliding to the transcript. A visible Pause control (WCAG 2.2.2); the loop also pauses off screen. The poster frame, and the reduced-motion image, is the finished recap, so a still visitor still sees the outcome. Caption under the frame in 14 px muted: "Recorded from the running app. The recap is built on the server from the chat and activity log, no external AI."
 - At 1280 × 800 the headline, support line, both actions and the top 40 % of the frame (enough to see the recap heading) are above the fold. At 375 × 812 the frame starts above the fold.
 
 ### 3. Walkthrough: Start, Share, Recap
 
-Title: "From link to recap." Two columns at ≥ 1024 px: text left (5 of 12 columns), sticky product pane right (7 of 12), pane `position: sticky; top: 96px`. Each step is one block of text about 70vh tall so scrolling advances one step at a time. The active step is `--text` with a 2 px rust rule at its left; inactive steps use `--text-muted` (5.98:1, so they stay readable). Colour, not opacity, marks the active step, because 0.45 opacity on ink would fall below 4.5:1.
+Title: "From link to recap." Two columns at ≥ 1024 px: text left (4 of 12 columns), sticky product pane right (8 of 12), pane `position: sticky; top: 96px`. Each step is one block of text about 70vh tall so scrolling advances one step at a time. The active step is `--text` with a 2 px rust rule at its left; inactive steps use `--text-muted` (5.98:1, so they stay readable). Colour, not opacity, marks the active step, because 0.45 opacity on ink would fall below 4.5:1.
 
 | Step | Text (left) | Product state (right pane, a capture) |
 |---|---|---|
@@ -195,7 +195,7 @@ Between 640 and 1023 px: the pane becomes a sticky band at the top (max 50vh) an
 
 ### 4. Outcomes (replaces the six icon cards)
 
-Three statements, no icons, no cards. Each is a serif statement (outcome size) with one line of supporting body text underneath, laid out as three rows separated by hairlines (one column at every width; it reads as a list, not a grid).
+Three statements, no icons. Each row is a `--surface` panel: the serif statement (outcome size) on the left, one line of supporting body text on the right (stacked below 1024 px). Rows, not a card grid.
 
 1. **"Everyone leaves with the same notes."** Ending the call produces a recap of key points and the transcript, kept in history and copyable as Markdown.
 2. **"A host can remove anyone, and the server enforces it."** Removing someone or ending the call is checked by the API, not just hidden in the interface.
@@ -223,7 +223,7 @@ Under the figure, a two-column list (one column under 640 px) of engineering det
 
 ### 6. Verified
 
-Title: "Verified end to end." One line: "Each flow runs in a real browser against the real API in CI-style Playwright tests." Then a list of rows, each: pass glyph (meaningful icon, `--success`, `aria-hidden` with the word "Passing" for screen readers), flow name, and the test it maps to as a mono link to the line in GitHub.
+Title: "Verified end to end." One line: "Each flow runs in a real browser against the real API in CI-style Playwright tests." Then one `--surface` panel with a row per test: the flows that test proves (pass glyph in `--success`, `aria-hidden`, with "passing" for screen readers) and the test's title in `<code>`, so each title appears once. The intro sentence links to the spec on GitHub.
 
 Flows requested, and what exists today in `frontend/tests/e2e/meeting-system.spec.js` (as of `master` `fe317a5`):
 
@@ -238,7 +238,7 @@ Flows requested, and what exists today in `frontend/tests/e2e/meeting-system.spe
 | End meeting and summary | same test, ends and lands on the recap with Key points | exists |
 | 403 on unauthorised summary access | "people outside a meeting cannot read its recap" asserts the UI message, not the HTTP status | **partial** |
 
-The row only shows items that match a test. Build phase either adds the three missing or partial tests (login, reload persistence, and an assertion on the `403` response) or drops those rows. See open decisions.
+Resolved in build: the missing tests were written (sign-in and reload persistence; a participant's remove call asserted as `403`; the outsider's recap request asserted as HTTP `403`).
 
 ### 7. Closing call to action
 

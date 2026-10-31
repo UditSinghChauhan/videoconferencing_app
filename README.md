@@ -2,18 +2,18 @@
 
 Bridge is a real-time video collaboration platform built for fast meetings, secure authentication, live participant sync, and persistent meeting insights. It combines a React frontend, an Express + MongoDB backend, Socket.IO for live coordination, and browser-level Playwright coverage for the full meeting lifecycle.
 
-![Bridge Landing Page](docs/bridge-landing.png)
+![Bridge landing page: the headline, the live demo action, and a recorded call ending in its recap](docs/screenshots/bridge-landing/after-1280-fold.png)
 
 ![Bridge Meeting Room — Live room with participants, chat, and controls](docs/bridge-meeting-room.png)
 
 ## Live Links
 
 - App: [bridgefrontend.onrender.com](https://bridgefrontend.onrender.com)
-- Live Demo (no sign-up needed): [bridgefrontend.onrender.com/demo](https://bridgefrontend.onrender.com/demo)
+- Live Demo (no sign-up needed, ends in a real recap): [bridgefrontend.onrender.com/demo](https://bridgefrontend.onrender.com/demo)
 - Repository: [github.com/UditSinghChauhan/videoconferencing_app](https://github.com/UditSinghChauhan/videoconferencing_app)
 
 > [!NOTE] 
-> The backend is hosted on a free tier instance. The initial login or meeting creation might take ~50 seconds to wake up from sleep if it has not been used recently.
+> The backend is hosted on a free tier instance and sleeps when idle; a cold start was measured at about 23 seconds. The landing page starts waking it in the background, and the sign-in form shows a live "waking the server" status instead of a blank wait. The demo needs no backend.
 
 ## Key Features
 
@@ -88,16 +88,25 @@ Real-Time Layer:
 
 Bridge now includes both API-level certification work and browser-level E2E validation.
 
-- Playwright end-to-end coverage includes:
-  - Register and login flow
-  - Session persistence after refresh
-  - Meeting create and join flow
-  - Real-time chat and leave/rejoin flow
-  - Host vs participant permission enforcement
-  - Host participant removal flow
-  - Meeting end and summary redirect
-  - Summary persistence
-  - Unauthorized summary access returning `403`
+- Playwright end-to-end coverage (`frontend/tests/e2e/`) includes:
+  - Register, sign in, and stay signed in after a reload
+  - Meeting create and join by invite link
+  - Real-time chat, mute, and leave/rejoin
+  - Host-only removal: a participant has no remove control and the API returns `403`
+  - Meeting end and redirect to the recap, which both people can open from history
+  - Unauthorized recap access returning `403`
+  - The public demo, which ends in a recap built by the same rules as the server
+  - The room grid reflowing when the window narrows
+  - Axe WCAG 2.1 AA checks on the landing, auth, demo and not-found pages
+
+The landing page's "Verified" list is checked against these tests by a unit test, so it cannot
+claim a flow that is not covered.
+
+To run the suite without a local MongoDB, start a throwaway in-memory one first:
+
+```bash
+cd backend && npm run db:memory
+```
 
 Run E2E tests from `frontend/`:
 
