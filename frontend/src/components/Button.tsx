@@ -3,7 +3,8 @@ import { Link, type LinkProps } from "react-router-dom";
 import styles from "./Button.module.css";
 import { Spinner } from "./Spinner";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+/** `accent` is for the landing page's one highlighted action; the app uses ink `primary`. */
+type Variant = "primary" | "accent" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 interface StyleProps {

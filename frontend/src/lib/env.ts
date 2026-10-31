@@ -6,3 +6,4 @@ export const API_BASE_URL = (configured || (import.meta.env.PROD ? window.locati
 
 export const REPOSITORY_URL = "https://github.com/UditSinghChauhan/videoconferencing_app";
 export const AUTHOR_URL = "https://github.com/UditSinghChauhan";
+export const LINKEDIN_URL = "https://www.linkedin.com/in/udit-singh-31382137a/";

@@ -262,39 +262,42 @@ async function captureRecording() {
     await openChat(host);
     await settle(host.page);
 
-    // 20 s: five messages arrive (~9 s), the host ends the call (~3 s), the recap
-    // appears and scrolls to the key points and transcript (~8 s).
-    const stop = await startScreencast(host.page, dir);
-    await sleep(800);
+    // The call is already under way when the clip starts, so the recap carries
+    // the 20 s: two last messages (~3 s), the host ends the call (~3 s), then
+    // the recap holds, scrolls to the transcript and holds again (~14 s).
     const speakers = { host, aarav, sofia, jordan };
-    for (const [key, text] of CHAT) {
-        if (key === "host") {
-            await say(host, text);
-            await settle(host.page);
-        } else {
-            await say(speakers[key], text);
-        }
-        await sleep(1900);
+    for (const [key, text] of CHAT.slice(0, 3)) {
+        await say(speakers[key], text);
+        await sleep(300);
+    }
+    await settle(host.page);
+    await sleep(1000);
+
+    const stop = await startScreencast(host.page, dir);
+    await sleep(600);
+    for (const [key, text] of CHAT.slice(3)) {
+        await say(speakers[key], text);
+        if (key === "host") await settle(host.page);
+        await sleep(1400);
     }
     await host.page.getByTestId("leave-button").hover();
-    await sleep(500);
+    await sleep(400);
     await host.page.getByTestId("leave-button").click();
-    await sleep(1200);
+    await sleep(1100);
     await host.page.getByTestId("confirm-end-meeting").click();
     await host.page.getByRole("heading", { name: "Meeting recap" }).waitFor();
-    await settle(host.page);
-    await sleep(2500);
     await host.page.locator("details summary").click();
     await host.page.evaluate(() => window.scrollTo(0, 0));
     await settle(host.page);
+    await sleep(4500);
     // Scroll in small steps: the screencast drops frames during native smooth scroll.
     const distance = await host.page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
-    for (let step = 1; step <= 60; step += 1) {
-        const eased = 1 - (1 - step / 60) ** 3;
+    for (let step = 1; step <= 70; step += 1) {
+        const eased = 1 - (1 - step / 70) ** 3;
         await host.page.evaluate((top) => window.scrollTo(0, top), Math.round(distance * eased));
         await sleep(50);
     }
-    await sleep(2500);
+    await sleep(4000);
     const frames = await stop();
 
     for (const p of [host, aarav, sofia, jordan]) await p.context.close();

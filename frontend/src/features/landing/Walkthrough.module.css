@@ -1,0 +1,207 @@
+.layout {
+    display: grid;
+    grid-template-columns: 4fr 8fr;
+    gap: var(--space-12);
+    align-items: start;
+}
+
+.steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Each step is tall enough that scrolling advances one step at a time. */
+.step {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 70vh;
+    padding-left: var(--space-8);
+}
+
+.step::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: calc(50% - 64px);
+    width: 2px;
+    height: 128px;
+    border-radius: 2px;
+    background: var(--accent-text);
+    transform: scaleY(0);
+    transition: transform var(--duration) var(--ease);
+}
+
+.step[data-active]::before {
+    transform: scaleY(1);
+}
+
+.number {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.title {
+    margin: var(--space-2) 0 var(--space-3);
+    color: var(--text-muted);
+    font-size: var(--text-xl);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    transition: color var(--duration) var(--ease);
+}
+
+.body {
+    max-width: 40ch;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--text-md);
+    line-height: 1.55;
+}
+
+.step[data-active] .title {
+    color: var(--text);
+}
+
+.inlineShot {
+    display: none;
+}
+
+.paneColumn {
+    position: sticky;
+    top: calc(50vh - 280px);
+}
+
+.viewport {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--room-bg);
+}
+
+.paneShot {
+    position: absolute;
+    inset: 0 0 auto 0;
+    width: 100%;
+    height: auto;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 240ms var(--ease), transform 240ms var(--ease);
+}
+
+.paneShot[data-active] {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* The recap is a long page: once it is in view, glide down to the transcript. */
+.paneShot[data-step="recap"][data-active] {
+    animation: read-recap 7s var(--ease) 900ms forwards;
+}
+
+@keyframes read-recap {
+    from { transform: translateY(0); }
+    to { transform: translateY(-47.5%); }
+}
+
+/* 640 to 1023 px: one column, the pane sticks as a band above the text. */
+@media (max-width: 1023px) {
+    .layout {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .paneColumn {
+        grid-row: 1;
+        top: 64px;
+        z-index: 1;
+        width: 100%;
+        padding: var(--space-4) 0;
+        background: var(--bg);
+    }
+
+    .pane {
+        max-width: 640px;
+        margin: 0 auto;
+    }
+
+    .step {
+        min-height: 60vh;
+    }
+}
+
+/* Under 640 px: stacked steps, each with its own phone capture. No sticky pane. */
+@media (max-width: 639px) {
+    .paneColumn {
+        display: none;
+    }
+
+    .step {
+        min-height: 0;
+        padding: 0 0 var(--space-16);
+    }
+
+    .step::before {
+        display: none;
+    }
+
+    .title,
+    .body {
+        color: var(--text);
+    }
+
+    .body {
+        color: var(--text-muted);
+    }
+
+    .number {
+        display: inline-grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-full);
+        color: var(--text);
+    }
+
+    .inlineShot {
+        display: block;
+        overflow: hidden;
+        max-width: 320px;
+        max-height: 600px;
+        margin-top: var(--space-6);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        background: var(--room-bg);
+        box-shadow: var(--shadow-md);
+    }
+
+    .inlineShot img {
+        width: 100%;
+        height: auto;
+    }
+
+    .inlineShot[data-step="recap"] {
+        background: var(--bg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .paneShot,
+    .step::before,
+    .title {
+        transition: none;
+    }
+
+    .paneShot {
+        transform: none;
+    }
+
+    .paneShot[data-step="recap"][data-active] {
+        animation: none;
+    }
+}
