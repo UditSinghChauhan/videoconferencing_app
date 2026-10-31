@@ -18,12 +18,32 @@ import {
 const REFRESH_COOKIE_NAME = "refreshToken";
 const REFRESH_COOKIE_MAX_AGE_MS = Number(process.env.JWT_REFRESH_COOKIE_MAX_AGE_MS || 7 * 24 * 60 * 60 * 1000);
 
-const refreshCookieOptions = {
-    httpOnly: true,
-    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/api/v1/users"
+const SAME_SITE_VALUES = new Set(["strict", "lax", "none"]);
+
+/**
+ * In production the frontend and API are deployed on different sites (for
+ * example two *.onrender.com hosts; onrender.com is on the Public Suffix List,
+ * so they are cross-site). A SameSite=Strict or Lax cookie is never sent on
+ * those cross-site XHRs, which silently breaks token refresh. Production
+ * therefore defaults to SameSite=None; Secure, and the refresh and logout
+ * endpoints stay protected by the per-session CSRF token header.
+ * Same-site deployments can opt back into "strict" via COOKIE_SAME_SITE.
+ */
+const buildRefreshCookieOptions = (env = process.env) => {
+    const isProduction = env.NODE_ENV === "production";
+    const configured = (env.COOKIE_SAME_SITE || "").toLowerCase();
+    const sameSite = SAME_SITE_VALUES.has(configured) ? configured : (isProduction ? "none" : "lax");
+
+    return {
+        httpOnly: true,
+        sameSite,
+        // Browsers reject SameSite=None cookies that are not Secure.
+        secure: isProduction || sameSite === "none",
+        path: "/api/v1/users"
+    };
 };
+
+const refreshCookieOptions = buildRefreshCookieOptions();
 
 const getClientMetadata = (req) => ({
     userAgent: req.get("user-agent") || "unknown",
@@ -258,6 +278,7 @@ const logoutAllUserSessions = async (user) => {
 };
 
 export {
+    buildRefreshCookieOptions,
     clearRefreshTokenCookie,
     loginUser,
     logoutAllUserSessions,
