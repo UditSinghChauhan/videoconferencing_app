@@ -1,0 +1,112 @@
+.hero {
+    margin-bottom: var(--space-12);
+}
+
+.eyebrow {
+    color: var(--text-muted);
+}
+
+.title {
+    max-width: 720px;
+    margin-top: var(--space-2);
+    font-family: var(--font-display);
+    font-size: clamp(2.25rem, 5vw, 3.25rem);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+}
+
+.actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    gap: var(--space-4);
+    margin-top: var(--space-8);
+}
+
+.startCard,
+.joinCard {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.startCard {
+    justify-items: start;
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+}
+
+.startCard p {
+    margin-bottom: var(--space-2);
+    opacity: 0.72;
+    font-size: var(--text-sm);
+}
+
+/* Inverted button inside the ink card. */
+.startCard button {
+    background: var(--on-primary);
+    color: var(--primary);
+}
+
+.startCard button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--on-primary) 88%, var(--primary));
+}
+
+.startCard h2,
+.joinCard h2 {
+    font-size: var(--text-lg);
+}
+
+.joinRow {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.joinRow > div {
+    flex: 1;
+}
+
+.joinRow input {
+    height: 48px;
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+}
+
+.error {
+    font-size: var(--text-sm);
+    color: #ffb3ad;
+}
+
+.section {
+    margin-top: var(--space-10);
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.sectionTitle {
+    margin-bottom: var(--space-4);
+    font-size: var(--text-lg);
+}
+
+.viewAll {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+    .actions {
+        grid-template-columns: 1fr;
+    }
+}
