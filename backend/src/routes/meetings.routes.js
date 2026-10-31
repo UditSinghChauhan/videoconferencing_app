@@ -14,14 +14,14 @@ import { verifyAuthToken } from "../middlewares/auth.js";
 import { meetingRateLimiter } from "../middlewares/rateLimit.js";
 import { validate } from "../middlewares/validate.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { meetingIdSchema, removeParticipantSchema, updateMeetingSettingsSchema } from "../validators/meeting.schemas.js";
+import { createMeetingSchema, meetingIdSchema, removeParticipantSchema, updateMeetingSettingsSchema } from "../validators/meeting.schemas.js";
 
 const router = Router();
 
 router.use(verifyAuthToken, meetingRateLimiter);
 
 router.route("/")
-    .post(validate(meetingIdSchema), asyncHandler(createMeetingController))
+    .post(validate(createMeetingSchema), asyncHandler(createMeetingController))
     .get(asyncHandler(getMeetingHistoryController));
 
 router.route("/:meetingId")

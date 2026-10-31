@@ -7,6 +7,7 @@ import {
     registerSchema
 } from "../src/validators/user.schemas.js";
 import {
+    createMeetingSchema,
     meetingIdSchema,
     removeParticipantSchema,
     updateMeetingSettingsSchema
@@ -37,8 +38,8 @@ test("registerSchema rejects a password without a digit", () => {
     assert.equal(result.success, false);
 });
 
-test("registerSchema rejects a password shorter than six characters", () => {
-    const result = registerSchema.safeParse({ ...validRegistration, password: "Pa1" });
+test("registerSchema rejects a password shorter than eight characters", () => {
+    const result = registerSchema.safeParse({ ...validRegistration, password: "Passw0r" });
 
     assert.equal(result.success, false);
 });
@@ -104,8 +105,29 @@ test("updateMeetingSettingsSchema rejects a non-boolean setting", () => {
     assert.equal(result.success, false);
 });
 
-test("removeParticipantSchema requires a participant user id", () => {
+test("removeParticipantSchema requires a valid participant user id", () => {
     assert.equal(removeParticipantSchema.safeParse({}).success, false);
     assert.equal(removeParticipantSchema.safeParse({ participantUserId: "  " }).success, false);
-    assert.equal(removeParticipantSchema.safeParse({ participantUserId: "user-2" }).success, true);
+    assert.equal(removeParticipantSchema.safeParse({ participantUserId: "user-2" }).success, false);
+    assert.equal(removeParticipantSchema.safeParse({ participantUserId: "507f1f77bcf86cd799439011" }).success, true);
+});
+
+test("registerSchema rejects a username with characters outside letters, digits and underscore", () => {
+    assert.equal(registerSchema.safeParse({ ...validRegistration, username: "alice smith" }).success, false);
+    assert.equal(registerSchema.safeParse({ ...validRegistration, username: "alice_smith" }).success, true);
+});
+
+test("meetingIdSchema rejects path-unsafe characters", () => {
+    for (const meetingId of ["../etc", "room code", "room/1", "room?x=1"]) {
+        assert.equal(meetingIdSchema.safeParse({ meetingId }).success, false, meetingId);
+    }
+});
+
+test("createMeetingSchema allows the code to be omitted", () => {
+    assert.equal(createMeetingSchema.safeParse({}).success, true);
+    assert.equal(createMeetingSchema.safeParse({ meetingId: "design-review" }).success, true);
+});
+
+test("updateMeetingSettingsSchema rejects unknown settings", () => {
+    assert.equal(updateMeetingSettingsSchema.safeParse({ allowChat: true, isAdmin: true }).success, false);
 });
