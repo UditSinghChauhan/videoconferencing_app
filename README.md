@@ -151,7 +151,7 @@ frontend/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22 (pinned in `.node-version`)
 - npm
 - MongoDB connection string
 
