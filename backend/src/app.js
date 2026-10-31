@@ -1,74 +1,65 @@
-import express from "express";
-import { createServer } from "node:http";
-import cors from "cors";
-import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import helmet from "helmet";
-import httpStatus from "http-status";
 import mongoose from "mongoose";
 
-import { connectToSocket } from "./controllers/socketManager.js";
-import { errorHandler, notFoundHandler } from "./middlewares/errorHandler.js";
-import meetingsRoutes from "./routes/meetings.routes.js";
-import userRoutes from "./routes/users.routes.js";
-import { sendSuccess } from "./utils/apiResponse.js";
-import { buildCorsOptions, getAllowedOrigins } from "./utils/cors.js";
+import { createApp } from "./createApp.js";
+import { getAllowedOrigins } from "./utils/cors.js";
 import { logger } from "./utils/logger.js";
 
 dotenv.config();
 
-const app = express();
-const server = createServer(app);
-
-connectToSocket(server);
-
 const PORT = process.env.PORT || 8000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 const MONGODB_URI = process.env.MONGODB_URI;
-const corsOptions = buildCorsOptions();
+const SHUTDOWN_TIMEOUT_MS = 10_000;
 
+const { app, io, server } = createApp();
 app.set("port", PORT);
-app.set("trust proxy", 1);
-app.use(helmet({
-    crossOriginResourcePolicy: false
-}));
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-app.use(cookieParser());
-app.use(express.json({ limit: "40kb" }));
-app.use(express.urlencoded({ limit: "40kb", extended: true }));
 
-app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/meetings", meetingsRoutes);
+let isShuttingDown = false;
 
-app.get("/api/v1/health", (req, res) => {
-    return sendSuccess(res, {
-        statusCode: httpStatus.OK,
-        message: "Server is running",
-        data: {
-            status: "OK"
-        }
-    });
-});
+// Stop accepting connections, let in-flight requests finish, close sockets and
+// the database, then exit. Hosting platforms send SIGTERM on every deploy.
+const shutdown = async (signal, exitCode = 0) => {
+    if (isShuttingDown) {
+        return;
+    }
 
-app.use(notFoundHandler);
-app.use(errorHandler);
+    isShuttingDown = true;
+    logger.info("Shutdown started", { signal });
 
-const shutdown = (signal, error = null) => {
-    logger.error("Process shutdown triggered", {
-        signal,
-        error: error?.message
-    });
+    const forceExit = setTimeout(() => {
+        logger.error("Shutdown timed out, forcing exit", { signal });
+        process.exit(1);
+    }, SHUTDOWN_TIMEOUT_MS);
+    forceExit.unref();
+
+    try {
+        io.close();
+        await new Promise((resolve) => server.close(() => resolve()));
+        await mongoose.connection.close();
+        logger.info("Shutdown complete", { signal });
+    } catch (error) {
+        logger.error("Error during shutdown", { signal, error: error.message });
+        exitCode = 1;
+    }
+
+    process.exit(exitCode);
 };
 
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+
 process.on("unhandledRejection", (reason) => {
-    shutdown("unhandledRejection", reason instanceof Error ? reason : new Error(String(reason)));
-    process.exit(1);
+    logger.error("Unhandled promise rejection", {
+        error: reason instanceof Error ? reason.message : String(reason),
+        stack: reason instanceof Error ? reason.stack : undefined
+    });
+    shutdown("unhandledRejection", 1);
 });
 
 process.on("uncaughtException", (error) => {
-    shutdown("uncaughtException", error);
-    process.exit(1);
+    logger.error("Uncaught exception", { error: error.message, stack: error.stack });
+    shutdown("uncaughtException", 1);
 });
 
 const start = async () => {

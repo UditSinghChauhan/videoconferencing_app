@@ -1,14 +1,15 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "type": "module", 
+  "description": "Bridge API: auth, meetings and realtime signalling",
+  "main": "src/app.js",
+  "type": "module",
   "scripts": {
     "dev": "nodemon src/app.js",
     "start": "node src/app.js",
     "prod": "pm2 start src/app.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js tests/integration/*.test.js",
+    "test:unit": "node --test tests/*.test.js"
   },
   "author": "Udit Singh",
   "license": "ISC",
@@ -20,7 +21,7 @@
     "express": "^4.18.2",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.1.0",
-    "http-status": "^1.7.3", 
+    "http-status": "^1.7.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.3",
     "socket.io": "^4.7.3",
@@ -28,6 +29,12 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "mongodb-memory-server": "^11.3.0",
+    "nodemon": "^3.0.2",
+    "socket.io-client": "^4.8.4",
+    "supertest": "^7.3.1"
+  },
+  "engines": {
+    "node": ">=18.18"
   }
 }
