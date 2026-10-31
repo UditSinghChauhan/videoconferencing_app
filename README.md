@@ -1,260 +1,144 @@
 # Bridge
 
-Bridge is a real-time video collaboration platform built for fast meetings, secure authentication, live participant sync, and persistent meeting insights. It combines a React frontend, an Express + MongoDB backend, Socket.IO for live coordination, and browser-level Playwright coverage for the full meeting lifecycle.
+**Video meetings that end with a recap.** Start a call in one click, share the link, talk. When the host ends the call, Bridge gives everyone the key points, a timeline, topics and the chat transcript, with no notetaker and nothing to install.
 
-![Bridge Landing Page](docs/bridge-landing.png)
+[![CI](https://github.com/UditSinghChauhan/videoconferencing_app/actions/workflows/ci.yml/badge.svg)](https://github.com/UditSinghChauhan/videoconferencing_app/actions/workflows/ci.yml)
 
-![Bridge Meeting Room — Live room with participants, chat, and controls](docs/bridge-meeting-room.png)
+**[Live app](https://bridgefrontend.onrender.com)** · **[Try the demo, no sign-up](https://bridgefrontend.onrender.com/demo)** · [Architecture](ARCHITECTURE.md) · [Design system](DESIGN.md)
 
-## Live Links
+![Bridge landing page](docs/screenshots/landing.png)
 
-- App: [bridgefrontend.onrender.com](https://bridgefrontend.onrender.com)
-- Live Demo (no sign-up needed): [bridgefrontend.onrender.com/demo](https://bridgefrontend.onrender.com/demo)
-- Repository: [github.com/UditSinghChauhan/videoconferencing_app](https://github.com/UditSinghChauhan/videoconferencing_app)
+> [!NOTE]
+> The API runs on a free hosting tier and sleeps when idle. The first request after a quiet period can take about 50 seconds; the app says so instead of failing silently.
 
-> [!NOTE] 
-> The backend is hosted on a free tier instance. The initial login or meeting creation might take ~50 seconds to wake up from sleep if it has not been used recently.
+## What it does
 
-## Key Features
+| | |
+|---|---|
+| **Start in one click** | *New meeting* creates a room with a readable code (`kmt-vrqp-xhw`). Join with a code or by pasting the invite link. |
+| **Lobby** | Preview your camera, mute before joining, and get a specific fix when a device is blocked. |
+| **The room** | Peer-to-peer video and audio, screen sharing with a presenter spotlight, speaking indicators, mute badges, chat and a people panel. Keyboard: <kbd>Ctrl/⌘ D</kbd> mic, <kbd>Ctrl/⌘ E</kbd> camera. |
+| **Host controls** | Only the host can remove people or end the meeting, enforced by the API rather than by hiding buttons. Ending asks for confirmation. |
+| **Recap** | Generated on the server from chat and activity: conclusion, key points, what happened, who was there, topics and the full transcript. Copy it as Markdown. |
+| **History** | Every meeting you hosted or joined, filterable by live or ended, with duration and headcount. |
+| **Resilience** | Automatic reconnect with token refresh. Opening a second tab hands the call over instead of duplicating you. Every view has loading, empty and error states. |
 
-### Secure Authentication
+| Lobby | Live room | Recap |
+|---|---|---|
+| ![Lobby](docs/screenshots/lobby.png) | ![Room](docs/screenshots/room-live.png) | ![Recap](docs/screenshots/recap.png) |
 
-- JWT access tokens with refresh token rotation
-- Refresh token stored in an HTTP-only cookie
-- CSRF protection for refresh/logout flows
-- Multi-session handling with logout-all support
-- Protected routes with session persistence after refresh
+## Architecture at a glance
 
-### Real-Time Collaboration
-
-- Socket.IO-based live meeting synchronization
-- Instant join, leave, remove, and end-meeting events
-- Real-time chat inside the room
-- Lobby flow before entering a meeting
-- WebRTC-based media sharing with camera, mic, and screen-share controls
-
-### Role-Based Meeting Control
-
-- Host and participant roles are assigned server-side
-- Only the host can end a meeting
-- Only the host can remove participants
-- Permissions are enforced in backend APIs, not just hidden in the UI
-
-### Smart Meeting Summaries
-
-- Summaries are generated server-side using keyword frequency analysis and activity log scoring — no external AI API required. This is a rule-based system, not AI-powered.
-- Meeting summaries are generated automatically when the host ends a meeting
-- Summaries include:
-  - Key points
-  - Highlights
-  - Keywords
-  - Participants involved
-  - Conclusion
-- Summaries are stored in MongoDB and remain available from history
-
-## Architecture Overview
-
-Frontend:
-
-- React with Context API for auth and meeting state
-- React Router for protected navigation
-- Material UI plus custom glassmorphism styling
-- Socket.IO client for live room updates
-
-Backend:
-
-- Node.js + Express
-- MongoDB with Mongoose
-- JWT access/refresh token flow
-- Zod validation and centralized error handling
-- Rate limiting for auth and meeting endpoints
-
-Real-Time Layer:
-
-- Socket.IO rooms scoped by `meetingId`
-- Authenticated socket connections using access tokens
-- Event-driven participant and chat synchronization
-
-## How It Works
-
-1. A user registers or logs in.
-2. The backend creates a tracked session and returns an access token plus refresh-token cookie.
-3. The user joins or creates a meeting using a room code.
-4. A socket connection is established with authentication.
-5. Join, leave, chat, removal, and end-meeting events sync across participants in real time.
-6. When the host ends the meeting, a summary is generated and users are redirected to the summary view.
-
-## Testing
-
-Bridge now includes both API-level certification work and browser-level E2E validation.
-
-- Playwright end-to-end coverage includes:
-  - Register and login flow
-  - Session persistence after refresh
-  - Meeting create and join flow
-  - Real-time chat and leave/rejoin flow
-  - Host vs participant permission enforcement
-  - Host participant removal flow
-  - Meeting end and summary redirect
-  - Summary persistence
-  - Unauthorized summary access returning `403`
-
-Run E2E tests from `frontend/`:
-
-```bash
-npx playwright install chromium   # first run only
-npm run test:e2e
+```text
+ Browser A  ◀──────── WebRTC media, peer to peer ────────▶  Browser B
+     │                                                         │
+     └──────── REST (HTTPS) + Socket.IO signalling ────────────┘
+                                │
+                     Node.js · Express · Socket.IO
+                     JWT sessions · Zod · Winston
+                                │
+                             MongoDB
+             users · sessions · meetings · activity · recaps
 ```
 
-Playwright starts both servers itself — the backend on port `8100` and the frontend on port `3100`
-— so neither needs to be running beforehand. `backend/.env` must be populated, since the backend
-still needs `MONGODB_URI` and its JWT secrets. On Linux the browser also needs its system libraries
-once: `sudo npx playwright install-deps chromium`.
+- **Media never touches the server.** It only authenticates, relays signalling inside a room, and keeps the record. That makes it cheap to run; the trade-off is that each person uploads one stream per participant, so rooms are designed for about six people. Larger rooms would need an SFU (see [Architecture § Scaling](ARCHITECTURE.md#9-scaling-and-what-id-do-next)).
+- **WebRTC uses "perfect negotiation" with fixed transceivers.** Muting, turning the camera off and screen sharing are `replaceTrack` calls, so they never trigger another offer/answer round.
+- **Sessions:** a 15-minute access token, plus a rotating refresh token in an `httpOnly` cookie bound to a server-side session, with CSRF protection and sign-out from every device.
 
-The suite creates real users and meetings in whatever database `MONGODB_URI` points at. Point it at
-a scratch database if you do not want that data in your development one. Note also that the auth
-rate limiter allows 10 attempts per IP per 15 minutes, and each run spends 3 of them from
-`127.0.0.1`, so more than three runs in a 15-minute window will start failing on login.
+Read [ARCHITECTURE.md](ARCHITECTURE.md) for the flows, data model, security model and design decisions.
 
-## Tech Stack
+## Tech stack
 
-- Frontend: React, React Router, Material UI, custom CSS
-- Backend: Node.js, Express
-- Database: MongoDB
-- Real-time: Socket.IO, WebRTC
-- Validation: Zod
-- Testing: Playwright
+| Layer | Choices |
+|---|---|
+| Web | React 18, TypeScript (strict), Vite, React Router, CSS Modules with design tokens, lucide icons |
+| Realtime | WebRTC (mesh, perfect negotiation), Socket.IO |
+| API | Node.js, Express, Mongoose, Zod, Helmet, express-rate-limit, Winston |
+| Data | MongoDB |
+| Quality | Vitest, `node:test` with Socket.IO integration tests on mongodb-memory-server, Playwright with real WebRTC between two browsers, axe WCAG 2.1 AA audits, GitHub Actions |
 
-## Project Structure
+## Run it locally
+
+Prerequisites: Node.js 18.18+ and a MongoDB connection string (local `mongod`, Docker or Atlas).
+
+```bash
+cd backend
+cp .env.example .env    # set MONGODB_URI, JWT_SECRET and JWT_REFRESH_SECRET
+npm install
+npm run dev             # http://localhost:8000
+```
+
+```bash
+cd frontend
+cp .env.example .env    # VITE_BACKEND_URL=http://localhost:8000
+npm install
+npm run dev             # http://localhost:3000
+```
+
+Open two browser windows (or one normal, one private) with different accounts to try a real call.
+
+### Configuration
+
+| Variable | Where | Purpose |
+|---|---|---|
+| `MONGODB_URI` | API | Database connection (required) |
+| `JWT_SECRET`, `JWT_REFRESH_SECRET` | API | Token signing secrets (required, use different values) |
+| `CORS_ORIGIN` | API | Comma-separated allowed origins in production |
+| `COOKIE_SAME_SITE` | API | Refresh-cookie policy. Defaults to `none` (with `Secure`) in production because the web app and API are on different sites |
+| `AUTH_RATE_LIMIT_MAX` | API | Sign-in attempts per IP per 15 minutes (default 10) |
+| `VITE_BACKEND_URL` | Web | API base URL (`REACT_APP_BACKEND_URL` is also accepted) |
+| `VITE_ICE_SERVERS` | Web | Optional JSON array of `RTCIceServer`, for example to add a TURN server for strict networks |
+
+## Tests
+
+```bash
+cd backend && npm test          # unit + Socket.IO integration (in-memory MongoDB)
+cd frontend && npm run typecheck && npm run lint && npm test && npm run build
+cd frontend && npm run test:e2e # Playwright: starts the API on :8100 and the web app on :3100
+```
+
+The end-to-end suite runs Chromium with synthetic camera and microphone devices, so two browsers exchange real media. It covers:
+
+- creating a meeting, joining by link, and two-way chat
+- mute visibility, leaving and rejoining
+- host removal, and ending the meeting into its recap
+- recap access control, unknown codes, protected-route redirects and the public demo
+
+It also runs an axe accessibility audit on every public page and on the room. It needs a MongoDB at `MONGODB_URI`; point it at a scratch database.
+
+CI runs all three layers on every pull request.
+
+## Project structure
 
 ```text
 backend/
   src/
-    controllers/
-    middlewares/
-    models/
-    routes/
-    services/
-    utils/
+    controllers/     HTTP handlers and the Socket.IO server
+    services/        auth and meeting business rules
+    models/          Mongoose schemas
+    middlewares/     auth, validation, rate limits, errors
+    validators/      Zod schemas
+    utils/           tokens, CORS, meeting codes, recap generation
+    createApp.js     app wiring shared by the entry point and tests
+  tests/             unit tests and integration/ (real sockets + MongoDB)
 
 frontend/
   src/
-    contexts/
-    pages/
-    styles/
-    utils/
-  tests/
-    e2e/
+    features/room/   PeerMesh (WebRTC), media + connection hooks, room UI
+    features/meetings/  history list and recap export
+    pages/           route components (code-split)
+    components/      design-system primitives
+    auth/  lib/  styles/
+  tests/e2e/         Playwright flows and accessibility audits
 ```
 
-## Local Setup
+## Known limits
 
-### Prerequisites
-
-- Node.js 18+
-- npm
-- MongoDB connection string
-
-### Backend
-
-```bash
-cd backend
-npm install
-```
-
-Create `backend/.env`:
-
-```env
-PORT=8000
-NODE_ENV=development
-MONGODB_URI=your_mongodb_connection_string
-CORS_ORIGIN=http://localhost:3000
-JWT_SECRET=your_access_token_secret
-JWT_REFRESH_SECRET=your_refresh_token_secret
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
-JWT_REFRESH_COOKIE_MAX_AGE_MS=604800000
-```
-
-Start the backend:
-
-```bash
-npm run dev
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-```
-
-Create `frontend/.env`:
-
-```env
-REACT_APP_ENV=development
-REACT_APP_BACKEND_URL=http://localhost:8000
-```
-
-Start the frontend:
-
-```bash
-npm start
-```
-
-## Core API Routes
-
-Authentication:
-
-- `POST /api/v1/users/register`
-- `POST /api/v1/users/login`
-- `POST /api/v1/users/refresh`
-- `POST /api/v1/users/logout`
-- `POST /api/v1/users/logout-all`
-- `GET /api/v1/users/me`
-
-Meetings:
-
-- `POST /api/v1/meetings`
-- `GET /api/v1/meetings`
-- `GET /api/v1/meetings/:meetingId`
-- `GET /api/v1/meetings/:meetingId/summary`
-- `POST /api/v1/meetings/:meetingId/join`
-- `POST /api/v1/meetings/:meetingId/leave`
-- `POST /api/v1/meetings/:meetingId/end`
-- `POST /api/v1/meetings/:meetingId/remove-participant`
-- `PATCH /api/v1/meetings/:meetingId/settings`
-
-Health:
-
-- `GET /api/v1/health`
-
-## Challenges Solved
-
-- Secure refresh-token rotation with CSRF validation
-- Multi-session auth handling with logout-all invalidation
-- Preventing duplicate participant presence during reconnects
-- Keeping socket state and database-backed meeting state aligned
-- Enforcing host-only actions at the API layer
-- Generating structured summaries without depending on external AI services
-
-## Future Improvements
-
-- TURN/SFU support for more reliable large-scale video sessions
-- LLM-powered meeting summarization
-- Meeting recording and playback
-- Team/workspace collaboration features
-- Expanded analytics and host controls
-
-## Status
-
-- Production deployed
-- End-to-end browser tested
-- Ready to iterate and extend
+- The peer-to-peer mesh is built for small rooms (about six people). Beyond that, upload bandwidth becomes the bottleneck.
+- Without a TURN server, calls between some strict corporate or mobile networks cannot connect. `VITE_ICE_SERVERS` accepts one.
+- Recaps come from chat and activity using keyword frequency and sentence scoring. There is no audio transcription and no external AI service.
+- Socket state is in memory, so the API runs as a single instance. Scaling out needs the Socket.IO Redis adapter.
 
 ## Author
 
-**Udit Singh Chauhan**
-
-- GitHub: [@UditSinghChauhan](https://github.com/UditSinghChauhan)
-- LinkedIn: [linkedin.com/in/udit-singh-31382137a](https://www.linkedin.com/in/udit-singh-31382137a/)
+Designed and built by **Udit Singh Chauhan** · [GitHub](https://github.com/UditSinghChauhan) · [LinkedIn](https://www.linkedin.com/in/udit-singh-31382137a/)

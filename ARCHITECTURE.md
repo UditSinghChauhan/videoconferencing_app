@@ -1,419 +1,168 @@
 # Architecture
 
-## 1. System Overview
+This document explains how Bridge works and why it is built this way. It is written for engineers reviewing the code. Product and visual decisions are in [DESIGN.md](DESIGN.md).
 
-Bridge is a full-stack real-time video collaboration platform built around a clear separation of concerns:
-
-- A React frontend handles authentication, meeting flows, room UI, history, and summary views.
-- A Node.js + Express backend exposes REST APIs for authentication, meeting lifecycle management, history, and summaries.
-- MongoDB persists users, active sessions, meetings, participants, activity logs, and generated summaries.
-- Socket.IO provides live synchronization for participant presence, chat, room state changes, removals, and meeting termination.
-- WebRTC is used in the browser for peer-to-peer media exchange once participants are inside a room.
-
-At a high level, the system works like this:
-
-1. A user authenticates through the backend and receives an access token plus a refresh-token cookie.
-2. The frontend stores the access token and uses it for API and socket authentication.
-3. Users create or join meetings through REST endpoints.
-4. Once in a room, Socket.IO keeps participant state and chat synchronized in real time.
-5. When the host ends the meeting, the backend generates a structured summary from activity logs and stores it in MongoDB.
-6. Users are redirected to the persisted summary view from the history page.
-
-This architecture balances responsiveness, backend enforcement, and maintainability. Real-time events are pushed through sockets, while business rules and persistent state remain controlled by the backend.
-
-## 2. Architecture Diagram (Text-Based)
+## 1. System overview
 
 ```text
-                        +----------------------+
-                        |      React App       |
-                        |  Auth / Rooms / UI   |
-                        +----------+-----------+
-                                   |
-                    REST APIs       |        WebSocket
-                                   | 
-                                   v
-                    +--------------+---------------+
-                    |       Node.js + Express      |
-                    |  Auth / Meetings / Summary   |
-                    +--------------+---------------+
-                                   |
-                                   |
-                                   v
-                        +----------------------+
-                        |       MongoDB        |
-                        | Users / Meetings     |
-                        | Sessions / Logs      |
-                        +----------------------+
+ Browser A  ◀──────── WebRTC media, peer to peer ────────▶  Browser B
+     │                                                         │
+     └──────── REST (HTTPS) + Socket.IO signalling ────────────┘
+                                │
+                     Node.js · Express · Socket.IO
+                                │
+                             MongoDB
 ```
+
+| Concern | Owner |
+|---|---|
+| Identity, sessions, roles, meeting state, recap | API (REST) + MongoDB |
+| Presence, chat, media state, signalling relay | Socket.IO, scoped to a meeting room |
+| Audio and video | Browsers, directly over WebRTC |
+
+The server never touches media. That keeps hosting cheap and the server simple. The trade-off is covered in [§ 9](#9-scaling-and-what-id-do-next).
+
+## 2. Codebase map
 
 ```text
-Client A <-------> Socket.IO Server <-------> Client B
-   |                    |   ^
-   |                    |   |
-   +---- REST APIs -----+   +---- Meeting state updates
+backend/src
+  createApp.js             Express + HTTP + Socket.IO wiring (no listen); used by app.js and tests
+  app.js                   entry point: MongoDB connect, listen, graceful shutdown
+  controllers/             REST handlers; socketManager.js is the realtime server
+  services/                auth.service.js, meeting.service.js (all business rules)
+  middlewares/             verifyAuthToken, validate(zod), rate limits, error handler
+  utils/                   tokens, CORS, meetingCode, meetingSummary, logger
+
+frontend/src
+  lib/                     api.ts (single HTTP client), session.ts, types, formatters
+  auth/                    AuthProvider, RequireAuth
+  features/room/
+    peerMesh.ts            WebRTC mesh, framework-free
+    useLocalMedia.ts       mic / camera / screen tracks
+    useMeetingConnection.ts  socket session as a reducer-driven state machine
+    RoomView, Lobby, VideoStage, VideoTile, ControlBar, SidePanel
+  features/meetings/       history list, recap Markdown export
+  pages/                   one lazy-loaded component per route
+  components/              design-system primitives
 ```
 
-```text
-Client -> /login -> Access Token + Refresh Cookie
-Client -> /meetings/:id/join -> Meeting State
-Client <-> Socket.IO room(meetingId) -> Live sync
-Host -> /meetings/:id/end -> Summary generation -> MongoDB
-Client -> /meetings/:id/summary -> Persisted summary
-```
+Rule of thumb: **business rules live in services, and pages only compose.** `RoomView` and `Lobby` are presentational. The real meeting (`RoomPage`) and the public demo (`DemoPage`) both render them, so the demo can never drift from the product.
 
-## 3. Authentication Flow
+## 3. Authentication and sessions
 
-### Login Flow
+**Sign-in.** `POST /users/login` verifies the bcrypt hash and creates a server-side session in the user's `sessions` array. The session stores a session id, the SHA-256 hashes of the refresh token and the CSRF token, the user agent, the IP and an expiry.
 
-1. The user submits username and password to `POST /api/v1/users/login`.
-2. The backend validates credentials against the `User` collection.
-3. On success, the backend creates a server-tracked session with:
-   - `sessionId`
-   - hashed refresh token
-   - hashed CSRF token
-   - user-agent and IP metadata
-   - expiration timestamp
-4. The backend returns:
-   - a short-lived JWT access token
-   - a CSRF token
-   - user details
-5. The refresh token is stored in an HTTP-only cookie scoped to the auth routes.
+The response carries:
+- a 15-minute **access JWT** containing `userId` and `sessionId`
+- a **CSRF token**
+- a 7-day **refresh JWT** in an `httpOnly` cookie scoped to `/api/v1/users`
 
-### Session Validation
+**Every request.** `verifyAuthToken` verifies the JWT, then confirms the session still exists and has not expired. That means signing out, or signing out of every device, revokes access tokens immediately; it doesn't wait for them to expire.
 
-Every protected API request uses the Bearer access token. The backend middleware:
+**Refresh.** `POST /users/refresh` requires the cookie and the `X-CSRF-Token` header. It rotates both tokens. Presenting an old refresh token is treated as replay and rejected.
 
-- verifies the JWT signature and expiry
-- loads the user from MongoDB
-- validates that the referenced session still exists and is active
+The client shares **one in-flight refresh** across all callers (HTTP interceptors and socket reconnects). Without that, two parallel 401s would each try to refresh, the second would look like replay, and the user would be signed out.
 
-This means token validity depends not only on signature but also on live session state.
+**Cross-site cookie.** In production the web app and the API are on different `onrender.com` hosts. `onrender.com` is a public suffix, so they are different sites. The refresh cookie is therefore `SameSite=None; Secure` by default. CSRF is still enforced by the header token, which a third-party page cannot read. `COOKIE_SAME_SITE=strict` is available for same-site deployments.
 
-### Token Refresh Mechanism
+**Sockets.** The handshake sends the access token (`auth` is a function, so every reconnect reads the latest token). The server applies the same JWT and session checks. An expired token produces `TOKEN_EXPIRED`; the client refreshes and reconnects.
 
-When an access token expires:
+## 4. Meeting lifecycle
 
-1. The frontend detects `401 TOKEN_EXPIRED`.
-2. It calls `POST /api/v1/users/refresh`.
-3. The backend validates:
-   - refresh token cookie
-   - refresh token signature
-   - session hash match
-   - CSRF token header
-4. The backend rotates the refresh token and CSRF token, updates the same session, and returns a new access token.
+| Step | API | Rules |
+|---|---|---|
+| Create | `POST /meetings` (body optional) | Without a code, the server generates `xxx-xxxx-xxx` from a 23-letter alphabet with no look-alike letters. The unique index, not a read-then-write check, guarantees no collisions; a collision is retried. |
+| Join | `POST /meetings/:id/join` | Unknown codes return **404**; the client never creates a meeting by accident. Ended meetings return 400 `MEETING_ENDED`. The host role is derived from `hostId`, so it survives rejoining. |
+| Leave | `POST /meetings/:id/leave` | Participants only. The host ends the meeting instead. |
+| Remove | `POST /meetings/:id/remove-participant` | Host only. The removed user's sockets get `meeting:removed` and are disconnected. |
+| End | `POST /meetings/:id/end` | Host only. Closes every participant, generates the recap, emits `meeting:ended`, then disconnects the room. |
+| Recap | `GET /meetings/:id/summary` | Anyone who was ever a participant. Returns metadata, the recap and the chat transcript. Others get 403. |
 
-This provides a more secure long-lived session model than relying on long-expiry access tokens alone.
+Every permission is checked in `meeting.service.js`. The UI hides controls for convenience only.
 
-### Security Aspects
+## 5. Realtime: Socket.IO
 
-- Access tokens are short-lived JWTs.
-- Refresh tokens are stored in HTTP-only cookies.
-- CSRF is enforced for refresh and logout operations.
-- Refresh tokens are hashed before persistence.
-- Sessions can be invalidated per user or across all devices with logout-all.
-- Socket authentication also checks that the underlying session is still active.
+Each meeting is a Socket.IO room named `meeting:<id>`.
 
-## 4. Real-Time Communication Flow (Socket.IO)
+**Client to server**
 
-### Client Connection
+| Event | Server behaviour |
+|---|---|
+| `join-call(meetingId)` | Validates the id, checks the user is an active participant, replaces any older socket of the same user (flagged first, so its disconnect does not count as leaving), joins the room, replays recent chat. |
+| `signal(toId, payload)` | Relayed **only if the target socket is in the sender's meeting**, and capped at 64 KB. |
+| `media:state({audio, video, screen})` | Sanitised to booleans, stored on the socket and broadcast to the room. |
+| `chat-message(text)` | Trimmed and capped at 2,000 characters. Rejected when the host disabled chat. Sent with the display name, an id and a timestamp. Persisted with an atomic `$push`. |
 
-When a user enters a meeting room:
+**Server to client:** `meeting:joined`, `user-joined`, `user-left`, `signal`, `media:state`, `chat-message`, `meeting:participants-updated`, `meeting:settings-updated`, `meeting:removed`, `meeting:ended`, and `meeting:error` (with a `code` such as `REPLACED_BY_NEW_CONNECTION` or `CHAT_DISABLED`).
 
-1. The frontend creates a Socket.IO connection.
-2. The access token is sent in the socket auth handshake.
-3. The backend verifies the token and session before allowing the socket to connect.
+**Leaving vs. disconnecting.** On disconnect, a user is marked as left only if this was their **last** socket in the room and it was not replaced by a newer tab. Hosts are never marked as left by a disconnect, so a host whose network drops does not end the meeting.
 
-### Room-Based Model
+**Client state.** `useMeetingConnection` is a reducer with explicit statuses: `connecting`, `connected`, `reconnecting`, `ended`, `removed`, `replaced` and `failed`. Terminal statuses are sticky. Two ordering details matter:
+- `media:state` can arrive before `user-joined` for the same socket. The reducer keeps it on a placeholder, and a later directory snapshot does not overwrite live state.
+- After a reconnect, the socket id changes. The client calls REST `join` again (the server marked the old socket as left) and only then emits `join-call`.
 
-Each meeting maps to a Socket.IO room:
+## 6. Media: the WebRTC mesh
 
-- Room key: `meeting:${meetingId}`
-- All real-time events for a meeting are scoped to that room
+`PeerMesh` (`features/room/peerMesh.ts`) has no React dependency.
 
-This prevents cross-meeting event leakage and keeps synchronization isolated.
+- **Who offers.** The newcomer connects to everyone already in the room; existing members wait for the offer. That halves signalling on join.
+- **Perfect negotiation.** Each pair has exactly one *polite* peer (by socket id order). Offer collisions resolve by rollback, so renegotiation and ICE restarts cannot deadlock.
+- **Fixed transceivers.** Every connection is created with one audio and one video transceiver in `sendrecv`, even with no device. Mute (`track.enabled`), camera off (stop the track, `replaceTrack(null)`) and screen share (replace the video track) never renegotiate. The answering side adopts the offered transceivers instead of adding new ones.
+- **Remote streams.** Built by the client from `ontrack`, with a new `MediaStream` identity per change. Script-side `addTrack` fires no `addtrack` event, so identity is how React learns the stream changed.
+- **What is shown.** A tile shows video only when the peer reports video in `media:state` **and** the track is unmuted. That second check also covers older API versions that don't send `media:state`.
+- **Failures.** On `failed` the connection calls `restartIce()`. ICE servers are STUN by default; `VITE_ICE_SERVERS` adds TURN without a code change.
 
-### Core Events
+Speaking detection uses one shared `AudioContext` with an `AnalyserNode` per track, sampled about 8 times a second with a short hold, rather than every animation frame.
 
-The system uses a focused set of events:
+## 7. Recap generation
 
-- `join-call`
-- `meeting:joined`
-- `meeting:participants-updated`
-- `chat-message`
-- `user-joined`
-- `user-left`
-- `meeting:removed`
-- `meeting:ended`
-- `meeting:settings-updated`
-- `meeting:error`
-- `signal` for WebRTC negotiation
+`utils/meetingSummary.js` is deterministic and runs in about a millisecond when the host ends the meeting.
 
-### Synchronization Model
+- **Key points:** chat lines scored by length, sentence completeness and decision words (*decide, deadline, ship, must, next*). The top three are kept.
+- **What happened:** the last three non-chat activity entries (joins, removals, end).
+- **Topics:** keyword frequency after removing stop words and conversational filler ("sounds good", "thanks").
+- **Conclusion:** a sentence assembled from topics and participants.
 
-Socket events do not replace backend state. Instead:
+It is honest about what it is: there is no audio transcription and no LLM. The schema separates the recap from activity logs, so an AI summariser could replace the generator without touching storage or the UI.
 
-- the backend remains the source of truth for meetings and participants
-- sockets broadcast state changes after backend mutations
-- clients re-render based on server-emitted participant and meeting state
+## 8. Data model
 
-This reduces drift between real-time UI and persisted meeting data.
+**User:** `name`, `username` (unique), `password` (bcrypt), and `sessions[]` (`sessionId`, refresh and CSRF hashes, user agent, IP, `expiresAt`). Expired sessions are pruned on write.
 
-## 5. Meeting Lifecycle
+**Meeting:**
+- `meetingId` (unique), `hostId`, `hostUsername`, `status` (`active` or `ended`), `settings`, `endedAt`
+- `participants[]`: `userId`, `username`, `name`, `role`, `joinedAt`, `leftAt`, `removedAt`
+- `activityLogs[]`: type, user, content, time
+- `summary`
+- Index `{ "participants.userId": 1, updatedAt: -1 }` serves history. History queries leave out `activityLogs` and return at most 50 meetings.
 
-### Create Meeting
+Participants and logs are embedded because they are always read with their meeting and are bounded by meeting size. A long-running public room would eventually hit the 16 MB document limit. The fix would be moving activity logs into their own collection.
 
-- A user creates a meeting with `POST /api/v1/meetings`
-- The backend creates a `Meeting` document
-- The creator is recorded as the host
-- Initial activity logs are created
+## 9. Scaling and what I'd do next
 
-### Join Meeting
+| Limit | Why | Next step |
+|---|---|---|
+| About 6 people per room | In a mesh, each person uploads N−1 streams | An SFU (LiveKit or mediasoup) behind the same signalling API; the client already isolates media in `PeerMesh` |
+| One API instance | Socket rooms and the chat replay buffer are in memory, and `signal` relays through a local socket lookup | The Socket.IO Redis adapter, plus emitting `signal` through the adapter |
+| Strict NATs | STUN only by default | Managed TURN (coturn or a provider) via `VITE_ICE_SERVERS` |
+| Recap quality | Rule-based | An optional LLM summariser behind the same `summary` schema, plus opt-in audio transcription |
+| Observability | Structured JSON logs only | Request ids, OpenTelemetry traces, and call-quality stats from `getStats()` |
 
-- A user joins via `POST /api/v1/meetings/:meetingId/join`
-- If the meeting exists and is active, the backend adds or restores the participant
-- The frontend then opens a socket connection and joins the corresponding room
+## 10. Testing strategy
 
-### Role Assignment
+| Layer | Tooling | What it proves |
+|---|---|---|
+| API unit | `node:test` | Tokens, validators, cookie policy, meeting codes, recap generation |
+| API integration | `node:test`, supertest, real Socket.IO clients, mongodb-memory-server | Signal isolation across rooms, the multi-tab roster bug, chat policy, media-state relay, generated codes, 404 on unknown codes |
+| Web unit | Vitest | Grid layout maths, meeting-code parsing, formatters, the connection reducer (including the event-ordering race), recap export |
+| End to end | Playwright with fake camera and mic | Two browsers in a real WebRTC call: chat, mute, leave and rejoin, removal, end and recap, access control, the demo |
+| Accessibility | axe-core, WCAG 2.1 AA | Public pages and the room; a keyboard-only sign-in check |
 
-Roles are assigned by the backend:
+The bug fixes in the API were written test-first: each integration test failed on the old code before the fix.
 
-- creator => `host`
-- other users => `participant`
+## 11. Design decisions
 
-Role information is returned as part of meeting state and used by the UI, but it is enforced server-side.
-
-### Meeting Actions
-
-Supported actions include:
-
-- join meeting
-- leave meeting
-- remove participant
-- update meeting settings
-- end meeting
-
-All of these are reflected both in persistent state and in socket-driven updates to connected clients.
-
-## 6. Role-Based Access Control
-
-Bridge uses backend-enforced RBAC for meeting actions.
-
-### Host Permissions
-
-The host can:
-
-- end the meeting
-- remove participants
-- update meeting settings
-
-### Participant Permissions
-
-Participants can:
-
-- join active meetings
-- leave active meetings
-- chat and collaborate inside the room
-
-Participants cannot:
-
-- end the meeting
-- remove the host
-- remove other participants
-- change host-only settings
-
-### Enforcement Model
-
-RBAC is enforced in service-layer logic, not just hidden in the frontend.
-
-This matters because:
-
-- UI controls can be bypassed
-- direct API calls must still be blocked
-- socket-connected users must remain constrained by persisted meeting roles
-
-This is one of the stronger production-oriented design choices in the system.
-
-## 7. Meeting Summary System
-
-### Activity Log Collection
-
-Each meeting stores structured activity logs, including:
-
-- join events
-- leave events
-- participant removal events
-- meeting settings changes
-- chat messages
-- meeting end event
-
-These logs are appended during the meeting lifecycle and become the source material for the summary.
-
-### Summary Generation
-
-Summary generation is rule-based and internal to the backend. It does not depend on an external AI API.
-
-The summary utility:
-
-- extracts chat messages
-- identifies candidate key points using heuristic scoring
-- derives top keywords by simple text frequency
-- captures recent non-chat highlights
-- builds a conclusion from participants and dominant keywords
-
-This keeps the summary flow deterministic, low-cost, and easy to operate.
-
-### Storage and Retrieval
-
-When the host ends a meeting:
-
-1. the meeting is marked as ended
-2. a summary object is generated
-3. the summary is stored inside the meeting document
-
-Users later retrieve it through:
-
-- meeting history
-- direct summary endpoint `GET /api/v1/meetings/:meetingId/summary`
-
-## 8. Data Layer (MongoDB)
-
-### Key Collections
-
-#### Users
-
-The `User` model stores:
-
-- profile identity (`name`, `username`)
-- hashed password
-- active sessions
-
-Each session contains:
-
-- `sessionId`
-- hashed refresh token
-- hashed CSRF token
-- metadata (user-agent, IP)
-- expiration
-
-#### Meetings
-
-The `Meeting` model stores:
-
-- `meetingId`
-- host identity
-- participants
-- status (`active` or `ended`)
-- meeting settings
-- activity logs
-- summary
-
-### Relationship Model
-
-```text
-User
-  └── sessions[]
-
-Meeting
-  ├── hostId -> User
-  ├── participants[]
-  │     └── userId -> User
-  ├── activityLogs[]
-  └── summary
-```
-
-This denormalized structure is appropriate for the current scope because meeting reads often need participant state, logs, and summary together.
-
-## 9. Testing Strategy
-
-Bridge uses Playwright for end-to-end verification at the browser level.
-
-### What Is Tested
-
-The E2E suite covers:
-
-- registration and login
-- session persistence after refresh
-- meeting creation and join flow
-- real-time chat synchronization
-- leave and rejoin behavior
-- role-restricted actions returning `403`
-- host participant removal
-- meeting end and summary redirect
-- summary persistence after reload
-- unauthorized summary access rejection
-
-### Why This Matters
-
-Playwright validates the full integrated system:
-
-- frontend behavior
-- backend APIs
-- auth/session state
-- socket synchronization
-- persisted meeting and summary data
-
-This is stronger than isolated unit testing for a real-time system because many failures only appear when multiple layers interact.
-
-## 10. Scalability & Future Improvements
-
-### WebRTC Scaling
-
-The current design is appropriate for small, direct peer-to-peer sessions. For larger rooms, a future SFU architecture would improve scalability and media reliability.
-
-### Socket.IO Horizontal Scaling
-
-To scale beyond a single process:
-
-- Socket.IO would need a distributed adapter such as Redis
-- room membership and socket broadcasts would need cross-instance coordination
-
-### AI-Based Summary Integration
-
-The current rule-based summary engine is efficient and self-contained. A future LLM-backed summarization layer could improve summary quality, but should be introduced behind a stable summary interface so the rest of the system remains unchanged.
-
-## 11. Design Decisions
-
-### Why Socket.IO
-
-Socket.IO was a strong fit because it provides:
-
-- reliable event-based communication
-- room semantics
-- reconnection support
-- a straightforward frontend/backend developer experience
-
-For this product, it reduces complexity compared to building a raw WebSocket orchestration layer manually.
-
-### Why JWT + Refresh Tokens
-
-This architecture combines stateless request auth with stateful session control:
-
-- access tokens are lightweight and fast for APIs and sockets
-- refresh tokens allow secure session continuity
-- server-side sessions preserve the ability to invalidate devices and rotate tokens
-
-This is a practical middle ground between pure stateless JWT auth and fully server-bound sessions.
-
-### Why Service-Based Backend Structure
-
-The backend is organized so that:
-
-- routes define endpoints
-- controllers handle request/response orchestration
-- services contain business rules
-- models define persistence shape
-- utilities handle reusable logic such as tokens and summaries
-
-This separation makes the codebase easier to reason about, test, and evolve as the product grows.
-
-## Closing Note
-
-Bridge demonstrates production-oriented thinking in a compact system:
-
-- backend-enforced permissions
-- secure session lifecycle handling
-- real-time state synchronization
-- persistent activity-based summaries
-- browser-level E2E validation
-
-For recruiters and interviewers, the strongest takeaway is that the project is not just a UI demo. It is a complete system with clear boundaries, real-time coordination, persistent domain modeling, and architecture choices that scale naturally into more advanced collaboration features.
+- **Socket.IO over raw WebSockets.** Rooms, acknowledgements, reconnection with backoff and a polling fallback for restrictive proxies. These are table stakes for signalling, and writing them by hand adds risk without adding value.
+- **Server-tracked sessions over stateless JWTs alone.** Revocation (sign out everywhere, removing a compromised session) matters more here than saving one indexed lookup per request.
+- **Vite and strict TypeScript, no component library.** The room's state machine and the WebRTC code are where bugs hide, and types pay for themselves there. Dropping MUI cut the initial bundle and let the design system express the product instead of the library.
+- **One presentational room for the demo and the product.** The old demo was a hand-maintained copy of the room that had already drifted. Now the demo exercises the same components the e2e suite tests.
