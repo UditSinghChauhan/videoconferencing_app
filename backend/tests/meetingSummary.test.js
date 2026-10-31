@@ -101,3 +101,16 @@ test("the summary is deterministic for identical input", () => {
     assert.deepEqual(first.keywords, second.keywords);
     assert.equal(first.conclusion, second.conclusion);
 });
+
+test("conversational filler is not reported as a keyword", () => {
+    const summary = generateMeetingSummary({
+        activityLogs: [
+            { type: "chat", username: "Maya", content: "Sounds good, thanks everyone" },
+            { type: "chat", username: "Gabe", content: "Sounds good. Release release deploy" }
+        ]
+    });
+
+    assert.ok(!summary.keywords.includes("sounds"));
+    assert.ok(!summary.keywords.includes("good"));
+    assert.ok(summary.keywords.includes("release"));
+});
