@@ -1,7 +1,6 @@
 .figure {
     margin: 0;
     padding: var(--space-10) var(--space-8);
-    border: 1px solid var(--room-border);
     border-radius: var(--radius-xl);
     background: var(--room-tile);
 }
@@ -25,7 +24,6 @@
     flex-direction: column;
     gap: var(--space-1);
     padding: var(--space-4);
-    border: 1px solid var(--room-border);
     border-radius: var(--radius-lg);
     background: var(--room-raised);
     text-align: center;
@@ -71,7 +69,8 @@
     text-align: center;
 }
 
-/* Both browsers drop a line down and meet above the API, so each visibly talks to the server. */
+/* Both browsers drop a line down and meet above the API, so each visibly talks to the server.
+   These are the figure's connectors (content), not dividers. taste-skill-ignore */
 .fork {
     position: relative;
     width: calc(100% - 2 * 15.625%);
@@ -124,7 +123,7 @@
     gap: var(--space-1);
     padding-left: var(--space-10);
     position: relative;
-    color: var(--room-muted);
+    color: var(--room-text);
     font-size: var(--text-base);
     line-height: 1.5;
     counter-increment: step;
@@ -139,8 +138,8 @@
     place-items: center;
     width: 28px;
     height: 28px;
-    border: 1px solid var(--room-border);
     border-radius: var(--radius-full);
+    background: var(--room-raised);
     color: var(--room-text);
     font-size: var(--text-sm);
     font-variant-numeric: tabular-nums;

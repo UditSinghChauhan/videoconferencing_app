@@ -58,7 +58,7 @@
 .body {
     max-width: 40ch;
     margin: 0;
-    color: var(--text-muted);
+    color: var(--text);
     font-size: var(--text-md);
     line-height: 1.55;
 }
@@ -149,13 +149,8 @@
         display: none;
     }
 
-    .title,
-    .body {
+    .title {
         color: var(--text);
-    }
-
-    .body {
-        color: var(--text-muted);
     }
 
     .number {
@@ -163,8 +158,8 @@
         place-items: center;
         width: 28px;
         height: 28px;
-        border: 1px solid var(--border-strong);
         border-radius: var(--radius-full);
+        background: var(--surface-2);
         color: var(--text);
     }
 
@@ -174,10 +169,8 @@
         max-width: 320px;
         max-height: 600px;
         margin-top: var(--space-6);
-        border: 1px solid var(--border);
         border-radius: var(--radius-xl);
         background: var(--room-bg);
-        box-shadow: var(--shadow-md);
     }
 
     .inlineShot img {
@@ -186,7 +179,7 @@
     }
 
     .inlineShot[data-step="recap"] {
-        background: var(--bg);
+        background: var(--surface);
     }
 }
 

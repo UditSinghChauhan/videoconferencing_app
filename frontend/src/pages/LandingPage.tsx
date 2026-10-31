@@ -16,6 +16,12 @@ import styles from "./LandingPage.module.css";
 
 const sourceUrl = (path: string) => `${REPOSITORY_URL}/blob/master/${path}`;
 
+/** Verified flows grouped under the Playwright test that proves them, in first-seen order. */
+const verifiedByTest = [...VERIFIED.reduce((groups, item) => {
+    groups.set(item.test, [...(groups.get(item.test) ?? []), item.flow]);
+    return groups;
+}, new Map<string, string[]>())];
+
 export default function LandingPage() {
     const { status } = useAuth();
     const signedIn = status === "authenticated";
@@ -49,12 +55,11 @@ export default function LandingPage() {
 
             <main id="main">
                 <section className={styles.hero} aria-labelledby="hero-title">
-                    <p className={styles.eyebrow}>Video calls for small teams</p>
                     <h1 id="hero-title" className={styles.headline}>
                         Meetings that end with a <em>recap</em>.
                     </h1>
                     <p className={styles.lede}>
-                        Start a call, share the link, talk. When the host ends it, everyone gets the key points and the full transcript.
+                        Video calls for small teams. When the host ends one, everyone gets the key points and the full transcript.
                     </p>
                     <div className={styles.heroActions}>
                         <ButtonLink to="/demo" size="lg" variant="accent">Try the live demo</ButtonLink>
@@ -76,7 +81,6 @@ export default function LandingPage() {
 
                 <section id="walkthrough" className={styles.section} aria-labelledby="walkthrough-title">
                     <div className={styles.intro}>
-                        <p className={styles.eyebrow}>Walkthrough</p>
                         <h2 id="walkthrough-title" className={styles.sectionTitle}>From link to recap.</h2>
                     </div>
                     <Walkthrough />
@@ -84,7 +88,6 @@ export default function LandingPage() {
 
                 <section className={styles.section} aria-labelledby="outcomes-title">
                     <div className={styles.intro}>
-                        <p className={styles.eyebrow}>What you get</p>
                         <h2 id="outcomes-title" className={styles.sectionTitle}>What you can count on.</h2>
                     </div>
                     <ul className={styles.outcomes}>
@@ -100,7 +103,6 @@ export default function LandingPage() {
                 <section id="engineering" className={styles.engineering} aria-labelledby="engineering-title">
                     <div className={styles.engineeringInner}>
                         <div className={styles.intro}>
-                            <p className={styles.eyebrowDark}>Under the hood</p>
                             <h2 id="engineering-title" className={styles.sectionTitle}>Built like a product, documented like a system.</h2>
                             <p className={styles.engineeringLede}>
                                 Media flows peer to peer. The server only authenticates, relays signalling inside a room and keeps the record, which keeps it cheap to run. The trade-off is upload bandwidth, so Bridge is built for rooms of up to about six people; larger rooms would need an SFU.
@@ -115,7 +117,7 @@ export default function LandingPage() {
                                     <h3>{note.label}</h3>
                                     <p>{note.detail}</p>
                                     <a href={sourceUrl(note.path)} target="_blank" rel="noreferrer">
-                                        {note.path.split("/").pop()}
+                                        <code>{note.path.split("/").pop()}</code>
                                         <span className="visually-hidden"> on GitHub, opens in a new tab</span>
                                     </a>
                                 </li>
@@ -135,27 +137,35 @@ export default function LandingPage() {
 
                 <section id="verified" className={styles.section} aria-labelledby="verified-title">
                     <div className={styles.intro}>
-                        <p className={styles.eyebrow}>Verified</p>
                         <h2 id="verified-title" className={styles.sectionTitle}>Tested end to end.</h2>
                         <p className={styles.sectionLede}>
-                            Each flow runs in real browsers against the real API and database, in Playwright tests that ship with the code.
+                            Each flow runs in real browsers against the real API and database, in Playwright tests that ship with the code.{" "}
+                            <a className={styles.inlineLink} href={sourceUrl(E2E_SPEC_PATH)} target="_blank" rel="noreferrer">
+                                Read the test suite<span className="visually-hidden"> on GitHub, opens in a new tab</span>
+                            </a>.
                         </p>
                     </div>
-                    <ul className={styles.verified}>
-                        {VERIFIED.map((item) => (
-                            <li key={item.flow}>
-                                <Check size={18} aria-hidden="true" className={styles.pass} />
-                                <span className={styles.flow}>
-                                    {item.flow}
-                                    <span className="visually-hidden">: passing</span>
-                                </span>
-                                <code className={styles.testName}>{item.test}</code>
-                            </li>
+                    <div className={styles.verified}>
+                        {verifiedByTest.map(([test, flows]) => (
+                            <div key={test} className={styles.verifiedGroup}>
+                                <ul>
+                                    {flows.map((flow) => (
+                                        <li key={flow}>
+                                            <Check size={18} aria-hidden="true" className={styles.pass} />
+                                            <span>
+                                                {flow}
+                                                <span className="visually-hidden">: passing</span>
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <p className={styles.testName}>
+                                    <span className="visually-hidden">Covered by the test </span>
+                                    <code>{test}</code>
+                                </p>
+                            </div>
                         ))}
-                    </ul>
-                    <a className={styles.textLink} href={sourceUrl(E2E_SPEC_PATH)} target="_blank" rel="noreferrer">
-                        Read the test suite<span className="visually-hidden"> on GitHub, opens in a new tab</span>
-                    </a>
+                    </div>
                 </section>
 
                 <section className={styles.closing} aria-labelledby="closing-title">

@@ -15,7 +15,6 @@
     position: sticky;
     top: 0;
     z-index: 30;
-    border-bottom: 1px solid var(--border);
     background: var(--bg);
 }
 
@@ -61,21 +60,8 @@
 
 /* ---------- Shared type ---------- */
 
-.eyebrow,
-.eyebrowDark {
-    margin: 0;
-    color: var(--accent-text);
-    font-size: var(--text-sm);
-    font-weight: 500;
-    letter-spacing: 0.02em;
-}
-
-.eyebrowDark {
-    color: #ff9a5c;
-}
-
 .sectionTitle {
-    margin: var(--space-3) 0 0;
+    margin: 0;
     font-family: var(--font-display);
     font-size: var(--text-4xl);
     font-weight: 400;
@@ -87,7 +73,7 @@
 .sectionLede {
     max-width: 60ch;
     margin: var(--space-4) 0 0;
-    color: var(--text-muted);
+    color: var(--text);
     font-size: var(--text-md);
     line-height: 1.55;
 }
@@ -132,8 +118,8 @@
 
 .lede {
     max-width: 34ch;
-    margin: var(--space-5) 0 0;
-    color: var(--text-muted);
+    margin: var(--space-6) 0 0;
+    color: var(--text);
     font-size: var(--text-lg);
     line-height: 1.5;
     text-wrap: pretty;
@@ -175,19 +161,22 @@
 /* ---------- Outcomes ---------- */
 
 .outcomes {
+    display: grid;
+    gap: var(--space-3);
     margin: 0;
     padding: 0;
     list-style: none;
-    border-top: 1px solid var(--border);
 }
 
+/* Rows are filled surfaces one tone step off the page, not ruled lines. */
 .outcomes li {
     display: grid;
     grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
     gap: var(--space-12);
     align-items: baseline;
-    padding: var(--space-10) 0;
-    border-bottom: 1px solid var(--border);
+    padding: var(--space-10) var(--space-10);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
 }
 
 .outcomes h3 {
@@ -202,7 +191,7 @@
 
 .outcomes p {
     margin: 0;
-    color: var(--text-muted);
+    color: var(--text);
     font-size: var(--text-md);
     line-height: 1.55;
 }
@@ -224,8 +213,8 @@
 
 .engineeringLede {
     max-width: 60ch;
-    margin: var(--space-4) 0 0;
-    color: var(--room-muted);
+    margin: var(--space-5) 0 0;
+    color: var(--room-text);
     font-size: var(--text-md);
     line-height: 1.55;
 }
@@ -241,7 +230,6 @@
 
 .notes li {
     padding: var(--space-6) 0;
-    border-top: 1px solid var(--room-border);
 }
 
 .notes h3 {
@@ -252,7 +240,7 @@
 
 .notes p {
     margin: var(--space-2) 0 0;
-    color: var(--room-muted);
+    color: var(--room-text);
     font-size: var(--text-base);
     line-height: 1.55;
 }
@@ -260,10 +248,13 @@
 .notes a {
     display: inline-block;
     margin-top: var(--space-3);
-    color: var(--room-text);
-    font-family: var(--font-mono);
+    color: #ff9a5c;
     font-size: var(--text-sm);
     text-underline-offset: 3px;
+}
+
+.notes code {
+    font-family: var(--font-mono);
 }
 
 .engineeringActions {
@@ -309,47 +300,60 @@
 /* ---------- Verified ---------- */
 
 .verified {
+    display: grid;
+    gap: var(--space-8);
+    padding: var(--space-8) var(--space-10);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+/* One row per test: the flows it proves, then the test's own title. */
+.verifiedGroup {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: var(--space-12);
+    align-items: start;
+}
+
+.verifiedGroup ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-6);
     margin: 0;
     padding: 0;
     list-style: none;
-    border-top: 1px solid var(--border);
 }
 
-.verified li {
+.verifiedGroup li {
     display: grid;
-    grid-template-columns: 24px minmax(0, 4fr) minmax(0, 7fr);
-    gap: var(--space-4);
-    align-items: baseline;
-    padding: var(--space-4) 0;
-    border-bottom: 1px solid var(--border);
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: var(--space-3);
+    align-items: start;
+    font-size: var(--text-md);
+    font-weight: 550;
+    line-height: 1.4;
 }
 
 .pass {
-    align-self: center;
+    margin-top: 2px;
     color: var(--success);
 }
 
-.flow {
-    font-size: var(--text-md);
-    font-weight: 550;
-}
-
 .testName {
-    overflow-wrap: anywhere;
+    margin: 0;
     color: var(--text-muted);
-    font-family: var(--font-mono);
     font-size: var(--text-sm);
     line-height: 1.45;
 }
 
-.textLink {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    margin-top: var(--space-6);
+.testName code {
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
+}
+
+.inlineLink {
     color: var(--text);
-    font-size: var(--text-md);
-    font-weight: 500;
+    font-weight: 550;
     text-underline-offset: 3px;
 }
 
@@ -378,7 +382,7 @@
 /* ---------- Footer ---------- */
 
 .footer {
-    border-top: 1px solid var(--border);
+    background: var(--surface-2);
 }
 
 .footerInner {
@@ -442,6 +446,11 @@
     }
 
     .outcomes li {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+    }
+
+    .verifiedGroup {
         grid-template-columns: 1fr;
         gap: var(--space-3);
     }
@@ -512,6 +521,20 @@
         font-size: var(--text-2xl);
     }
 
+    .outcomes li {
+        padding: var(--space-6);
+    }
+
+    .verified {
+        padding: var(--space-6);
+    }
+
+    .verifiedGroup ul {
+        grid-template-columns: 1fr;
+    }
+
+
+
     .engineering {
         margin-top: var(--space-16);
         padding: var(--space-16) 0;
@@ -522,14 +545,6 @@
         margin-top: var(--space-10);
     }
 
-    .verified li {
-        grid-template-columns: 24px minmax(0, 1fr);
-        row-gap: var(--space-1);
-    }
-
-    .testName {
-        grid-column: 2;
-    }
 
     .closing {
         padding-top: var(--space-16);
