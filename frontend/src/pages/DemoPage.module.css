@@ -1,0 +1,30 @@
+.banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--room-raised);
+    color: var(--room-muted);
+    font-size: var(--text-sm);
+}
+
+.banner strong {
+    color: #ff9a5c;
+}
+
+.banner a {
+    --surface: var(--room-hover);
+    --surface-2: #3a3a40;
+    --border-strong: var(--room-border);
+    --text: var(--room-text);
+    flex: none;
+}
+
+@media (max-width: 640px) {
+    .banner a {
+        display: none;
+    }
+}
