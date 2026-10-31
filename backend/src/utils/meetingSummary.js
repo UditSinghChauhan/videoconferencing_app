@@ -3,7 +3,11 @@ const STOP_WORDS = new Set([
     "their", "will", "would", "could", "should", "what", "when", "where", "which", "while", "been", "being",
     "them", "they", "then", "than", "just", "some", "very", "more", "most", "also", "only", "over", "under",
     "after", "before", "because", "through", "during", "each", "such", "our", "out", "are", "was", "but",
-    "not", "you", "all", "can", "has", "had", "let", "lets", "its", "it's", "a", "an", "to", "of", "in", "on", "is", "it"
+    "not", "you", "all", "can", "has", "had", "let", "lets", "its", "it's", "a", "an", "to", "of", "in", "on", "is", "it",
+    // Conversational filler that dominates chat but says nothing about the topic.
+    "sounds", "sound", "good", "great", "nice", "okay", "yeah", "yes", "sure", "thanks", "thank", "think", "know",
+    "like", "really", "maybe", "right", "well", "going", "gonna", "want", "make", "here", "everyone", "today",
+    "i'll", "we'll", "i'm", "we're", "that's", "don't", "can't", "does", "doing", "done", "said", "says", "okay"
 ]);
 
 const normalizeText = (value = "") => value.replace(/\s+/g, " ").trim();

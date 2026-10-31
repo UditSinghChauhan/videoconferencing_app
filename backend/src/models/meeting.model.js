@@ -4,6 +4,8 @@ const participantSchema = new Schema(
     {
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
         username: { type: String, required: true },
+        // Display name at join time; older documents fall back to username.
+        name: { type: String, default: null },
         role: { type: String, enum: ["host", "participant"], required: true },
         joinedAt: { type: Date, default: Date.now },
         leftAt: { type: Date, default: null },
@@ -62,6 +64,9 @@ const meetingSchema = new Schema(
     },
     { timestamps: true }
 );
+
+// History is queried by participant and sorted by recency.
+meetingSchema.index({ "participants.userId": 1, updatedAt: -1 });
 
 const Meeting = mongoose.model("Meeting", meetingSchema);
 
