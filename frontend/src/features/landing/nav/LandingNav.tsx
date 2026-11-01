@@ -19,7 +19,9 @@ export function LandingNav({ signedIn, links }: LandingNavProps) {
             <div className={styles.inner}>
                 <Logo />
                 <nav className={styles.links} aria-label="Sections">
-                    {links.map((link) => <a key={link.href} href={link.href}>{link.label}</a>)}
+                    {links.map((link) => link.href.startsWith("/")
+                        ? <Link key={link.href} to={link.href}>{link.label}</Link>
+                        : <a key={link.href} href={link.href}>{link.label}</a>)}
                 </nav>
                 <div className={styles.actions}>
                     {signedIn ? <Link to="/home">Your meetings</Link> : <Link to="/auth">Sign in</Link>}

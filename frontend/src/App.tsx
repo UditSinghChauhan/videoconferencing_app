@@ -15,6 +15,7 @@ const RecapPage = lazy(() => import("./pages/RecapPage"));
 const RoomPage = lazy(() => import("./pages/RoomPage"));
 const DemoPage = lazy(() => import("./pages/DemoPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const DesignNotesPage = lazy(() => import("./pages/DesignNotesPage"));
 // Development only: the illustrated cast for review and for scripts/render-cast.mjs.
 // `import.meta.env.DEV` is false in production builds, so the route and its chunk are dropped.
 const CastPage = import.meta.env.DEV ? lazy(() => import("./features/landing/cast/CastPage")) : null;
@@ -41,6 +42,7 @@ export default function App() {
                         <Routes>
                             <Route path="/" element={<LandingPage />} />
                             <Route path="/demo" element={<DemoPage />} />
+                            <Route path="/design-notes" element={<DesignNotesPage />} />
                             <Route path="/auth" element={<AuthPage />} />
                             <Route path="/home" element={<RequireAuth><DashboardPage /></RequireAuth>} />
                             <Route path="/history" element={<RequireAuth><HistoryRoute /></RequireAuth>} />

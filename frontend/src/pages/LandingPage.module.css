@@ -299,19 +299,7 @@
     text-align: center;
 }
 
-.builder {
-    max-width: 52ch;
-    margin: var(--space-16) 0 0;
-    color: var(--text);
-    font-size: var(--text-md);
-    line-height: 1.6;
-}
 
-.builder a {
-    color: var(--text);
-    font-weight: 550;
-    text-underline-offset: 3px;
-}
 
 .closingTitle {
     margin: 0;

@@ -90,6 +90,13 @@
     margin-left: auto;
 }
 
+/* Mid widths: keep the chapter and the case study, drop the section anchors. */
+@media (max-width: 1099px) {
+    .links a:not(:first-child):not(:last-child) {
+        display: none;
+    }
+}
+
 @media (max-width: 1023px) {
     .inner {
         padding: 0 var(--space-8);

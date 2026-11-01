@@ -7,21 +7,24 @@ import { GithubIcon } from "../components/GithubIcon";
 import { Logo } from "../components/Logo";
 
 const SECTION_LINKS = [
+    { href: "#signature", label: "How it works" },
     { href: "#walkthrough", label: "Walkthrough" },
     { href: "#engineering", label: "Engineering" },
     { href: "#decisions", label: "Decisions" },
-    { href: "#verified", label: "Verified" }
+    { href: "#verified", label: "Verified" },
+    { href: "/design-notes", label: "Design notes" }
 ];
 import { ArchitectureFigure } from "../features/landing/ArchitectureFigure";
 import { DECISIONS, E2E_SPEC_PATH, ENGINEERING } from "../features/landing/content";
 import { VerifiedTerminal } from "../features/landing/verified/VerifiedTerminal";
+import { ClosingLoop } from "../features/landing/closing/ClosingLoop";
 import { Bento } from "../features/landing/bento/Bento";
 import { Facts } from "../features/landing/facts/Facts";
 import { SignatureChapter } from "../features/landing/chapter/SignatureChapter";
 import { HeroStage } from "../features/landing/hero/HeroStage";
 import { Walkthrough } from "../features/landing/Walkthrough";
 import { wakeServer } from "../lib/api";
-import { AUTHOR_URL, LINKEDIN_URL, REPOSITORY_URL } from "../lib/env";
+import { AUTHOR_URL, LINKEDIN_URL, PORTFOLIO_URL, REPOSITORY_URL } from "../lib/env";
 import styles from "./LandingPage.module.css";
 
 const sourceUrl = (path: string) => `${REPOSITORY_URL}/blob/master/${path}`;
@@ -159,33 +162,30 @@ export default function LandingPage() {
                     <VerifiedTerminal />
                 </section>
 
-                <section className={styles.closing} aria-labelledby="closing-title">
+<section className={styles.closing} aria-labelledby="closing-title">
                     <h2 id="closing-title" className={styles.closingTitle}>See a call turn into its recap.</h2>
                     <div className={styles.heroActions}>
                         <ButtonLink to="/demo" size="lg" variant="accent">Try the live demo</ButtonLink>
+                        <ButtonLink to={startHref} size="lg" variant="secondary">
+                            {signedIn ? "Go to your meetings" : "Start a meeting"}
+                        </ButtonLink>
                     </div>
-                    <p className={styles.heroNote}>
-                        Or <Link to={startHref}>{signedIn ? "go to your meetings" : "create an account"}</Link> and host a real one.
-                    </p>
-                    <p className={styles.builder}>
-                        Bridge was designed, engineered and tested end to end by{" "}
-                        <a href={AUTHOR_URL} target="_blank" rel="noreferrer">Udit Singh Chauhan</a>: product, interface, realtime
-                        backend and the test suite.{" "}
-                        <a href={LINKEDIN_URL} target="_blank" rel="noreferrer">Get in touch on LinkedIn</a>.
-                    </p>
+                    <ClosingLoop />
                 </section>
             </main>
 
-            <footer className={styles.footer}>
+<footer className={styles.footer}>
                 <div className={styles.footerInner}>
                     <Logo />
                     <p>
-                        Designed and built by <a href={AUTHOR_URL} target="_blank" rel="noreferrer">Udit Singh Chauhan</a>.
+                        Designed and built by <a href={AUTHOR_URL} target="_blank" rel="noreferrer">Udit Singh Chauhan</a>
                     </p>
-                    <div className={styles.footerLinks}>
+                    <nav className={styles.footerLinks} aria-label="More">
+                        <Link to="/design-notes">Design notes</Link>
+                        {PORTFOLIO_URL ? <a href={PORTFOLIO_URL} target="_blank" rel="noreferrer">Portfolio</a> : null}
                         <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">GitHub</a>
                         <a href={LINKEDIN_URL} target="_blank" rel="noreferrer">LinkedIn</a>
-                    </div>
+                    </nav>
                 </div>
             </footer>
         </div>
