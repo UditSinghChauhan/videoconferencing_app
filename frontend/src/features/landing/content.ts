@@ -2,16 +2,23 @@
 
 export const E2E_SPEC_PATH = "frontend/tests/e2e/meeting-system.spec.js";
 
+export interface Crop {
+    x: number;
+    y: number;
+    width: number;
+}
+
 export interface WalkthroughStep {
     id: "start" | "share" | "recap";
     title: string;
     body: string;
     image: { desktop: string; mobile: string; alt: string; desktopHeight: number; mobileHeight: number };
     /**
-     * The part of the 1280 px-wide desktop capture the pane shows, in capture
-     * pixels, so interface text stays near its real size instead of shrinking.
+     * The walkthrough camera: where it starts and ends while this step is in
+     * view, in capture pixels (the desktop capture is 1280 px wide). A crop
+     * at most 740 px wide keeps interface text at 13 px or more in the pane.
      */
-    crop: { x: number; y?: number; width: number };
+    camera: { from: Crop; to: Crop };
 }
 
 export const WALKTHROUGH: WalkthroughStep[] = [
@@ -24,9 +31,9 @@ export const WALKTHROUGH: WalkthroughStep[] = [
             mobile: "/landing/step-start-mobile.webp",
             desktopHeight: 1600,
             mobileHeight: 1688,
-            alt: "A new Bridge room with only the host, Maya Patel, and the invite link just copied."
+            alt: "A new Bridge room with only the host, Maya Patel, on camera, and the invite link just copied."
         },
-        crop: { x: 0, width: 1280 }
+        camera: { from: { x: 0, y: 0, width: 700 }, to: { x: 260, y: 150, width: 740 } }
     },
     {
         id: "share",
@@ -37,9 +44,9 @@ export const WALKTHROUGH: WalkthroughStep[] = [
             mobile: "/landing/step-share-mobile.webp",
             desktopHeight: 1600,
             mobileHeight: 1688,
-            alt: "The same room with four people. Jordan Lee is muted, and the chat shows messages about the release checklist and Thursday's deadline."
+            alt: "The same room with four people on camera, Maya, Aarav, Sofia and Jordan, and the chat with messages about the release checklist and Thursday's deadline."
         },
-        crop: { x: 460, width: 820 }
+        camera: { from: { x: 20, y: 70, width: 740 }, to: { x: 540, y: 40, width: 740 } }
     },
     {
         id: "recap",
@@ -49,10 +56,10 @@ export const WALKTHROUGH: WalkthroughStep[] = [
             desktop: "/landing/step-recap-desktop.webp",
             mobile: "/landing/step-recap-mobile.webp",
             desktopHeight: 3050,
-            mobileHeight: 4326,
-            alt: "The meeting recap: three key points taken from the chat, who was there, topics such as release and onboarding, and the five-message transcript."
+            mobileHeight: 4402,
+            alt: "The meeting recap: three key points taken from the chat, who was there, topics such as release checklist and onboarding fix, and the five-message transcript."
         },
-        crop: { x: 230, y: 64, width: 820 }
+        camera: { from: { x: 240, y: 90, width: 720 }, to: { x: 240, y: 860, width: 720 } }
     }
 ];
 
@@ -84,21 +91,6 @@ export const DECISIONS: Decision[] = [
     }
 ];
 
-
-export const OUTCOMES = [
-    {
-        title: "Everyone leaves with the same notes.",
-        body: "Ending the call produces key points and the full transcript, kept in each person's history and copyable as Markdown."
-    },
-    {
-        title: "A host can remove anyone, and the server enforces it.",
-        body: "Removing someone or ending the call is checked by the API, so a participant cannot do it by calling the endpoint directly."
-    },
-    {
-        title: "Join from a link, in a browser, in seconds.",
-        body: "No install and no account for the demo. A lobby checks your devices first, and a dropped connection rejoins on its own."
-    }
-];
 
 export interface EngineeringNote {
     label: string;

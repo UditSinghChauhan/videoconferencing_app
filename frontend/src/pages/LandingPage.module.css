@@ -111,65 +111,13 @@
     line-height: 1.45;
 }
 
-/* ---------- Facts ---------- */
 
-.facts {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-10);
-    width: 100%;
-    max-width: 1040px;
-    margin: var(--space-16) 0 0;
-    padding: var(--space-10) var(--space-12);
-    border-radius: var(--radius-xl);
-    background: var(--surface);
-    text-align: left;
-}
 
-.facts dt {
-    font-family: var(--font-display);
-    font-size: var(--text-5xl);
-    letter-spacing: -0.02em;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
 
-.facts dd {
-    max-width: 28ch;
-    margin: var(--space-3) 0 0;
-    color: var(--text);
-    font-size: var(--text-md);
-    line-height: 1.5;
-}
 
-/* ---------- Outcomes ---------- */
 
-.outcomes {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-12);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
 
-.outcomes h3 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--text-2xl);
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    line-height: 1.12;
-    text-wrap: balance;
-}
 
-.outcomes p {
-    max-width: 34ch;
-    margin: var(--space-4) 0 0;
-    color: var(--text);
-    font-size: var(--text-md);
-    line-height: 1.55;
-}
 
 /* ---------- Engineering (the one dark surface) ---------- */
 
@@ -487,23 +435,9 @@
         padding-bottom: var(--space-24);
     }
 
-    .outcomes {
-        grid-template-columns: 1fr;
-        gap: var(--space-10);
-    }
-
     .decisions li {
         grid-template-columns: 1fr;
         gap: var(--space-5);
-    }
-
-    .facts {
-        gap: var(--space-6);
-        padding: var(--space-8);
-    }
-
-    .facts dt {
-        font-size: var(--text-4xl);
     }
 
     .verified {
@@ -581,22 +515,8 @@
         margin-bottom: var(--space-8);
     }
 
-    .outcomes h3 {
-        font-size: var(--text-2xl);
-    }
-
     .decisions li {
         padding: var(--space-6);
-    }
-
-    .facts {
-        grid-template-columns: 1fr;
-        margin-top: var(--space-10);
-        padding: var(--space-6);
-    }
-
-    .facts dt {
-        font-size: var(--text-4xl);
     }
 
     .verified {

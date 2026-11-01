@@ -14,7 +14,9 @@ const SECTION_LINKS = [
     { href: "#verified", label: "Verified" }
 ];
 import { ArchitectureFigure } from "../features/landing/ArchitectureFigure";
-import { DECISIONS, E2E_SPEC_PATH, ENGINEERING, FACTS, OUTCOMES, TEST_LINES, VERIFIED } from "../features/landing/content";
+import { DECISIONS, E2E_SPEC_PATH, ENGINEERING, TEST_LINES, VERIFIED } from "../features/landing/content";
+import { Bento } from "../features/landing/bento/Bento";
+import { Facts } from "../features/landing/facts/Facts";
 import { SignatureChapter } from "../features/landing/chapter/SignatureChapter";
 import { HeroStage } from "../features/landing/hero/HeroStage";
 import { Walkthrough } from "../features/landing/Walkthrough";
@@ -63,14 +65,7 @@ export default function LandingPage() {
                         </figcaption>
                     </figure>
 
-                    <dl className={styles.facts}>
-                        {FACTS.map((fact) => (
-                            <div key={fact.value + fact.label}>
-                                <dt>{fact.value}</dt>
-                                <dd>{fact.label}</dd>
-                            </div>
-                        ))}
-                    </dl>
+                    <Facts />
                 </section>
 
                 <SignatureChapter />
@@ -86,14 +81,7 @@ export default function LandingPage() {
                     <div className={styles.intro}>
                         <h2 id="outcomes-title" className={styles.sectionTitle}>What you can count on.</h2>
                     </div>
-                    <ul className={styles.outcomes}>
-                        {OUTCOMES.map((outcome) => (
-                            <li key={outcome.title}>
-                                <h3>{outcome.title}</h3>
-                                <p>{outcome.body}</p>
-                            </li>
-                        ))}
-                    </ul>
+                    <Bento />
                 </section>
 
                 <section id="engineering" className={styles.engineering} aria-labelledby="engineering-title" data-nav-theme="dark">
