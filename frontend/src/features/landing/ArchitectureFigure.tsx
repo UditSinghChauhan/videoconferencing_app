@@ -10,7 +10,7 @@ import styles from "./ArchitectureFigure.module.css";
  * under reduced motion. Below 1024 px, and always for screen readers, the
  * same facts are an ordered list.
  */
-export function ArchitectureFigure() {
+export default function ArchitectureFigure() {
     const ref = useRef<HTMLDivElement>(null);
     const inView = useInView(ref, { margin: "0px" });
 

@@ -69,7 +69,8 @@
 .dbFlash {
     opacity: 0;
     animation-duration: 4s;
-    animation-iteration-count: infinite;
+    /* Three passes, then still (WCAG 2.2.2): the figure stays readable without motion. */
+    animation-iteration-count: 3;
     animation-timing-function: linear;
     animation-play-state: paused;
 }

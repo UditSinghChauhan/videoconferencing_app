@@ -21,7 +21,7 @@ const enter = { duration: 0.55, ease: EASE };
  * from real Bridge components and fixture data. 12 columns: two large tiles
  * and two small. Loops pause off screen; reduced motion shows the final state.
  */
-export function Bento() {
+export default function Bento() {
     return (
         <ul className={styles.bento}>
             <Tile size="large" title="Everyone leaves with the same notes." body="The recap lands in each person's history and copies as Markdown for Slack, Notion or email.">

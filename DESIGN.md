@@ -184,98 +184,55 @@ Only transform, opacity and filter animate (colour transitions on controls excep
 
 ## Section-by-section spec
 
-### 1. Navigation
+As shipped on 2026-11-01 (`feat/landing-revamp`). Code in `frontend/src/features/landing/`.
 
-Logo left. Links: Walkthrough, Engineering, Decisions, Verified (anchors; hidden under 768 px). Right: "Sign in" text link and "GitHub" text link with the GitHub mark. Solid `--bg`, no border, no blur. No filled button in the nav, so the hero's accent action is the only one in the first viewport.
+### 1. Navigation (`nav/`)
 
-### 2. Hero (first viewport)
+Logo; anchors How it works, Walkthrough, Engineering, Decisions, Verified, and a Design notes route (between 768 and 1099 px only How it works and Design notes; under 768 px none). Right: Sign in and GitHub. Solid paper at the top; after 40 px translucent paper with a hairline; over the Engineering section the dark room tokens, crossfading in 150 ms. No filled button in the nav.
 
-Centred, one column at every width.
+### 2. Hero (`hero/`, `HeroRecording.tsx`)
 
-- h1: "Meetings that end with a *recap*." (kept; italic rust "recap").
-- One support line, max 34ch, in full ink: "Video calls for small teams. When the host ends one, everyone gets the key points and the full transcript."
-- Two actions: **Try the live demo** (rust, the accent action; goes to `/demo`, no account) and **Start a meeting** (ink outline; signed in → `/home`, otherwise `/auth?mode=signup`). The demo is first because it needs nothing from the visitor.
-- Below, centred app-window frame (ToDesktop framing) holding the **20 s muted loop**, cut so the recap dominates: 0–5 s the last two messages of a live four-person call and the host pressing End; 5–20 s the recap page, holding on the key points, then gliding to the transcript. Recorded at 2x and encoded at 1920 × 1200 (about 540 KB, H.264 first). A Pause control sits in the window bar, never over the recording (WCAG 2.2.2); the loop also pauses off screen. The poster frame, and the reduced-motion image, is the finished recap, so a still visitor still sees the outcome. Caption under the frame in 14 px muted: "Recorded from the running app. The recap is built on the server from the chat and activity log, no external AI."
-- At 1280 × 800 the headline, support line, both actions and the top 40 % of the frame (enough to see the recap heading) are above the fold. At 375 × 812 the frame starts above the fold.
+h1 "Meetings that end with a *recap*.", one support line, **Try the live demo** (rust) and **Start a meeting** (outline). Below, a frame up to 1200 px with `--shadow-lg` in a warm pool of light, holding a 12 s muted loop recorded from the running app with the illustrated cast: faces and a moving speaking ring, two chat messages, End, the room folds away, the recap builds and glides to the topic chips. The frame settles from 0.92 to 1 (radius 20 to 12) as it reaches the middle of the viewport. Under 640 px a portrait loop in a phone outline. Poster is the first frame (four faces). Pause control in the window bar; the loop pauses off screen. Reduced motion: the call still beside the recap card. Caption: "Recorded from the running app with an illustrated demo cast."
 
-### 2b. Facts
+### 2b. Facts (`facts/`)
 
-Directly under the hero frame, one `--surface` panel with three facts, each a large serif value and one line: **0.4 s** from End to the recap on screen (measured with `scripts/measure-wake.mjs`), **0 bytes** of media through the server, and **N flows** tested end to end (N is counted from the Verified list in code, so the two cannot disagree). No vanity numbers: every value is measured or structural.
+0.4 s (End to recap, measured by `scripts/measure-wake.mjs`), 0 bytes of media through the server, N flows (counted from `VERIFIED`). Count up once in view.
 
-### 3. Walkthrough: Start, Share, Recap
+### 3. Signature chapter: "Faces in, notes out." (`chapter/`)
 
-Title: "From link to recap." Two columns at ≥ 1024 px: text left (4 of 12 columns), sticky product pane right (8 of 12), pane `position: sticky; top: 96px`. Each step is one block of text about 70vh tall so scrolling advances one step at a time. The active step is `--text` with a 2 px rust rule at its left; inactive steps use `--text-muted` (5.98:1, so they stay readable). Colour, not opacity, marks the active step, because 0.45 opacity on ink would fall below 4.5:1.
+A stage pinned for about 300vh with `position: sticky`, scrubbed both ways by scroll progress, built from the room's tile, chat and control styles and the recap's styles: (1) "Four people, one call." the ring moves; (2) "The chat carries the decisions." the panel slides in and decision lines light in rust; (3) "The host ends it." End pulses and the tiles fold into a stack; (4) "Everyone gets the same notes." the stack becomes the recap, key points write in, chips pop, the transcript opens. Content comes from the real summariser on the stand-up fixture (`fixtures.ts`). Under 1024 px and under reduced motion: four blocks.
 
-| Step | Text (left) | Product state (right pane, a capture) |
-|---|---|---|
-| **1. Start** | "One click makes a room with a readable code like `kmt-vrqp-xhw`. The lobby checks your camera and mic, then hands you the link." | The room just after the host joins: a single host tile, the invite link copied ("Link copied" confirmation visible), the meeting code in the top bar, timer at 00:0x. |
-| **2. Share** | "People join from the browser with no install. You see who is speaking, who is muted, and the chat, in real time." | The same room with four people: speaking ring on one tile, a mute badge on another, chat panel open with three to four messages about a release and a deadline. |
-| **3. Recap** | "When the host ends the call, the server writes the recap: key points, highlights, topics and the full transcript, saved to everyone's history." | The recap page for that meeting: heading "Meeting recap", meta (duration, people), Key points list, topic chips, and the chat transcript section expanded below. |
+### 4. Walkthrough (`Walkthrough.tsx`)
 
-Each pane image has real alt text describing the state, e.g. "Bridge room with four participants; Maya is speaking, Jordan is muted, chat shows three messages."
+"From link to recap." Steps about 60vh with centred copy; a sticky pane with an "01 / 03" rust progress line. The pane is a camera over one capture per step, panning and zooming from the step's first framing to its last (600 ms spring); crops keep pane text at 13 px or more. Under 1024 px steps stack with their own capture.
 
-The pane zooms each capture to a crop (`crop` in `content.ts`, in capture pixels) so interface text shows near its real size: Start shows the whole new room, Share the tiles and chat, Recap the content column below the app header, gliding down to the transcript. Step titles are serif at 48 px.
+### 5. Outcomes bento (`bento/`)
 
-Below 1024 px there is no sticky pane (a band covering half a tablet screen hid the text it described): each step is its text followed by its own capture, wide on tablets and phone-size under 640 px.
+"What you can count on." 12 columns, two large and two small tiles (20 px radius, `--shadow-sm` lifting to `--shadow-md`), each a micro-demo of real components: Copy as Markdown with its toast and the real Markdown; link, lobby device check, room; Live, Reconnecting…, back; the host removes someone and a participant's own remove request gets 403. Loops run in view, stop after three cycles, and hold their final state under reduced motion.
 
-### 4. Outcomes (replaces the six icon cards)
+### 6. Engineering (`ArchitectureFigure.tsx`)
 
-Three statements, no icons, no boxes: a typographic row of three columns, each a serif statement (28 px) with its supporting sentence below (stacked below 1024 px).
+Dark section. SVG figure from 1024 px with traffic on a 4 s loop (three passes): media packets peer to peer, signalling browser → API → browser, a write pulse API → MongoDB. Ordered list below 1024 px and for screen readers. Engineering notes link to their files.
 
-1. **"Everyone leaves with the same notes."** Ending the call produces a recap of key points and the transcript, kept in history and copyable as Markdown.
-2. **"A host can remove anyone, and the server enforces it."** Removing someone or ending the call is checked by the API, not just hidden in the interface.
-3. **"Join from a link, in a browser, in seconds."** No install, a lobby to check your devices first, and a dropped connection rejoins on its own.
+### 7. Decisions
 
-Implementation detail from the old cards (token rotation, CSRF, reconnect handling, second-tab handover) moves to section 5.
+Three cards: serif title, Why, Cost, and a "Would change when" footer only where ARCHITECTURE.md names the change (SFU, LLM layer).
 
-### 5. Engineering (kept, the differentiator)
+### 8. Verified (`verified/`)
 
-Kept on the dark surface (`--room-bg`) as the page's one change of mood. Title kept: "Built like a product, documented like a system." Lede kept (peer-to-peer media, server only authenticates, relays and records; trade-off is upload bandwidth, so about six people; larger rooms need an SFU).
+A terminal that types each Playwright test in on enter, with its line link and duration, and ticks off the flows it proves. Durations only from a real JSON report (`scripts/e2e-durations.mjs` → `e2e-run.json`).
 
-**Architecture figure, one clean figure.** A single `<figure>` with a `<figcaption>`, drawn as inline SVG at ≥ 640 px so the lines are exact:
+### 9. Closing and footer (`closing/`)
 
-- Top row: Browser A and Browser B, joined by one dashed rust line labelled "media, peer to peer (WebRTC)".
-- Both browsers connect down to one Node.js API node with a solid line each, labelled once "signalling (Socket.IO) + REST". This fixes the current figure, where only one stem leaves the browser row, so it reads as if Browser B alone talks to the server.
-- API to MongoDB, labelled "users · sessions · meetings · activity · recaps".
-- Labels at 14 px, nodes with name (Geist 600) and stack line (14 px muted).
+"See a call turn into its recap." with the rust demo action and an outline Start a meeting, above a small loop where the call folds into its recap card. Footer: "Designed and built by Udit Singh Chauhan" (GitHub), Design notes, GitHub, LinkedIn; a portfolio link appears only when `PORTFOLIO_URL` is set.
 
-**Under 640 px** the SVG is replaced by an ordered list that says the same thing in reading order:
-1. Browser A ⇄ Browser B: media, peer to peer over WebRTC.
-2. Each browser → Node.js API: Socket.IO signalling and REST, authenticated with a JWT.
-3. Node.js API → MongoDB: users, sessions, meetings, activity and recaps.
+### 10. Design notes (`/design-notes`)
 
-Under the figure, a two-column list (one column under 640 px) of engineering detail, each with a link to the file that implements it: WebRTC mesh with perfect negotiation; Socket.IO signalling with an authenticated handshake; sessions (15-minute access tokens, rotating refresh tokens in httpOnly cookies, CSRF check, sign out everywhere); reconnects and second-tab handover; Zod-validated routes with server-side roles; a deterministic rule-based summariser (no external AI). Actions: "Read the architecture notes" (white outline on dark, not rust, so this viewport has no accent action competing with the Verified row) and "Source on GitHub" text link.
+A standalone case study: summary, role, timeline, stack, problem, the two moods with live token swatches, the room tile, the recap's information design, accessibility, before and after, motion principles, next steps.
 
-### 5b. Decisions: "Why it is built this way."
+### Performance
 
-Three trade-offs, each stated the way it would be in a design review: the decision (serif, 28 px), then **Why.** and **Trade-off.** One `--surface` panel per decision, decision on the left, reasoning on the right. Content: peer-to-peer mesh rather than an SFU; a rule-based recap rather than an LLM; short access tokens with rotating, hashed, replay-checked refresh tokens. Every claim is checked against the code before it ships.
-
-### 6. Verified
-
-Title: "Verified end to end." One line: "Each flow runs in a real browser against the real API in CI-style Playwright tests." Then one `--surface` panel with a row per test: the flows that test proves (pass glyph in `--success`, `aria-hidden`, with "passing" for screen readers) and the test's title in `<code>`, so each title appears once. The intro sentence links to the spec on GitHub.
-
-Flows requested, and what exists today in `frontend/tests/e2e/meeting-system.spec.js` (as of `master` `fe317a5`):
-
-| Flow | Test today | Status |
-|---|---|---|
-| Register | `signUp()` helper, used by every lifecycle test | exists |
-| Login | none: e2e only checks empty-form validation on `/auth` | **missing** |
-| Session persistence after refresh | none: no test reloads the page while signed in | **missing** |
-| Create and join | "two people meet, chat, …" (host creates, guest joins by link) | exists |
-| Chat | same test, chat both ways | exists |
-| Host-only removal | same test, host removes guest; guest sees "You were removed" | exists (UI); the guest-cannot-remove half is not asserted |
-| End meeting and summary | same test, ends and lands on the recap with Key points | exists |
-| 403 on unauthorised summary access | "people outside a meeting cannot read its recap" asserts the UI message, not the HTTP status | **partial** |
-
-Resolved in build: the missing tests were written (sign-in and reload persistence; a participant's remove call asserted as `403`; the outsider's recap request asserted as HTTP `403`).
-
-### 7. Closing call to action
-
-Serif line: "See a call turn into its recap." One accent action: **Try the live demo**. A text link: "or create an account". Then the builder's line: designed, engineered and tested end to end by Udit Singh Chauhan, with links to GitHub and LinkedIn. No icon.
-
-### 8. Footer
-
-Logo, "Designed and built by Udit Singh Chauhan" (link), GitHub link, LinkedIn link. 14 px muted.
+Sections below the hero load as they approach the viewport (`Deferred.tsx`), so `motion` and the demos stay out of the first paint; the hero poster is preloaded. Lighthouse mobile on the production build: 96 performance, 100 accessibility, 100 best practices, 100 SEO; LCP 2.3 s, CLS 0.005.
 
 ## Live demo and the backend wake-up
 

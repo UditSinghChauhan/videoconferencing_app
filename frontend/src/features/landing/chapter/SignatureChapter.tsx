@@ -19,12 +19,12 @@ import styles from "./SignatureChapter.module.css";
  * progress. Built from real room and recap components with fixture data.
  * Under 1024 px, and under reduced motion, it becomes four plain blocks.
  */
-export function SignatureChapter() {
+export default function SignatureChapter() {
     const wide = useMediaQuery("(min-width: 1024px)");
     const reduced = useReducedMotion();
 
     return (
-        <section id="signature" className={styles.section} aria-labelledby="signature-title">
+        <section className={styles.section} aria-labelledby="signature-title">
             <h2 id="signature-title" className={styles.sectionTitle}>Faces in, notes out.</h2>
             {wide && !reduced ? <PinnedStage /> : <ChapterBlocks still={Boolean(reduced)} />}
         </section>

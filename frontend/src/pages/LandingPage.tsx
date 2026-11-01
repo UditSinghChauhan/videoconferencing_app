@@ -1,10 +1,27 @@
-import { useEffect } from "react";
+import { lazy, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { LandingNav } from "../features/landing/nav/LandingNav";
 import { useAuth } from "../auth/AuthContext";
 import { ButtonLink } from "../components/Button";
 import { GithubIcon } from "../components/GithubIcon";
 import { Logo } from "../components/Logo";
+import { DECISIONS, E2E_SPEC_PATH, ENGINEERING } from "../features/landing/content";
+import { Deferred } from "../features/landing/Deferred";
+import { Facts } from "../features/landing/facts/Facts";
+import { HeroStage } from "../features/landing/hero/HeroStage";
+import { wakeServer } from "../lib/api";
+import { AUTHOR_URL, LINKEDIN_URL, PORTFOLIO_URL, REPOSITORY_URL } from "../lib/env";
+import styles from "./LandingPage.module.css";
+
+// Below the fold: each section's code loads as it approaches the viewport,
+// keeping the animation library and the demos out of the first paint.
+const SignatureChapter = lazy(() => import("../features/landing/chapter/SignatureChapter"));
+const Walkthrough = lazy(() => import("../features/landing/Walkthrough"));
+const Bento = lazy(() => import("../features/landing/bento/Bento"));
+const ArchitectureFigure = lazy(() => import("../features/landing/ArchitectureFigure"));
+const VerifiedTerminal = lazy(() => import("../features/landing/verified/VerifiedTerminal"));
+const ClosingLoop = lazy(() => import("../features/landing/closing/ClosingLoop"));
+
 
 const SECTION_LINKS = [
     { href: "#signature", label: "How it works" },
@@ -14,18 +31,6 @@ const SECTION_LINKS = [
     { href: "#verified", label: "Verified" },
     { href: "/design-notes", label: "Design notes" }
 ];
-import { ArchitectureFigure } from "../features/landing/ArchitectureFigure";
-import { DECISIONS, E2E_SPEC_PATH, ENGINEERING } from "../features/landing/content";
-import { VerifiedTerminal } from "../features/landing/verified/VerifiedTerminal";
-import { ClosingLoop } from "../features/landing/closing/ClosingLoop";
-import { Bento } from "../features/landing/bento/Bento";
-import { Facts } from "../features/landing/facts/Facts";
-import { SignatureChapter } from "../features/landing/chapter/SignatureChapter";
-import { HeroStage } from "../features/landing/hero/HeroStage";
-import { Walkthrough } from "../features/landing/Walkthrough";
-import { wakeServer } from "../lib/api";
-import { AUTHOR_URL, LINKEDIN_URL, PORTFOLIO_URL, REPOSITORY_URL } from "../lib/env";
-import styles from "./LandingPage.module.css";
 
 const sourceUrl = (path: string) => `${REPOSITORY_URL}/blob/master/${path}`;
 
@@ -71,20 +76,20 @@ export default function LandingPage() {
                     <Facts />
                 </section>
 
-                <SignatureChapter />
+                <Deferred id="signature" minHeight="calc(320vh + 240px)"><SignatureChapter /></Deferred>
 
                 <section id="walkthrough" className={styles.section} aria-labelledby="walkthrough-title">
                     <div className={styles.intro}>
                         <h2 id="walkthrough-title" className={styles.sectionTitle}>From link to recap.</h2>
                     </div>
-                    <Walkthrough />
+                    <Deferred minHeight="1600px"><Walkthrough /></Deferred>
                 </section>
 
 <section className={styles.section} aria-labelledby="outcomes-title">
                     <div className={styles.intro}>
                         <h2 id="outcomes-title" className={styles.sectionTitle}>What you can count on.</h2>
                     </div>
-                    <Bento />
+                    <Deferred minHeight="1000px"><Bento /></Deferred>
                 </section>
 
                 <section id="engineering" className={styles.engineering} aria-labelledby="engineering-title" data-nav-theme="dark">
@@ -96,7 +101,7 @@ export default function LandingPage() {
                             </p>
                         </div>
 
-                        <ArchitectureFigure />
+                        <Deferred minHeight="600px"><ArchitectureFigure /></Deferred>
 
                         <ul className={styles.notes}>
                             {ENGINEERING.map((note) => (
@@ -159,7 +164,7 @@ export default function LandingPage() {
                             </a>.
                         </p>
                     </div>
-                    <VerifiedTerminal />
+                    <Deferred minHeight="720px"><VerifiedTerminal /></Deferred>
                 </section>
 
 <section className={styles.closing} aria-labelledby="closing-title">
@@ -170,7 +175,7 @@ export default function LandingPage() {
                             {signedIn ? "Go to your meetings" : "Start a meeting"}
                         </ButtonLink>
                     </div>
-                    <ClosingLoop />
+                    <Deferred minHeight="460px"><ClosingLoop /></Deferred>
                 </section>
             </main>
 

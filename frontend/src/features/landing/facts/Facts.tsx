@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { animate, useInView, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { usePrefersReducedMotion } from "../../../lib/usePrefersReducedMotion";
 import { FACTS } from "../content";
 import styles from "./Facts.module.css";
 
@@ -10,7 +10,20 @@ import styles from "./Facts.module.css";
  */
 export function Facts() {
     const ref = useRef<HTMLDListElement>(null);
-    const inView = useInView(ref, { once: true, margin: "-15% 0px" });
+    const [inView, setInView] = useState(false);
+
+    useEffect(() => {
+        const element = ref.current;
+        if (!element) return;
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry?.isIntersecting) {
+                setInView(true);
+                observer.disconnect();
+            }
+        }, { rootMargin: "0px 0px -15% 0px" });
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, []);
 
     return (
         <dl ref={ref} className={styles.facts}>
@@ -26,7 +39,7 @@ export function Facts() {
 
 function CountUp({ value, run }: { value: string; run: boolean }) {
     const ref = useRef<HTMLSpanElement>(null);
-    const reduced = useReducedMotion();
+    const reduced = usePrefersReducedMotion();
     const match = /^([\d.]+)(.*)$/.exec(value);
 
     useEffect(() => {
@@ -35,14 +48,17 @@ function CountUp({ value, run }: { value: string; run: boolean }) {
         const target = Number(match[1]);
         const decimals = match[1]?.includes(".") ? match[1].split(".")[1]?.length ?? 0 : 0;
         if (target === 0) return;
-        const controls = animate(0, target, {
-            duration: 1.1,
-            ease: [0.16, 1, 0.3, 1],
-            onUpdate: (latest) => {
-                element.textContent = `${latest.toFixed(decimals)}${match[2]}`;
-            }
-        });
-        return () => controls.stop();
+        // 1.1 s on an exponential ease-out (the landing entrance curve), in rAF.
+        const started = performance.now();
+        let raf = 0;
+        const tick = (now: number) => {
+            const t = Math.min(1, (now - started) / 1100);
+            const eased = t === 1 ? 1 : 1 - 2 ** (-10 * t);
+            element.textContent = `${(target * eased).toFixed(decimals)}${match[2]}`;
+            if (t < 1) raf = window.requestAnimationFrame(tick);
+        };
+        raf = window.requestAnimationFrame(tick);
+        return () => window.cancelAnimationFrame(raf);
         // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, when the panel first comes into view
     }, [run, reduced]);
 

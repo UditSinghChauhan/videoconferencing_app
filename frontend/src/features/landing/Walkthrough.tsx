@@ -21,7 +21,7 @@ const cropAt = (from: Crop, to: Crop, t: number): Crop => ({ x: lerp(from.x, to.
  * framing to its last, with a 600 ms spring between them. Below 1024 px the
  * steps stack, each with its own capture.
  */
-export function Walkthrough() {
+export default function Walkthrough() {
     const wide = useMediaQuery("(min-width: 1024px)");
     return wide ? <CameraWalkthrough /> : <StackedWalkthrough />;
 }

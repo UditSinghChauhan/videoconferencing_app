@@ -33,6 +33,7 @@
 .recap {
     max-width: 440px;
     justify-self: center;
+    pointer-events: none;
 }
 
 @media (max-width: 639px) {

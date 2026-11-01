@@ -25,7 +25,7 @@ const LINE_GAP = 0.32;
  * from a real Playwright JSON report (e2e-run.json, scripts/e2e-durations.mjs);
  * a test without one shows no time. Reduced motion shows the finished run.
  */
-export function VerifiedTerminal() {
+export default function VerifiedTerminal() {
     const ref = useRef<HTMLDivElement>(null);
     const inView = useInView(ref, { once: true, margin: "-20% 0px" });
     const reduced = Boolean(useReducedMotion());

@@ -7,7 +7,7 @@
     background-size: 180px;
 }
 
-.page section[id] {
+.page [id] {
     scroll-margin-top: 80px;
 }
 
