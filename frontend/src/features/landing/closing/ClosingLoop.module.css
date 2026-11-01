@@ -1,0 +1,43 @@
+.stage {
+    display: grid;
+    place-items: center;
+    width: min(100%, 560px);
+    min-height: 420px;
+    margin: var(--space-10) auto 0;
+}
+
+.room,
+.recap {
+    grid-area: 1 / 1;
+    width: 100%;
+}
+
+.room {
+    padding: var(--space-3);
+    border-radius: var(--radius-xl);
+    background: var(--room-bg);
+    box-shadow: var(--shadow-lg);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+}
+
+.slot {
+    position: relative;
+    border-radius: var(--radius-lg);
+}
+
+.recap {
+    max-width: 440px;
+    justify-self: center;
+    pointer-events: none;
+}
+
+@media (max-width: 639px) {
+    .stage {
+        min-height: 360px;
+    }
+}

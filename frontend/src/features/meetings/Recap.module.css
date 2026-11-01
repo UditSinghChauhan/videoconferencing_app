@@ -280,3 +280,47 @@
         border-bottom: 1px solid var(--border);
     }
 }
+
+/* Right after a call ends, the recap builds in: sections rise in order, then key points one by one. */
+.recap[data-reveal] > *,
+.recap[data-reveal] .points li,
+.recap[data-reveal] .chips li {
+    animation: recap-rise 640ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.recap[data-reveal] > :nth-child(2) { animation-delay: 90ms; }
+.recap[data-reveal] > :nth-child(3) { animation-delay: 180ms; }
+.recap[data-reveal] > :nth-child(4) { animation-delay: 270ms; }
+.recap[data-reveal] > :nth-child(5) { animation-delay: 360ms; }
+.recap[data-reveal] > :nth-child(n + 6) { animation-delay: 450ms; }
+.recap[data-reveal] .points li:nth-child(1) { animation-delay: 380ms; }
+.recap[data-reveal] .points li:nth-child(2) { animation-delay: 560ms; }
+.recap[data-reveal] .points li:nth-child(3) { animation-delay: 740ms; }
+.recap[data-reveal] .chips li { animation-name: recap-pop; animation-duration: 480ms; }
+.recap[data-reveal] .chips li:nth-child(1) { animation-delay: 700ms; }
+.recap[data-reveal] .chips li:nth-child(2) { animation-delay: 770ms; }
+.recap[data-reveal] .chips li:nth-child(3) { animation-delay: 840ms; }
+.recap[data-reveal] .chips li:nth-child(4) { animation-delay: 910ms; }
+.recap[data-reveal] .chips li:nth-child(n + 5) { animation-delay: 980ms; }
+
+@keyframes recap-rise {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+}
+
+@keyframes recap-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.85);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .recap[data-reveal] > *,
+    .recap[data-reveal] .points li,
+    .recap[data-reveal] .chips li {
+        animation: none;
+    }
+}

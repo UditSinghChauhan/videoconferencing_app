@@ -15,12 +15,14 @@ interface RecapViewProps {
     footnote?: ReactNode;
     /** Open the transcript by default (the demo shows it straight away). */
     transcriptOpen?: boolean;
+    /** Build the recap in line by line, right after the host ends the call. */
+    reveal?: boolean;
 }
 
 type CopyState = "idle" | "copied" | "failed";
 
 /** The recap of an ended meeting. Shared by the recap page and the public demo. */
-export function RecapView({ recap, notice, footnote, transcriptOpen = false }: RecapViewProps) {
+export function RecapView({ recap, notice, footnote, transcriptOpen = false, reveal = false }: RecapViewProps) {
     const [copy, setCopy] = useState<CopyState>("idle");
     const { summary } = recap;
 
@@ -40,7 +42,7 @@ export function RecapView({ recap, notice, footnote, transcriptOpen = false }: R
     const hasContent = summary.keyPoints.length > 0 || summary.highlights.length > 0;
 
     return (
-        <article className={styles.recap} data-testid="recap">
+        <article className={styles.recap} data-testid="recap" data-reveal={reveal || undefined}>
             <header className={styles.header}>
                 {notice ? <p className={styles.notice} role="status">{notice}</p> : null}
                 <p className={styles.code}>{recap.meetingId}</p>

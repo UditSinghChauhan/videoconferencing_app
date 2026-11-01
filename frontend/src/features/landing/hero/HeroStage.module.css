@@ -1,0 +1,38 @@
+.stage {
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    margin: var(--space-16) auto 0;
+}
+
+/* A warm pool of light behind the frame: lighting, not a decorative blob. */
+.light {
+    position: absolute;
+    inset: -12% -8% -18%;
+    z-index: 0;
+    background: radial-gradient(50% 50% at 50% 46%, rgba(232, 89, 12, 0.13), rgba(232, 89, 12, 0.05) 45%, transparent 72%);
+    pointer-events: none;
+}
+
+.frame {
+    position: relative;
+    z-index: 1;
+    transform-origin: 50% 30%;
+    will-change: transform;
+}
+
+@media (max-width: 639px) {
+    .stage {
+        margin-top: var(--space-10);
+    }
+
+    .light {
+        inset: -6% -20% -10%;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .light {
+        background: radial-gradient(50% 50% at 50% 46%, rgba(255, 122, 51, 0.12), transparent 70%);
+    }
+}

@@ -1,0 +1,50 @@
+.single {
+    position: fixed;
+    inset: 0;
+    background: #000;
+}
+
+.review {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-10);
+    background: var(--room-bg);
+    color: var(--room-text);
+    min-height: 100vh;
+}
+
+.review h1,
+.review h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-10);
+}
+
+.tile {
+    position: relative;
+    margin: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    aspect-ratio: 16 / 9;
+    box-shadow: inset 0 0 0 1px var(--room-border);
+}
+
+.tile[data-speaking] {
+    box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.tile figcaption {
+    position: absolute;
+    left: var(--space-2);
+    bottom: var(--space-2);
+    padding: 4px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: rgba(12, 12, 14, 0.66);
+    font-size: var(--text-sm);
+}

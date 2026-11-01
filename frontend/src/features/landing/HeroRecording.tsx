@@ -1,29 +1,36 @@
 import { useEffect, useRef, useState } from "react";
 import { usePrefersReducedMotion } from "../../lib/usePrefersReducedMotion";
 import { AppFrame } from "./AppFrame";
+import { RecapCard } from "./RecapCard";
 import styles from "./HeroRecording.module.css";
 
-const POSTER = "/landing/hero-poster.webp";
 const DESCRIPTION =
-    "Recording of a Bridge call: four people chat about a release, the host ends the meeting, and the recap appears with key points and the transcript.";
+    "Recording of a Bridge call with four illustrated participants. The speaking ring moves between them, two chat messages arrive, the host presses End, the room folds away and the recap builds in with key points and topics.";
+
+const SOURCES = {
+    desktop: { mp4: "/landing/hero.mp4", webm: "/landing/hero.webm", poster: "/landing/hero-poster.webp", width: 1920, height: 1200 },
+    phone: { mp4: "/landing/hero-phone.mp4", webm: "/landing/hero-phone.webm", poster: "/landing/hero-phone-poster.webp", width: 720, height: 1440 }
+} as const;
 
 /**
- * The hero's 20 s muted loop, in its app window. The pause control sits in the
- * window bar so it never covers the recording (the End button is bottom right). Reduced motion shows the finished recap as a
- * still instead; the loop pauses off screen and has a visible pause control.
+ * The hero loop: a recording of the running app. Muted, inline, paused off
+ * screen, with a visible pause control that never covers the recording. Under
+ * reduced motion it becomes a still: the call's four faces with the recap card
+ * beside it, so the outcome is still visible.
  */
-export function HeroRecording({ address }: { address: string }) {
+export function HeroRecording({ variant }: { variant: "desktop" | "phone" }) {
     const reducedMotion = usePrefersReducedMotion();
     const videoRef = useRef<HTMLVideoElement>(null);
     const [paused, setPaused] = useState(false);
     const pausedByVisitor = useRef(false);
+    const source = SOURCES[variant];
 
     useEffect(() => {
         const video = videoRef.current;
         if (!video) return;
 
         const play = () => {
-            video.play().catch((error: unknown) => {
+            video.play().then(() => setPaused(false)).catch((error: unknown) => {
                 // Autoplay can be refused (data saver, low power mode); the poster stays and the button offers play.
                 console.warn("Hero recording did not autoplay", error instanceof Error ? error.message : error);
                 setPaused(true);
@@ -34,19 +41,11 @@ export function HeroRecording({ address }: { address: string }) {
             if (!entry) return;
             if (entry.isIntersecting && !pausedByVisitor.current) play();
             else video.pause();
-        }, { threshold: 0.25 });
+        }, { threshold: 0.2 });
 
         observer.observe(video);
         return () => observer.disconnect();
-    }, [reducedMotion]);
-
-    if (reducedMotion) {
-        return (
-            <AppFrame address={address}>
-                <img className={styles.media} src={POSTER} width={2560} height={1600} alt="The finished recap of a Bridge call: key points, who was there and the transcript." fetchPriority="high" />
-            </AppFrame>
-        );
-    }
+    }, [reducedMotion, variant]);
 
     const toggle = () => {
         const video = videoRef.current;
@@ -70,25 +69,53 @@ export function HeroRecording({ address }: { address: string }) {
         </button>
     );
 
-    return (
-        <AppFrame address={address} controls={control}>
-            <video
-                ref={videoRef}
+    if (reducedMotion) {
+        const still = (
+            <img
                 className={styles.media}
-                width={1920}
-                height={1200}
-                poster={POSTER}
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                aria-label={DESCRIPTION}
-                onPlay={() => setPaused(false)}
-            >
-                {/* H.264 first: smaller than the VP9 file at this size, and every current browser plays it. */}
-                <source src="/landing/hero.mp4" type="video/mp4" />
-                <source src="/landing/hero.webm" type="video/webm" />
-            </video>
-        </AppFrame>
+                src={source.poster}
+                width={source.width}
+                height={source.height}
+                alt="A Bridge call: Maya Patel, Aarav Mehta, Sofia Rossi and Jordan Lee, drawn as an illustrated demo cast, each in their own room."
+                fetchPriority="high"
+            />
+        );
+        return (
+            <div className={styles.stillPair} data-variant={variant}>
+                {variant === "desktop" ? <AppFrame address="bridgefrontend.onrender.com">{still}</AppFrame> : <div className={styles.phone}>{still}</div>}
+                <RecapCard className={styles.stillRecap} />
+            </div>
+        );
+    }
+
+    const video = (
+        <video
+            ref={videoRef}
+            className={styles.media}
+            width={source.width}
+            height={source.height}
+            poster={source.poster}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-label={DESCRIPTION}
+            onPlay={() => setPaused(false)}
+        >
+            {/* H.264 first: every current browser plays it. */}
+            <source src={source.mp4} type="video/mp4" />
+            <source src={source.webm} type="video/webm" />
+        </video>
     );
+
+    if (variant === "phone") {
+        return (
+            <div className={styles.phoneWrap}>
+                <div className={styles.phone}>{video}</div>
+                <div className={styles.phoneControl}>{control}</div>
+            </div>
+        );
+    }
+
+    return <AppFrame address="bridgefrontend.onrender.com" controls={control}>{video}</AppFrame>;
 }

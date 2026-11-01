@@ -133,3 +133,32 @@
         justify-content: center;
     }
 }
+
+/* The host ended the call: tiles and chat shrink and fade, then the recap opens. */
+.body,
+.footer,
+.header {
+    transition:
+        transform 460ms cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 360ms cubic-bezier(0.16, 1, 0.3, 1),
+        filter 360ms ease-out;
+}
+
+.room[data-ending] .body {
+    transform: scale(0.94);
+    opacity: 0;
+    filter: blur(6px);
+}
+
+.room[data-ending] .footer,
+.room[data-ending] .header {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .body,
+    .footer,
+    .header {
+        transition: none;
+    }
+}

@@ -2,13 +2,12 @@
     display: block;
     width: 100%;
     height: auto;
-    aspect-ratio: 16 / 10;
-    background: var(--bg);
+    background: var(--room-bg);
 }
 
 .toggle {
     min-width: 56px;
-    height: 24px;
+    height: 26px;
     padding: 0 var(--space-3);
     border: 0;
     border-radius: var(--radius-full);
@@ -17,13 +16,72 @@
     font-size: var(--text-sm);
     font-weight: 550;
     cursor: pointer;
-    transition: background-color var(--duration-fast) var(--ease);
+    transition: background-color var(--duration-fast) var(--ease), transform var(--duration-fast) var(--ease);
 }
 
 .toggle:hover {
     background: var(--room-hover);
 }
 
+.toggle:active {
+    transform: scale(0.97);
+}
+
 .toggle:focus-visible {
     outline-color: #ff9a5c;
+}
+
+/* Phone: a plain device outline, no notch or buttons (decoration). */
+.phoneWrap {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3);
+}
+
+.phone {
+    width: min(100%, 320px);
+    padding: 8px;
+    border-radius: 44px;
+    background: var(--room-bg);
+    box-shadow: var(--shadow-lg);
+}
+
+.phone .media {
+    border-radius: 36px;
+    aspect-ratio: 1 / 2;
+}
+
+.phoneControl .toggle {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+/* Reduced motion: the call and its recap side by side. */
+.stillPair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 340px);
+    gap: var(--space-6);
+    align-items: center;
+}
+
+.stillPair[data-variant="phone"] {
+    grid-template-columns: 1fr;
+    justify-items: center;
+}
+
+.stillRecap {
+    max-width: 380px;
+}
+
+@media (max-width: 1023px) {
+    .stillPair {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toggle {
+        transition: none;
+    }
 }

@@ -21,6 +21,7 @@ export default function DemoPage() {
     const toast = useToast();
     const [phase, setPhase] = useState<Phase>("lobby");
     const [participants, setParticipants] = useState<DemoParticipant[]>(DEMO_PARTICIPANTS);
+    const [ending, setEnding] = useState(false);
     const [speakerId, setSpeakerId] = useState<string | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [startedAt] = useState(() => Date.now() - 4 * 60_000);
@@ -102,7 +103,13 @@ export default function DemoPage() {
         ...participants.map((p) => ({ id: p.id, name: p.name, isHost: false, isYou: false, micOn: p.micOn }))
     ], [media.micOn, participants]);
 
-    const endCall = () => {
+    const endCall = async () => {
+        // Let the room fold away before the recap builds in (instant under reduced motion).
+        setEnding(true);
+        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            await new Promise((resolve) => window.setTimeout(resolve, 460));
+        }
+        setEnding(false);
         timers.current.forEach((timer) => window.clearTimeout(timer));
         timers.current = [];
         activity.current.push({ type: "ended", username: "You", content: "ended the meeting" });
@@ -139,6 +146,7 @@ export default function DemoPage() {
                         recap={recap}
                         notice="Demo ended. This is the recap Bridge writes when a host ends a call."
                         transcriptOpen
+                        reveal
                         footnote="In the demo the recap is built in your browser by the same rules the server uses: keyword frequency and sentence scoring over the chat and activity log. No audio is recorded and no external AI is used."
                     />
                 </main>
@@ -192,6 +200,7 @@ export default function DemoPage() {
             onSendMessage={sendMessage}
             onRemovePerson={removePerson}
             onLeave={endCall}
+            ending={ending}
         />
     );
 }

@@ -128,7 +128,7 @@
     field-sizing: content;
 }
 
-.composer textarea:focus {
+.composer textarea:focus-visible {
     outline: none;
 }
 
