@@ -1,0 +1,20 @@
+{
+    "ranAt": "2026-11-01T19:23:28.568Z",
+    "passed": 13,
+    "failed": 0,
+    "tests": {
+        "landing has no WCAG 2.1 AA violations": 3135,
+        "sign in has no WCAG 2.1 AA violations": 1933,
+        "sign up has no WCAG 2.1 AA violations": 1962,
+        "demo lobby has no WCAG 2.1 AA violations": 2050,
+        "not found has no WCAG 2.1 AA violations": 1867,
+        "demo room has no WCAG 2.1 AA violations": 1668,
+        "the sign-in form works with the keyboard alone": 840,
+        "two people meet, chat, mute, leave, get removed, and the host ends with a recap": 8861,
+        "people outside a meeting cannot read its recap, and unknown codes are explained": 5215,
+        "a returning user signs in and stays signed in after a reload": 2781,
+        "protected pages send visitors to sign in with a return path and validate input": 806,
+        "the public demo works without an account": 2258,
+        "the room grid reflows when the window narrows": 1426
+    }
+}

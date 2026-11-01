@@ -224,23 +224,25 @@
 
 .decisions {
     display: grid;
-    gap: var(--space-3);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-/* One panel per decision: the decision set large, then why and what it costs. */
-.decisions li {
-    display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: var(--space-12);
-    padding: var(--space-10);
-    border-radius: var(--radius-lg);
+/* One card per decision: the decision set in serif, then why, what it costs, and when it would change. */
+.decision {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    padding: var(--space-8);
+    border-radius: 20px;
     background: var(--surface);
+    box-shadow: var(--shadow-sm);
 }
 
-.decisions h3 {
+.decision h3 {
     margin: 0;
     font-family: var(--font-display);
     font-size: var(--text-2xl);
@@ -250,82 +252,34 @@
     text-wrap: balance;
 }
 
-.decisions p {
+.decisionBlock p {
     margin: 0;
-    font-size: var(--text-md);
+    font-size: var(--text-base);
     line-height: 1.55;
 }
 
-.decisions p + p {
-    margin-top: var(--space-4);
-    color: var(--text-muted);
+.decisionBlock .decisionLabel {
+    margin-bottom: var(--space-1);
+    color: var(--accent-text);
+    font-size: var(--text-sm);
+    font-weight: 600;
 }
 
-.decisions strong {
+.wouldChange {
+    margin: auto 0 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+}
+
+.wouldChange strong {
     color: var(--text);
     font-weight: 600;
 }
 
 /* ---------- Verified ---------- */
-
-/* One aligned row per flow: pass mark · flow · what it checks · the test's line. */
-.verified {
-    display: grid;
-    grid-template-columns: 20px minmax(0, 15rem) minmax(0, 1fr) auto;
-    column-gap: var(--space-5);
-    margin: 0;
-    padding: var(--space-2) var(--space-8);
-    border-radius: var(--radius-lg);
-    background: var(--surface);
-    list-style: none;
-}
-
-/* Rows share the list's columns (subgrid), so every column lines up down the panel. */
-.verifiedRow {
-    display: grid;
-    grid-column: 1 / -1;
-    grid-template-columns: subgrid;
-    align-items: baseline;
-    padding: var(--space-4) 0;
-}
-
-.verifiedRow + .verifiedRow {
-    border-top: 1px solid var(--border);
-}
-
-.pass {
-    align-self: start;
-    margin-top: 2px;
-    color: var(--success);
-}
-
-.flow {
-    font-size: var(--text-md);
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-.flowDetail {
-    color: var(--text-muted);
-    font-size: var(--text-base);
-    line-height: 1.5;
-}
-
-.testLink {
-    display: inline-flex;
-    align-items: center;
-    min-height: 32px;
-    padding: 0 var(--space-2);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-size: var(--text-sm);
-    text-underline-offset: 3px;
-    white-space: nowrap;
-}
-
-.testLink code {
-    font-family: var(--font-mono);
-}
 
 .inlineLink {
     color: var(--text);
@@ -411,6 +365,10 @@
 /* ---------- 768 px and below ---------- */
 
 @media (max-width: 1023px) {
+    .decisions {
+        grid-template-columns: 1fr;
+    }
+
     .navInner,
     .hero,
     .section,
@@ -435,23 +393,9 @@
         padding-bottom: var(--space-24);
     }
 
-    .decisions li {
-        grid-template-columns: 1fr;
-        gap: var(--space-5);
-    }
 
-    .verified {
-        grid-template-columns: 20px minmax(0, 1fr) auto;
-    }
 
-    .verifiedRow {
-        row-gap: var(--space-1);
-    }
 
-    .flowDetail {
-        grid-column: 2 / 4;
-        grid-row: 2;
-    }
 }
 
 @media (max-width: 767px) {
@@ -515,27 +459,10 @@
         margin-bottom: var(--space-8);
     }
 
-    .decisions li {
-        padding: var(--space-6);
-    }
 
-    .verified {
-        padding: var(--space-1) var(--space-5);
-    }
 
-    .verified {
-        grid-template-columns: 20px minmax(0, 1fr);
-    }
 
-    .flowDetail,
-    .testLink {
-        grid-column: 2;
-    }
 
-    .testLink {
-        justify-self: start;
-        margin-left: calc(-1 * var(--space-2));
-    }
 
 
 

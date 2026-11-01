@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Check } from "lucide-react";
 import { LandingNav } from "../features/landing/nav/LandingNav";
 import { useAuth } from "../auth/AuthContext";
 import { ButtonLink } from "../components/Button";
@@ -14,7 +13,8 @@ const SECTION_LINKS = [
     { href: "#verified", label: "Verified" }
 ];
 import { ArchitectureFigure } from "../features/landing/ArchitectureFigure";
-import { DECISIONS, E2E_SPEC_PATH, ENGINEERING, TEST_LINES, VERIFIED } from "../features/landing/content";
+import { DECISIONS, E2E_SPEC_PATH, ENGINEERING } from "../features/landing/content";
+import { VerifiedTerminal } from "../features/landing/verified/VerifiedTerminal";
 import { Bento } from "../features/landing/bento/Bento";
 import { Facts } from "../features/landing/facts/Facts";
 import { SignatureChapter } from "../features/landing/chapter/SignatureChapter";
@@ -128,12 +128,19 @@ export default function LandingPage() {
                     </div>
                     <ol className={styles.decisions}>
                         {DECISIONS.map((item) => (
-                            <li key={item.decision}>
+                            <li key={item.decision} className={styles.decision}>
                                 <h3>{item.decision}</h3>
-                                <div>
-                                    <p><strong>Why.</strong> {item.why}</p>
-                                    <p><strong>Trade-off.</strong> {item.cost}</p>
+                                <div className={styles.decisionBlock}>
+                                    <p className={styles.decisionLabel}>Why</p>
+                                    <p>{item.why}</p>
                                 </div>
+                                <div className={styles.decisionBlock}>
+                                    <p className={styles.decisionLabel}>Cost</p>
+                                    <p>{item.cost}</p>
+                                </div>
+                                {item.wouldChange ? (
+                                    <p className={styles.wouldChange}><strong>Would change when</strong> {item.wouldChange}</p>
+                                ) : null}
                             </li>
                         ))}
                     </ol>
@@ -149,28 +156,7 @@ export default function LandingPage() {
                             </a>.
                         </p>
                     </div>
-                    <ul className={styles.verified}>
-                        {VERIFIED.map((item) => (
-                            <li key={item.flow} className={styles.verifiedRow}>
-                                <Check size={18} aria-hidden="true" className={styles.pass} />
-                                <span className={styles.flow}>
-                                    {item.flow}
-                                    <span className="visually-hidden">: passing.</span>
-                                </span>
-                                <span className={styles.flowDetail}>{item.detail}</span>
-                                <a
-                                    className={styles.testLink}
-                                    href={`${sourceUrl(E2E_SPEC_PATH)}#L${TEST_LINES[item.test] ?? 1}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    title={item.test}
-                                >
-                                    <code>{E2E_SPEC_PATH.split("/").pop()}:{TEST_LINES[item.test]}</code>
-                                    <span className="visually-hidden">, the test “{item.test}” on GitHub, opens in a new tab</span>
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
+                    <VerifiedTerminal />
                 </section>
 
                 <section className={styles.closing} aria-labelledby="closing-title">

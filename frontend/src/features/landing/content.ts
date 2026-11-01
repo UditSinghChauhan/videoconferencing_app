@@ -70,6 +70,8 @@ export interface Decision {
     decision: string;
     why: string;
     cost: string;
+    /** Only where ARCHITECTURE.md ("Scalability & Future Improvements") names the change. */
+    wouldChange?: string;
 }
 
 /** The trade-offs behind the build, stated the way they would be in a design review. */
@@ -77,12 +79,14 @@ export const DECISIONS: Decision[] = [
     {
         decision: "A peer-to-peer mesh, not a media server.",
         why: "Small rooms get the lowest latency, and the server never pays for media: it only authenticates, relays signalling and keeps the record.",
-        cost: "Each person uploads a stream to everyone else, so rooms top out at about six. Past that, the same signalling would front an SFU."
+        cost: "Each person uploads a stream to everyone else, so rooms top out at about six.",
+        wouldChange: "rooms need more than about six people: the same signalling would front an SFU."
     },
     {
         decision: "A rule-based recap, not an LLM.",
         why: "The same call always produces the same notes, nothing leaves the server, it costs nothing per meeting, and it is tested like any other function.",
-        cost: "It selects sentences rather than writing a summary. An LLM summary is the next step, behind the same recap interface."
+        cost: "It selects sentences rather than writing a summary.",
+        wouldChange: "summary quality matters more than determinism: an LLM layer would sit behind the same recap interface."
     },
     {
         decision: "Short access tokens and rotating refresh tokens.",
