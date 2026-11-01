@@ -9,10 +9,12 @@ Source of truth for every value below: `frontend/src/styles/tokens.css`.
 
 ## Principles
 
-1. **Show the product, not decoration.** No stock photos, no abstract blobs, no illustrated mockups. Marketing visuals are captures of the running app.
-2. **One accent, used for meaning.** Rust marks the brand, "live" states, focus and, on the landing page only, the single most important action in view. It is never a background for long text.
-3. **Ink for primary actions in the app.** Inside the product, primary buttons are near-black on light and near-white on dark; this keeps rust free for status. The landing page is the one exception (see below).
-4. **Honest copy.** Name what the product does ("recap generated from chat and activity"), including limits ("best for up to 6 people").
+1. **Show the product working, with people in it.** Marketing visuals are recordings of the running app or real components rendered with fixture data. A calling product shows faces: the landing uses an original illustrated cast (see "Cast" below), never stock photos and never AI-generated photographs of people.
+2. **One idea per page.** The landing page exists to show one transformation: a live call becomes a written recap when the host presses End ("Faces in, notes out."). Every section builds toward that moment or explains it.
+3. **One accent, used for meaning.** Rust marks the brand, "live" states, focus, the speaking ring, decisions in the recap, and, on the landing page only, the single most important action in view. It is never a background for long text.
+4. **Ink for primary actions in the app.** Inside the product, primary buttons are near-black on light and near-white on dark; this keeps rust free for status. The landing page is the one exception (see below).
+5. **Depth and motion are allowed when they explain.** Soft shadows lift product frames off the paper; motion shows cause and effect (the ring follows the voice, the call folds into notes). Decoration for its own sake is still out.
+6. **Honest copy and honest numbers.** Name what the product does ("recap generated from chat and activity"), including limits ("best for up to 6 people"). Every number is measured or counted in code.
 
 ## Colour
 
@@ -56,7 +58,7 @@ Scale (px): 12 · 13 · 14 · 16 · 18 · 22 · 28 · 36 · 48 · 64. Body is 15
 
 ## Motion
 
-150–250 ms, `cubic-bezier(0.2, 0, 0, 1)`, transform and opacity only. Everything is disabled under `prefers-reduced-motion: reduce`.
+App UI: 150–250 ms, `cubic-bezier(0.2, 0, 0, 1)`, transform and opacity only. The landing page has its own motion rules (below). Everything has a `prefers-reduced-motion: reduce` path that shows the final state instantly.
 
 ## Components
 
@@ -80,15 +82,27 @@ Semantic landmarks, visible `:focus-visible` ring (2 px accent + 2 px offset), e
 
 The landing page is a portfolio piece. Its reader is a recruiter or hiring engineer with about five seconds of attention. In that time they must learn what Bridge does (**a call that ends in a written recap**), see that it is real, and want to click the live demo. Everything after the fold exists to convince them the builder is a strong product engineer.
 
-Identity carried over from the app: warm off-white `--bg`, Instrument Serif headline with an italic rust accent word, rust (not orange-red, not lime) as the only accent. Two references shape layout only: Skydive for light surfaces and generous spacing, ToDesktop for the centred app-window frame. Nothing else is borrowed from either: no blue gradient, no floating callouts.
+Identity carried over from the app: warm off-white `--bg` with a faint warm grain, Instrument Serif headline with an italic rust accent word, rust (not orange-red, not lime) as the only accent, the dark room palette, and the Decisions section. Creative direction since 2026-11-01: **"Faces in, notes out."** (references and reasoning in `docs/REVAMP.md`).
 
 ## Rules
 
 1. **One accent action per viewport.** At any scroll position at most one rust-filled button is visible. Other actions are outline (`secondary`) or text links.
-2. **No eyebrows, no hairline dividers, no shadows at rest.** Sections open with their heading. Surfaces are separated by a tone step (`--surface` panels on `--bg`), never a 1 px rule. The app-window frame is defined by its dark fill, not a shadow. Monospace only for literal code (file names, test titles).
-3. **No decorative icons, no decorative gradients.** An icon appears only when it carries meaning (the GitHub mark on an outbound link, the pass mark in Verified). Shadows are the existing `--shadow-*` scale.
-4. **Every product image is a capture of the running app**, saved as a file in `frontend/public/landing/`, sized, `loading="lazy"` below the fold, with `width`/`height` set to stop layout shift. Captures are re-taken by script (`frontend/scripts/capture-landing.mjs`, added in build) so they never drift from the product.
-5. **Claims are checkable.** Every engineering note links to the file that does it, and every Verified flow names its Playwright test. `src/features/landing/content.test.ts` fails the build if a test title, a step inside it, or a linked file stops existing.
+2. **Faces first.** The first frame on desktop and on a phone shows the four-person call with the cast's faces. Product frames are hero-scale (up to 1200 px) and the UI inside them is legible: no product text under 13 px at 1440 px.
+3. **Soft depth on product, flat on text.** Product frames carry `--shadow-lg` at rest and sit in a faint warm radial light; bento tiles carry `--shadow-sm` and lift to `--shadow-md` on hover. Text sections stay flat. The paper has a faint warm grain (an inline SVG noise at 3–4 % opacity, no image request). No blob gradients, no glass, no blur panels.
+4. **Icons only when they mean something.** The GitHub mark on an outbound link, pass marks, mic-off and status badges inside product UI. No icon-topped feature cards.
+5. **Every product image is the running app or its real components.** Recordings come from `frontend/scripts/capture-landing.mjs` (the app, with the illustrated cast fed in as fake camera and microphone). Scroll-scrubbed and bento demos render the real room and recap components with fixture data. Sized media, `loading="lazy"` below the fold, `width`/`height` set.
+6. **Claims are checkable.** Every engineering note links to the file that does it, and every Verified flow names its Playwright test. `src/features/landing/content.test.ts` fails the build if a test title, a step inside it, or a linked file stops existing. Durations shown in the Verified terminal come only from a real Playwright JSON report; without one they are omitted.
+7. **Section-aware navigation.** The nav is solid paper at the top, becomes translucent paper with a hairline after 40 px of scroll, and switches to the dark tokens (150 ms crossfade) while it sits over a dark section.
+8. **Native scroll only.** Pinned stages use `position: sticky` and read scroll progress; nothing hijacks, smooths or snaps the scroll.
+
+## Cast
+
+Four original illustrated people stand in for call participants on the landing page: Maya Patel, Aarav Mehta, Sofia Rossi and Jordan Lee (the names the fixtures already use). Each wears their avatar hue from `avatarColorFor`, so the person on camera matches their initials elsewhere.
+
+- Layered SVG, soft flat shading, warm palette that sits on paper and room tokens, diverse in skin tone, hair, age and setting. Not photoreal, not mascots, not emoji, no resemblance to any real or known character.
+- Each sits in their own simple room (lamp, shelf, window, plant) so a tile reads as a webcam feed.
+- Alive, not static: breathing (scale 1.000–1.006), a blink every 3–6 s with jitter, small head tilts; mouth and a hand gesture only while that person is speaking. Under reduced motion they hold a neutral pose.
+- Components live in `frontend/src/features/landing/cast/`; `/__cast` (development only) shows all four.
 
 ## Colour (landing)
 
@@ -153,15 +167,20 @@ Nothing on the landing page is smaller than 14 px (the current page has 10 to 14
 
 ## Motion
 
+The landing page uses `motion` (motion/react) for scroll-linked and in-view motion. Native scroll only.
+
 | What | Duration | Easing | Property |
 |---|---|---|---|
-| Walkthrough pane swap | 240 ms | `--ease` | opacity, translateY 8 px |
-| Walkthrough step text becoming active | 200 ms | `--ease` | color (muted to ink), rule scaleY 0 to 1 |
-| Button hover / press | 150 ms | `--ease` | background-color, transform scale 0.98 on press |
-| Wake-up status line appearing | 200 ms | `--ease` | opacity |
-| Hero recording | 20 s loop, muted, `playsinline` | n/a | n/a |
+| Entrances (sections, cards, recap lines) | 500–700 ms, staggered 60–90 ms | `cubic-bezier(0.16, 1, 0.3, 1)` (`--ease-out-expo`) | opacity, translateY 16–24 px |
+| Controls (buttons, links, nav, chips) | 150–250 ms | `--ease` | background-color, colour, transform scale 0.98 on press |
+| Nav theme crossfade | 150 ms | `--ease` | background-color, colour, border-colour |
+| Hero frame settle | scroll-linked | linear map of progress | scale 0.92 → 1, radius 20 → 12 |
+| Signature chapter | scroll-linked, about 300vh, both directions | progress segments | transform, opacity, filter |
+| Walkthrough camera | 600 ms spring (no bounce) | spring | transform (translate, scale) |
+| Bento micro-demos and architecture packets | 4–8 s loops, paused off screen | `--ease-out-expo` | transform, opacity |
+| Cast idle | breathing 4–5 s, blink 120 ms | sine / ease | transform |
 
-Only transform and opacity animate, except button and step text colour. Under `prefers-reduced-motion: reduce`: the hero `<video>` is not rendered and its poster image (the finished recap) is shown instead; the walkthrough swaps panes instantly with no translate; nothing autoplays. The walkthrough is driven by `IntersectionObserver` on the step text, no scroll library and no scroll-jacking: the page scrolls normally and the pane follows.
+Only transform, opacity and filter animate (colour transitions on controls excepted). Every animation has a `prefers-reduced-motion: reduce` path that shows the final state instantly: the hero shows a poster of the grid beside its recap, the signature chapter becomes four static blocks, loops do not run, counters show their final value. Videos and loops pause when off screen.
 
 ## Section-by-section spec
 
@@ -276,3 +295,11 @@ Spec:
 - The hero video has `aria-label` describing the sequence and no audio track; under reduced motion it is not rendered.
 - Touch targets ≥ 44 px for the two hero actions and the closing action.
 - Axe: zero WCAG 2.1 AA violations on `/` (existing `accessibility.spec.js` covers `/`).
+
+---
+
+## Decision log
+
+### 2026-11-01: "Faces in, notes out."
+
+The landing page was correct and forgettable: no faces anywhere, a blank first frame, unreadable product UI and a summariser bug visible in its Topics chips. Rules that made it calm ("no shadows at rest", "no decorative icons", "no scroll library") also made it flat. Decision: rebuild the landing around the single transformation the product performs, at hero scale, with an original illustrated cast standing in for participants, soft depth on product frames, and scroll-linked motion with `motion/react` on native scroll. Kept: the art direction (Instrument Serif with the italic rust "recap", Geist, warm paper, one rust accent, the dark room palette) and the Decisions section. Still banned: blob gradients, glassmorphism, fake logos or testimonials, invented metrics, scroll-jacking, stock or generated photos of people. Reasoning and references: `docs/REVAMP.md`.

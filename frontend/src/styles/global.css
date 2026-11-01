@@ -106,7 +106,7 @@ video {
     text-decoration: none;
 }
 
-.skip-link:focus {
+.skip-link:focus-visible {
     top: var(--space-4);
 }
 

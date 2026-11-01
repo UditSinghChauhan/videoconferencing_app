@@ -116,6 +116,8 @@ export const ENGINEERING: EngineeringNote[] = [
 
 export interface VerifiedFlow {
     flow: string;
+    /** One line on what the test actually checks. */
+    detail: string;
     /** Exact title of the Playwright test that covers the flow. */
     test: string;
     /** A line that must exist in the spec, pinning the step inside the test. */
@@ -124,16 +126,24 @@ export interface VerifiedFlow {
 
 const LIFECYCLE = "two people meet, chat, mute, leave, get removed, and the host ends with a recap";
 const RETURNING = "a returning user signs in and stays signed in after a reload";
+const OUTSIDERS = "people outside a meeting cannot read its recap, and unknown codes are explained";
+
+/** Line of each test's declaration in the spec, for deep links. content.test.ts keeps these honest. */
+export const TEST_LINES: Record<string, number> = {
+    [LIFECYCLE]: 43,
+    [OUTSIDERS]: 138,
+    [RETURNING]: 161
+};
 
 export const VERIFIED: VerifiedFlow[] = [
-    { flow: "Register", test: RETURNING, step: 'await page.getByRole("button", { name: "Create account" }).click();' },
-    { flow: "Sign in", test: RETURNING, step: 'await page.getByRole("button", { name: "Sign in" }).click();' },
-    { flow: "Stay signed in after a reload", test: RETURNING, step: "await page.reload();" },
-    { flow: "Create a meeting and join it by link", test: LIFECYCLE, step: "// Guest joins by pasting the full invite link." },
-    { flow: "Chat in real time", test: LIFECYCLE, step: "// Chat both ways." },
-    { flow: "Only the host can remove people", test: LIFECYCLE, step: "expect(forbidden.status()).toBe(403);" },
-    { flow: "End the meeting and open its recap", test: LIFECYCLE, step: "// Host ends the meeting and lands on the recap." },
-    { flow: "Outsiders get a 403 on a recap", test: "people outside a meeting cannot read its recap, and unknown codes are explained", step: "expect((await summaryResponse).status()).toBe(403);" }
+    { flow: "Register", detail: "A new account is created from the sign-up form and lands on the dashboard.", test: RETURNING, step: 'await page.getByRole("button", { name: "Create account" }).click();' },
+    { flow: "Sign in", detail: "In a fresh browser, the same person signs in with their username and password.", test: RETURNING, step: 'await page.getByRole("button", { name: "Sign in" }).click();' },
+    { flow: "Stay signed in after a reload", detail: "A full page reload keeps the session and the dashboard.", test: RETURNING, step: "await page.reload();" },
+    { flow: "Create a meeting and join by link", detail: "The host gets a readable code; a guest pastes the full invite link and joins.", test: LIFECYCLE, step: "// Guest joins by pasting the full invite link." },
+    { flow: "Chat in real time", detail: "Messages arrive both ways between two browsers.", test: LIFECYCLE, step: "// Chat both ways." },
+    { flow: "Only the host can remove people", detail: "A participant's remove request gets HTTP 403; the host's succeeds.", test: LIFECYCLE, step: "expect(forbidden.status()).toBe(403);" },
+    { flow: "End the meeting and open its recap", detail: "Ending lands the host on the recap with key points and the transcript.", test: LIFECYCLE, step: "// Host ends the meeting and lands on the recap." },
+    { flow: "Outsiders get a 403 on a recap", detail: "Someone who was not in the call gets HTTP 403 for its summary.", test: OUTSIDERS, step: "expect((await summaryResponse).status()).toBe(403);" }
 ];
 
 /** Facts under the hero. Each is measured or structural, never a vanity number. */

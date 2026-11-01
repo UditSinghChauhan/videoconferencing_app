@@ -1,12 +1,20 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
+import { LandingNav } from "../features/landing/nav/LandingNav";
 import { useAuth } from "../auth/AuthContext";
 import { ButtonLink } from "../components/Button";
 import { GithubIcon } from "../components/GithubIcon";
 import { Logo } from "../components/Logo";
+
+const SECTION_LINKS = [
+    { href: "#walkthrough", label: "Walkthrough" },
+    { href: "#engineering", label: "Engineering" },
+    { href: "#decisions", label: "Decisions" },
+    { href: "#verified", label: "Verified" }
+];
 import { ArchitectureFigure } from "../features/landing/ArchitectureFigure";
-import { DECISIONS, E2E_SPEC_PATH, ENGINEERING, FACTS, OUTCOMES, VERIFIED } from "../features/landing/content";
+import { DECISIONS, E2E_SPEC_PATH, ENGINEERING, FACTS, OUTCOMES, TEST_LINES, VERIFIED } from "../features/landing/content";
 import { HeroRecording } from "../features/landing/HeroRecording";
 import { Walkthrough } from "../features/landing/Walkthrough";
 import { wakeServer } from "../lib/api";
@@ -14,12 +22,6 @@ import { AUTHOR_URL, LINKEDIN_URL, REPOSITORY_URL } from "../lib/env";
 import styles from "./LandingPage.module.css";
 
 const sourceUrl = (path: string) => `${REPOSITORY_URL}/blob/master/${path}`;
-
-/** Verified flows grouped under the Playwright test that proves them, in first-seen order. */
-const verifiedByTest = [...VERIFIED.reduce((groups, item) => {
-    groups.set(item.test, [...(groups.get(item.test) ?? []), item.flow]);
-    return groups;
-}, new Map<string, string[]>())];
 
 export default function LandingPage() {
     const { status } = useAuth();
@@ -35,23 +37,7 @@ export default function LandingPage() {
 
     return (
         <div className={styles.page}>
-            <header className={styles.nav}>
-                <div className={styles.navInner}>
-                    <Logo />
-                    <nav className={styles.navLinks} aria-label="Sections">
-                        <a href="#walkthrough">Walkthrough</a>
-                        <a href="#engineering">Engineering</a>
-                        <a href="#decisions">Decisions</a>
-                        <a href="#verified">Verified</a>
-                    </nav>
-                    <div className={styles.navActions}>
-                        {signedIn ? <Link to="/home">Your meetings</Link> : <Link to="/auth">Sign in</Link>}
-                        <a href={REPOSITORY_URL} target="_blank" rel="noreferrer" className={styles.navGithub}>
-                            <GithubIcon /> <span>GitHub</span>
-                        </a>
-                    </div>
-                </div>
-            </header>
+            <LandingNav signedIn={signedIn} links={SECTION_LINKS} />
 
             <main id="main">
                 <section className={styles.hero} aria-labelledby="hero-title">
@@ -107,7 +93,7 @@ export default function LandingPage() {
                     </ul>
                 </section>
 
-                <section id="engineering" className={styles.engineering} aria-labelledby="engineering-title">
+                <section id="engineering" className={styles.engineering} aria-labelledby="engineering-title" data-nav-theme="dark">
                     <div className={styles.engineeringInner}>
                         <div className={styles.intro}>
                             <h2 id="engineering-title" className={styles.sectionTitle}>Built like a product, documented like a system.</h2>
@@ -172,27 +158,28 @@ export default function LandingPage() {
                             </a>.
                         </p>
                     </div>
-                    <div className={styles.verified}>
-                        {verifiedByTest.map(([test, flows]) => (
-                            <div key={test} className={styles.verifiedGroup}>
-                                <ul>
-                                    {flows.map((flow) => (
-                                        <li key={flow}>
-                                            <Check size={18} aria-hidden="true" className={styles.pass} />
-                                            <span>
-                                                {flow}
-                                                <span className="visually-hidden">: passing</span>
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <p className={styles.testName}>
-                                    <span className="visually-hidden">Covered by the test </span>
-                                    <code>{test}</code>
-                                </p>
-                            </div>
+                    <ul className={styles.verified}>
+                        {VERIFIED.map((item) => (
+                            <li key={item.flow} className={styles.verifiedRow}>
+                                <Check size={18} aria-hidden="true" className={styles.pass} />
+                                <span className={styles.flow}>
+                                    {item.flow}
+                                    <span className="visually-hidden">: passing.</span>
+                                </span>
+                                <span className={styles.flowDetail}>{item.detail}</span>
+                                <a
+                                    className={styles.testLink}
+                                    href={`${sourceUrl(E2E_SPEC_PATH)}#L${TEST_LINES[item.test] ?? 1}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title={item.test}
+                                >
+                                    <code>{E2E_SPEC_PATH.split("/").pop()}:{TEST_LINES[item.test]}</code>
+                                    <span className="visually-hidden">, the test “{item.test}” on GitHub, opens in a new tab</span>
+                                </a>
+                            </li>
                         ))}
-                    </div>
+                    </ul>
                 </section>
 
                 <section className={styles.closing} aria-labelledby="closing-title">
