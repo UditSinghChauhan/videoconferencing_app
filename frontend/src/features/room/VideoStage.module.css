@@ -1,5 +1,9 @@
 .grid {
     flex: 1;
+    /* Tiles have fixed pixel sizes; without this the grid cannot shrink below
+       them, the ResizeObserver never sees the smaller size, and narrowing the
+       window leaves tiles wider than the screen. */
+    min-width: 0;
     min-height: 0;
     display: flex;
     flex-wrap: wrap;

@@ -1,0 +1,194 @@
+.layout {
+    display: grid;
+    grid-template-columns: 4fr 8fr;
+    gap: var(--space-12);
+    align-items: start;
+}
+
+.steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Each step is tall enough that scrolling advances one step at a time. */
+.step {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 62vh;
+    padding-left: var(--space-8);
+}
+
+.step::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: calc(50% - 64px);
+    width: 2px;
+    height: 128px;
+    border-radius: 2px;
+    background: var(--accent-text);
+    transform: scaleY(0);
+    transition: transform var(--duration) var(--ease);
+}
+
+.step[data-active]::before {
+    transform: scaleY(1);
+}
+
+.number {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.title {
+    margin: var(--space-2) 0 var(--space-4);
+    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-size: var(--text-4xl);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    transition: color var(--duration) var(--ease);
+}
+
+.body {
+    max-width: 36ch;
+    margin: 0;
+    color: var(--text);
+    font-size: var(--text-lg);
+    line-height: 1.55;
+}
+
+.step[data-active] .title {
+    color: var(--text);
+}
+
+.inlineShot {
+    display: none;
+}
+
+.paneColumn {
+    position: sticky;
+    top: calc(50vh - 280px);
+}
+
+.viewport {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--room-bg);
+}
+
+/* Width and left come from the step's crop (Walkthrough.tsx), so text stays near real size. */
+.paneShot {
+    position: absolute;
+    top: 0;
+    max-width: none;
+    height: auto;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 240ms var(--ease), transform 240ms var(--ease);
+}
+
+.paneShot[data-active] {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* The recap is a long page: once it is in view, glide down to the transcript. */
+.paneShot[data-step="recap"][data-active] {
+    animation: read-recap 9s var(--ease) 1200ms forwards;
+}
+
+@keyframes read-recap {
+    from { transform: translateY(0); }
+    to { transform: translateY(var(--glide)); }
+}
+
+/* Below 1024 px: no sticky pane; each step is its text followed by its own capture. */
+@media (max-width: 1023px) {
+    .layout {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .paneColumn {
+        display: none;
+    }
+
+    .step {
+        min-height: 0;
+        padding: 0 0 var(--space-16);
+    }
+
+    .step::before {
+        display: none;
+    }
+
+    .title {
+        color: var(--text);
+        font-size: var(--text-2xl);
+    }
+
+    .body {
+        max-width: 60ch;
+    }
+
+    .number {
+        display: inline-grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-full);
+        background: var(--surface-2);
+        color: var(--text);
+    }
+
+    .inlineShot {
+        display: block;
+        overflow: hidden;
+        margin-top: var(--space-6);
+        border-radius: var(--radius-xl);
+        background: var(--room-bg);
+    }
+
+    .inlineShot img {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    /* The recap is a long page: show its top, where the key points are. */
+    .inlineShot[data-step="recap"] {
+        max-height: 560px;
+        background: var(--surface);
+    }
+}
+
+@media (max-width: 639px) {
+    .inlineShot {
+        max-width: 320px;
+        max-height: 600px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .paneShot,
+    .step::before,
+    .title {
+        transition: none;
+    }
+
+    .paneShot {
+        transform: none;
+    }
+
+    .paneShot[data-step="recap"][data-active] {
+        animation: none;
+    }
+}

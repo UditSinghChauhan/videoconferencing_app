@@ -1,0 +1,185 @@
+.figure {
+    margin: 0;
+    padding: var(--space-10) var(--space-8);
+    border-radius: var(--radius-xl);
+    background: var(--room-tile);
+}
+
+.diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Browser A, media link, Browser B. Columns 1fr 1.2fr 1fr: browser centres sit at 15.625% from each edge. */
+.peers {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    align-items: center;
+    width: 100%;
+}
+
+.node {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--room-raised);
+    text-align: center;
+}
+
+.node strong {
+    color: var(--room-text);
+    font-size: var(--text-md);
+    font-weight: 600;
+}
+
+.node span {
+    color: var(--room-muted);
+    font-size: var(--text-sm);
+}
+
+.wide {
+    width: min(100%, 440px);
+}
+
+.media {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 var(--space-3);
+}
+
+.mediaLine {
+    width: 100%;
+    border-top: 2px dashed var(--accent);
+}
+
+.media .label {
+    margin-top: var(--space-2);
+    color: #ff9a5c;
+}
+
+.label {
+    color: var(--room-muted);
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* Both browsers drop a line down and meet above the API, so each visibly talks to the server.
+   These are the figure's connectors (content), not dividers. taste-skill-ignore */
+.fork {
+    position: relative;
+    width: calc(100% - 2 * 15.625%);
+    height: 56px;
+    border: 1px solid var(--room-muted);
+    border-top: 0;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.fork .label {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translate(-50%, 50%);
+    padding: 0 var(--space-3);
+    background: var(--room-tile);
+    white-space: nowrap;
+}
+
+.stem {
+    width: 1px;
+    height: 32px;
+    background: var(--room-muted);
+}
+
+.stemLabelled {
+    position: relative;
+    height: 40px;
+}
+
+.stemLabelled .label {
+    position: absolute;
+    left: var(--space-3);
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+}
+
+.list {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+}
+
+.list li {
+    display: grid;
+    gap: var(--space-1);
+    padding-left: var(--space-10);
+    position: relative;
+    color: var(--room-text);
+    font-size: var(--text-base);
+    line-height: 1.5;
+    counter-increment: step;
+}
+
+.list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    background: var(--room-raised);
+    color: var(--room-text);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.list strong {
+    color: var(--room-text);
+    font-weight: 600;
+}
+
+.caption {
+    margin-top: var(--space-8);
+    color: var(--room-muted);
+    font-size: var(--text-sm);
+    text-align: center;
+}
+
+/* Diagram from 640 px; the list stays for screen readers. */
+@media (min-width: 640px) {
+    .list {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 639px) {
+    .figure {
+        padding: var(--space-6) var(--space-5);
+    }
+
+    .diagram {
+        display: none;
+    }
+
+    .caption {
+        text-align: left;
+    }
+}

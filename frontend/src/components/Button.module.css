@@ -54,6 +54,15 @@
     background: var(--primary-hover);
 }
 
+.accent {
+    background: var(--cta);
+    color: var(--on-cta);
+}
+
+.accent:hover:not(:disabled) {
+    background: var(--cta-hover);
+}
+
 .secondary {
     background: var(--surface);
     border-color: var(--border-strong);

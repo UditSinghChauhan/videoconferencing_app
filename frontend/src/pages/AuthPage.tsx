@@ -5,7 +5,9 @@ import { Button } from "../components/Button";
 import { Field } from "../components/Field";
 import { FullPageSpinner } from "../components/FullPageSpinner";
 import { Logo } from "../components/Logo";
-import { getErrorMessage } from "../lib/api";
+import { WakeNotice } from "../components/WakeNotice";
+import { getErrorMessage, wakeServer } from "../lib/api";
+import { useElapsedAfter } from "../lib/useElapsedAfter";
 import styles from "./AuthPage.module.css";
 
 type Mode = "signin" | "signup";
@@ -48,6 +50,12 @@ export default function AuthPage() {
     const [submitting, setSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const firstFieldRef = useRef<HTMLInputElement>(null);
+    const waitingSeconds = useElapsedAfter(submitting);
+
+    // Start booting a sleeping API while the visitor types.
+    useEffect(() => {
+        void wakeServer();
+    }, []);
 
     useEffect(() => {
         if (status === "authenticated") {
@@ -172,6 +180,7 @@ export default function AuthPage() {
                         <Button type="submit" size="lg" block loading={submitting}>
                             {isSignUp ? "Create account" : "Sign in"}
                         </Button>
+                        <WakeNotice elapsed={waitingSeconds} />
                     </form>
 
                     <p className={styles.switch}>

@@ -1,0 +1,45 @@
+.frame {
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    background: var(--room-bg);
+}
+
+.bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    padding: 0 var(--space-4);
+    background: var(--room-bg);
+}
+
+.address {
+    max-width: 100%;
+    overflow: hidden;
+    padding: 2px var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--room-tile);
+    color: var(--room-muted);
+    font-size: var(--text-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.screen {
+    position: relative;
+    background: var(--bg);
+}
+
+.screen img,
+.screen video {
+    width: 100%;
+    height: auto;
+}
+
+.controls {
+    position: absolute;
+    right: var(--space-2);
+    top: 50%;
+    transform: translateY(-50%);
+}
