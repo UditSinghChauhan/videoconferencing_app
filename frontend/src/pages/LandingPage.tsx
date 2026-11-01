@@ -15,7 +15,7 @@ const SECTION_LINKS = [
 ];
 import { ArchitectureFigure } from "../features/landing/ArchitectureFigure";
 import { DECISIONS, E2E_SPEC_PATH, ENGINEERING, FACTS, OUTCOMES, TEST_LINES, VERIFIED } from "../features/landing/content";
-import { HeroRecording } from "../features/landing/HeroRecording";
+import { HeroStage } from "../features/landing/hero/HeroStage";
 import { Walkthrough } from "../features/landing/Walkthrough";
 import { wakeServer } from "../lib/api";
 import { AUTHOR_URL, LINKEDIN_URL, REPOSITORY_URL } from "../lib/env";
@@ -55,10 +55,10 @@ export default function LandingPage() {
                     </div>
                     <p className={styles.heroNote}>The demo needs no account and runs in your browser.</p>
 
-                    <figure className={styles.heroFigure}>
-                        <HeroRecording address="bridgefrontend.onrender.com" />
+<figure className={styles.heroFigure}>
+                        <HeroStage />
                         <figcaption>
-                            Recorded from the running app: four people, one call, and the recap the server writes when the host ends it. No external AI.
+                            Recorded from the running app with an illustrated demo cast. The recap is written on the server from the chat and activity, with no external AI.
                         </figcaption>
                     </figure>
 
@@ -79,7 +79,7 @@ export default function LandingPage() {
                     <Walkthrough />
                 </section>
 
-                <section className={styles.section} aria-labelledby="outcomes-title">
+<section className={styles.section} aria-labelledby="outcomes-title">
                     <div className={styles.intro}>
                         <h2 id="outcomes-title" className={styles.sectionTitle}>What you can count on.</h2>
                     </div>

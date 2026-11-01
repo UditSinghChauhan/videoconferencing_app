@@ -19,3 +19,6 @@ Thumbs.db
 # IDE
 .vscode
 .idea
+
+# Cast recordings for the landing captures (scripts/render-cast.mjs)
+capture/cast/

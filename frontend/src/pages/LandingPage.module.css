@@ -1,8 +1,10 @@
 /* Landing page. Values and section rules: DESIGN.md, "Landing page". */
 
+/* Warm paper with a faint grain (a 3 KB tile, under 4 % opacity). */
 .page {
     overflow-x: clip;
-    background: var(--bg);
+    background: var(--bg) url("/landing/grain.webp") repeat;
+    background-size: 180px;
 }
 
 .page section[id] {
@@ -46,7 +48,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: var(--content-width);
+    max-width: 1280px;
     margin: 0 auto;
     padding: var(--space-16) var(--space-10) 0;
     text-align: center;
@@ -97,13 +99,13 @@
 
 .heroFigure {
     width: 100%;
-    max-width: 1040px;
-    margin: var(--space-12) 0 0;
+    max-width: 1200px;
+    margin: 0;
 }
 
 .heroFigure figcaption {
     max-width: 60ch;
-    margin: var(--space-4) auto 0;
+    margin: var(--space-6) auto 0;
     color: var(--text-muted);
     font-size: var(--text-sm);
     line-height: 1.45;

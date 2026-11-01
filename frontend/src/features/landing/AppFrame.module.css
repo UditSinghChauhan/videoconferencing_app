@@ -1,7 +1,9 @@
+/* App window around a product recording: soft depth at rest (landing Rules 3). */
 .frame {
     overflow: hidden;
-    border-radius: var(--radius-xl);
+    border-radius: var(--frame-radius, var(--radius-xl));
     background: var(--room-bg);
+    box-shadow: var(--shadow-lg);
 }
 
 .bar {
@@ -9,7 +11,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 36px;
+    height: 40px;
     padding: 0 var(--space-4);
     background: var(--room-bg);
 }
@@ -28,7 +30,7 @@
 
 .screen {
     position: relative;
-    background: var(--bg);
+    background: var(--room-bg);
 }
 
 .screen img,

@@ -15,6 +15,9 @@ const RecapPage = lazy(() => import("./pages/RecapPage"));
 const RoomPage = lazy(() => import("./pages/RoomPage"));
 const DemoPage = lazy(() => import("./pages/DemoPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+// Development only: the illustrated cast for review and for scripts/render-cast.mjs.
+// `import.meta.env.DEV` is false in production builds, so the route and its chunk are dropped.
+const CastPage = import.meta.env.DEV ? lazy(() => import("./features/landing/cast/CastPage")) : null;
 
 /** Old links used /history?summary=<id>; keep them working. */
 function HistoryRoute() {
@@ -43,6 +46,7 @@ export default function App() {
                             <Route path="/history" element={<RequireAuth><HistoryRoute /></RequireAuth>} />
                             <Route path="/meetings/:meetingId" element={<RequireAuth><RecapPage /></RequireAuth>} />
                             <Route path="/room/:roomId" element={<RequireAuth><RoomPage /></RequireAuth>} />
+                            {CastPage ? <Route path="/__cast" element={<CastPage />} /> : null}
                             <Route path="*" element={<NotFoundPage />} />
                         </Routes>
                     </Suspense>

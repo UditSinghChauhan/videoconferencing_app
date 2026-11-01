@@ -84,6 +84,7 @@ export const DECISIONS: Decision[] = [
     }
 ];
 
+
 export const OUTCOMES = [
     {
         title: "Everyone leaves with the same notes.",
