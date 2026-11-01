@@ -15,6 +15,7 @@ const SECTION_LINKS = [
 ];
 import { ArchitectureFigure } from "../features/landing/ArchitectureFigure";
 import { DECISIONS, E2E_SPEC_PATH, ENGINEERING, FACTS, OUTCOMES, TEST_LINES, VERIFIED } from "../features/landing/content";
+import { SignatureChapter } from "../features/landing/chapter/SignatureChapter";
 import { HeroStage } from "../features/landing/hero/HeroStage";
 import { Walkthrough } from "../features/landing/Walkthrough";
 import { wakeServer } from "../lib/api";
@@ -71,6 +72,8 @@ export default function LandingPage() {
                         ))}
                     </dl>
                 </section>
+
+                <SignatureChapter />
 
                 <section id="walkthrough" className={styles.section} aria-labelledby="walkthrough-title">
                     <div className={styles.intro}>
