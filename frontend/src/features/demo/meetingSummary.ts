@@ -78,7 +78,8 @@ const TOPIC_STOP_WORDS = new Set([
     // Evaluative and filler adjectives or adverbs.
     "fine", "firm", "ready", "awesome", "cool", "perfect", "bad", "better", "best", "worse", "big", "small",
     "quick", "quickly", "new", "old", "able", "sorry", "please", "hey", "hello", "hi", "ok", "agree", "catch",
-    "true", "false", "real", "actually", "basically", "probably", "definitely", "totally", "pretty", "enough"
+    "true", "false", "real", "actually", "basically", "probably", "definitely", "totally", "pretty", "enough",
+    "once", "twice", "overnight", "daily", "weekly", "anyway", "instead"
 ]);
 
 /** Words that are verbs in almost every chat sentence. A determiner in front ("the fix") makes them nouns. */
@@ -185,10 +186,13 @@ interface CommitmentContext {
     keywords: string[];
 }
 
+/** An action item as parsed, with whether the chat said "by <day>" (used only for the summary sentence). */
+type ParsedAction = ActionItem & { by?: boolean };
+
 interface ConclusionInput {
     chatCount: number;
     participantCount: number;
-    outcome: ActionItem | null;
+    outcome: ParsedAction | null;
     keyPoints: KeyPoint[];
     keywords: string[];
     names: Set<string>;
@@ -225,18 +229,19 @@ const formatDue = (preposition: string | undefined, when: string) => {
     return capitalize(preposition?.toLowerCase() === "before" ? `before ${value}` : value);
 };
 
-/** "Thursday" -> "on Thursday", "Today" -> "today", "Before lunch" -> "before lunch". */
-const dueInSentence = (due: string) => {
+/** "Thursday" -> "on Thursday" (or "by Thursday" when the chat said "by"), "Today" -> "today", "Before lunch" -> "before lunch". */
+const dueInSentence = (due: string, by = false) => {
     const lower = due.toLowerCase();
+    if (by && !lower.startsWith("before")) return `by ${/^(today|tonight|tomorrow)$/.test(lower) ? lower : due}`;
     return /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/.test(lower) ? `on ${due}` : lower;
 };
 
 /** Takes the due date out of a task: "send the copy by Wednesday" -> ["send the copy", "Wednesday"]. */
-const extractDue = (text: string): { text: string; due?: string } => {
+const extractDue = (text: string): { text: string; due?: string; by?: boolean } => {
     const match = text.match(DUE);
     if (!match || match.index === undefined) return { text };
     const rest = `${text.slice(0, match.index)}${text.slice(match.index + match[0].length)}`.replace(/\s{2,}/g, " ");
-    return { text: rest.trim(), due: formatDue(match[1], match[2] ?? "") };
+    return { text: rest.trim(), due: formatDue(match[1], match[2] ?? ""), by: match[1]?.toLowerCase() === "by" };
 };
 
 const splitSentences = (text: string) => text.split(/(?<=[.!?])\s+/).map((part) => part.trim()).filter(Boolean);
@@ -265,7 +270,7 @@ const expandObject = (object: string, keywords: string[]) => {
  * Patterns: "<Name> owns <x>", "<Name|I|we> will|'ll <task>", "let's <task>",
  * and anything after "Next step:" / "Action:" / "TODO:" that starts with "we".
  */
-const parseCommitment = (clause: string, { speaker, label, resolveName, keywords }: CommitmentContext): ActionItem | null => {
+const parseCommitment = (clause: string, { speaker, label, resolveName, keywords }: CommitmentContext): ParsedAction | null => {
     const text = clause.replace(/[’]/g, "'");
     let owner: string | null = null;
     let task: string | null = null;
@@ -292,11 +297,12 @@ const parseCommitment = (clause: string, { speaker, label, resolveName, keywords
 
     if (!owner || !task) return null;
 
-    const { text: withoutDue, due } = extractDue(task);
+    const { text: withoutDue, due, by } = extractDue(task);
     const finalTask = toTask(withoutDue);
     if (wordCount(finalTask) < 2) return null;
 
-    return due ? { owner, task: finalTask, due } : { owner, task: finalTask };
+    // `by` only shapes the summary sentence; it is not part of the stored item.
+    return due ? { owner, task: finalTask, due, by } : { owner, task: finalTask };
 };
 
 /** Same owner and the same last word ("the copy"): keep the first, adding a due date it lacked. */
@@ -335,11 +341,15 @@ const buildConclusion = ({ chatCount, participantCount, outcome, keyPoints, keyw
         && (!outcome || !point.text.toLowerCase().includes(outcome.task.toLowerCase())));
 
     if (outcome) {
-        const agreed = `Agreed to ${lowerFirst(outcome.task, names)}${outcome.due ? ` ${dueInSentence(outcome.due)}` : ""}`;
-        return support ? `${agreed}; ${lowerFirst(stripEnd(support.text), names)}.` : `${agreed}.`;
+        const when = outcome.due ? ` ${dueInSentence(outcome.due, outcome.by)}` : "";
+        // A team outcome reads "Agreed to…"; one person's commitment reads "Jordan will…".
+        const lead = outcome.owner === EVERYONE
+            ? `Agreed to ${lowerFirst(outcome.task, names)}${when}`
+            : `${outcome.owner.split(" ")[0]} will ${lowerFirst(outcome.task, names)}${when}`;
+        return support ? `${lead}; ${lowerFirst(stripEnd(support.text), names)}.` : `${lead}.`;
     }
 
-    if (topics.length) {
+    if (topics.length >= 2) {
         return `Talked through ${topics.map((topic) => `the ${topic}`).join(" and ")}.`;
     }
 
@@ -362,9 +372,9 @@ export function generateMeetingSummary(activityLogs: ActivityEntry[], now = new 
 
     const keywords = getTopKeywords(chatMessages.map((entry) => entry.content), participantsInvolved);
 
-    const actions: ActionItem[] = [];
+    const actions: ParsedAction[] = [];
     const statements: { speaker: string; text: string; order: number }[] = [];
-    let outcome: ActionItem | null = null;
+    let outcome: ParsedAction | null = null;
     let order = 0;
 
     for (const message of chatMessages) {
@@ -392,6 +402,9 @@ export function generateMeetingSummary(activityLogs: ActivityEntry[], now = new 
         }
     }
 
+    // Without a team outcome, the first person's commitment carries the summary.
+    outcome ??= actions[0] ?? null;
+
     const keyPoints = statements
         .map((entry) => ({ ...entry, score: scoreSentence(entry.text) }))
         .sort((a, b) => b.score - a.score || a.order - b.order)
@@ -407,7 +420,7 @@ export function generateMeetingSummary(activityLogs: ActivityEntry[], now = new 
         version: SUMMARY_VERSION,
         generatedAt: now.toISOString(),
         keyPoints,
-        actionItems: dedupeActions(actions),
+        actionItems: dedupeActions(actions.map(({ by: _by, ...item }) => item)),
         highlights,
         keywords,
         participantsInvolved,

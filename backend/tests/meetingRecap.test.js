@@ -126,3 +126,14 @@ test("the host is shown by display name, never by the internal handle", () => {
     const bare = { hostUsername: "maya_epkkn", participants: [{ username: "maya_epkkn", name: null, role: "host" }], activityLogs: [] };
     assert.equal(getHostDisplayName(bare), null);
 });
+
+test("without a team outcome, the first person's commitment leads the summary", () => {
+    const { conclusion, keywords } = generateMeetingSummary({
+        activityLogs: [
+            chat("Aarav Mehta", "The flaky checkout test failed twice overnight."),
+            chat("Jordan Lee", "I’ll pin the browser version in the checkout test by tomorrow.")
+        ]
+    });
+    assert.equal(conclusion, "Jordan will pin the browser version in the checkout test by tomorrow; the flaky checkout test failed twice overnight.");
+    assert.ok(!keywords.some((keyword) => /twice|overnight/.test(keyword)), `adverbs are not topics: ${keywords}`);
+});
