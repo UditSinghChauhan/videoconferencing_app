@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, MonitorUp, UserMinus, Wifi } from "lucide-react";
+import { ArrowRight, Check, MonitorUp, UserMinus } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { RecapView } from "../../meetings/RecapView";
 import { recapToMarkdown } from "../../meetings/recapMarkdown";
@@ -8,12 +8,15 @@ import { CAST, castByName, type CastId } from "../cast/people";
 import { FEATURES } from "../content";
 import { HISTORY, STANDUP, STANDUP_MEETING } from "../fixtures";
 import { Reveal } from "../Reveal";
-import { Face, FaceStack } from "../parts/People";
+import { Face, FaceStack, TeamStack } from "../parts/People";
 import { CastTile } from "../stage/StageParts";
 import styles from "./Product.module.css";
 
-/** The first lines of the real export, from the same function the button calls. */
-const MARKDOWN = recapToMarkdown(STANDUP_MEETING).split("\n").slice(2, 13).join("\n");
+/** The real export, from the same function the button calls; the card shows its first ten lines and fades out. */
+const MARKDOWN = recapToMarkdown(STANDUP_MEETING).split("\n").slice(2).join("\n");
+
+/** The embedded recap leaves out the transcript: the pane is clipped to the card, and nothing interactive should hide under the fade. */
+const EMBEDDED_MEETING = { ...STANDUP_MEETING, chat: undefined };
 
 const avatarFor = (name: string) => {
     const member = castByName(name);
@@ -63,13 +66,16 @@ function RecapFeature() {
                     </figure>
                 </div>
                 <div className={styles.recapPane}>
-                    <RecapView
-                        recap={STANDUP_MEETING}
-                        headingLevel={3}
-                        hideFootnote
-                        renderAvatar={avatarFor}
-                        onCopy={(copied) => setToast(copied ? "Recap copied as Markdown" : "Couldn’t copy. Select the text instead.")}
-                    />
+                    <div className={styles.recapPaneInner}>
+                        <RecapView
+                            recap={EMBEDDED_MEETING}
+                            headingLevel={3}
+                            hideFootnote
+                            renderAvatar={avatarFor}
+                            renderTeam={() => <TeamStack />}
+                            onCopy={(copied) => setToast(copied ? "Recap copied as Markdown" : "Couldn’t copy. Select the text instead.")}
+                        />
+                    </div>
                 </div>
             </div>
             <div className={styles.toastRegion} role="status" aria-live="polite">
@@ -140,7 +146,7 @@ function HostFragment() {
                 <li><Face person="jordan" size={24} /><span>Jordan Lee</span><span className={styles.remove}><UserMinus size={14} /></span></li>
             </ul>
             <div className={styles.confirm}>
-                <strong>Remove Jordan Lee from the call?</strong>
+                <strong>Remove Jordan?</strong>
                 <span className={styles.confirmActions}>
                     <span className={styles.ghost}>Cancel</span>
                     <span className={styles.danger}>Remove</span>
@@ -150,38 +156,34 @@ function HostFragment() {
     );
 }
 
+/** A shared screen fills the main tile; the presenter shrinks to a thumbnail in the corner. */
 function ScreenFragment() {
     return (
         <div className={styles.screen}>
-            <div className={styles.strip}>
-                <CastTile person="aarav" still className={styles.mini} />
-                <CastTile person="sofia" still className={styles.mini} />
+            <div className={styles.slide}>
+                <strong>Release checklist</strong>
+                <span><i className={styles.done}><Check size={9} strokeWidth={3} /></i> Onboarding fix merged</span>
+                <span><i className={styles.done}><Check size={9} strokeWidth={3} /></i> Empty states signed off</span>
+                <span><i className={styles.pending}><Check size={9} strokeWidth={3} /></i> Final copy</span>
             </div>
-            <div className={styles.shared}>
-                <div className={styles.slideBar}><MonitorUp size={13} /> Aarav is presenting</div>
-                <div className={styles.slide}>
-                    <strong>Release checklist</strong>
-                    <span><i className={styles.done} /> Onboarding fix merged</span>
-                    <span><i className={styles.done} /> Empty states signed off</span>
-                    <span><i /> Final copy</span>
-                </div>
-            </div>
-            <span className={styles.shareButton}><MonitorUp size={14} /> Share screen</span>
+            <span className={styles.presenting}><MonitorUp size={12} /> Maya is presenting</span>
+            <CastTile person="maya" still className={styles.presenter} />
         </div>
     );
 }
 
+/** A 4 s loop: the link drops, the tile dims and reconnects, the bars refill, the video and the chip come back. */
 function ReconnectFragment() {
     return (
         <div className={styles.reconnect}>
-            <div className={styles.pill}>
-                <span className={styles.stateLive}><span className={styles.liveDot} /> Live · 17:52</span>
-                <span className={styles.stateLost}><Wifi size={14} /> Reconnecting…</span>
-                <span className={styles.stateBack}><Check size={14} /> Back in the call</span>
-            </div>
-            <div className={styles.bars}>
-                {[0, 1, 2, 3, 4].map((bar) => <span key={bar} />)}
-            </div>
+            <CastTile person="jordan" still className={styles.reconnectTile} />
+            <span className={styles.bars} aria-hidden="true">
+                {[0, 1, 2, 3].map((bar) => <span key={bar} />)}
+            </span>
+            <span className={styles.status}>
+                <span className={styles.stateLost}><span className={styles.spinner} /> Reconnecting…</span>
+                <span className={styles.stateBack}><Check size={13} strokeWidth={2.5} /> Back in the call</span>
+            </span>
         </div>
     );
 }

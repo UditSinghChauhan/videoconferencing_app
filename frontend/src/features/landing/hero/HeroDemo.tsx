@@ -73,8 +73,10 @@ function useLoop(paused: boolean) {
 }
 
 /**
- * The hero's one composition: a light app window holding the dark call, with
- * the recap card overlapping its lower right edge. Everything is DOM (the
+ * The hero's one composition: a light app window holding the dark call. On
+ * desktop the window is centred until End is pressed, then steps left while
+ * the recap card docks over its right edge (clear of every face and of End);
+ * on phones the card always sits over the grid's lower edge and rebuilds. Everything is DOM (the
  * room's own tile and control styles, the illustrated cast), so it is sharp
  * at any size. Under reduced motion it holds the finished state.
  */
@@ -95,8 +97,10 @@ export function HeroDemo() {
                     </span>
                     <span className={styles.live}>
                         <span className={styles.dot} />
-                        Live
+                        <span className={styles.liveWord}>Live</span>
                         <span className={styles.timer}>17:52</span>
+                        {/* Phones drop the control bar; End moves up here so the press still shows. */}
+                        <span className={`${styles.end} ${styles.chromeEnd}`}><PhoneOff size={14} /> End</span>
                     </span>
                 </div>
                 <div className={styles.call}>
@@ -124,17 +128,22 @@ export function HeroDemo() {
                 </div>
                 <div className={styles.recapBody}>
                     <p className={styles.summary}>{STANDUP_RECAP.conclusion}</p>
-                    <p className={styles.itemsLabel}>Action items</p>
-                    <ul className={styles.items}>
-                        {items.map((item) => (
-                            <li key={item.task}>
-                                <span className={styles.box} />
-                                <span className={styles.task}>{item.task}</span>
-                                <OwnerChip name={item.owner} />
-                                {item.due ? <span className={styles.due}>{item.due}</span> : null}
-                            </li>
-                        ))}
-                    </ul>
+                    {/* The label and its items arrive as one block, so the label is never alone. */}
+                    {items.length ? (
+                        <div className={styles.itemsBlock}>
+                            <p className={styles.itemsLabel}>Action items</p>
+                            <ul className={styles.items}>
+                                {items.map((item) => (
+                                    <li key={item.task}>
+                                        <span className={styles.box} />
+                                        <span className={styles.task}>{item.task}</span>
+                                        <OwnerChip name={item.owner} />
+                                        <span className={styles.due}>{item.due ?? "—"}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ) : null}
                 </div>
             </div>
         </div>

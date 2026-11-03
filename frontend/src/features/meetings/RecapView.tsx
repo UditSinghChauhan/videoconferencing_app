@@ -25,6 +25,8 @@ interface RecapViewProps {
     onCopy?: (copied: boolean) => void;
     /** Draws a person's avatar; defaults to initials on their hue. */
     renderAvatar?: (name: string) => ReactNode;
+    /** Draws the owner of a team commitment ("Everyone"), e.g. the team's avatar stack, in place of the word. */
+    renderTeam?: () => ReactNode;
 }
 
 type CopyState = "idle" | "copied" | "failed";
@@ -45,7 +47,7 @@ export function PersonChip({ name, avatar }: { name: string; avatar?: ReactNode 
 }
 
 /** The recap of an ended meeting. Shared by the recap page and the public demo. */
-export function RecapView({ recap, notice, footnote, transcriptOpen = false, reveal = false, headingLevel = 1, hideFootnote = false, onCopy, renderAvatar }: RecapViewProps) {
+export function RecapView({ recap, notice, footnote, transcriptOpen = false, reveal = false, headingLevel = 1, hideFootnote = false, onCopy, renderAvatar, renderTeam }: RecapViewProps) {
     const [copy, setCopy] = useState<CopyState>("idle");
     const { summary } = recap;
     const Title = `h${headingLevel}` as "h1" | "h2" | "h3";
@@ -113,8 +115,13 @@ export function RecapView({ recap, notice, footnote, transcriptOpen = false, rev
                             <li key={`${index}-${item.task}`}>
                                 <span className={styles.box} aria-hidden="true" />
                                 <span className={styles.task}>{item.task}</span>
-                                <PersonChip name={item.owner} avatar={renderAvatar?.(item.owner)} />
-                                {item.due ? <span className={styles.due}>{item.due}</span> : null}
+                                {item.owner === "Everyone" && renderTeam
+                                    ? <span className={styles.team}>{renderTeam()}</span>
+                                    : <PersonChip name={item.owner} avatar={renderAvatar?.(item.owner)} />}
+                                {/* Always present, so the due dates line up in one right-aligned column. */}
+                                <span className={styles.due}>
+                                    {item.due ?? <><span aria-hidden="true">—</span><span className="visually-hidden">No due date</span></>}
+                                </span>
                             </li>
                         ))}
                     </ul>

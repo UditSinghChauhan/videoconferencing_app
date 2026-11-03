@@ -26,13 +26,18 @@ export const CastTile = forwardRef<HTMLDivElement, CastTileProps>(function CastT
     { person, speaking = false, host = false, you = false, muted = false, still = false, className, children },
     ref
 ) {
-    const name = CAST[person].name;
+    const [first, ...rest] = CAST[person].name.split(" ");
     return (
         <div ref={ref} className={[tileStyles.tile, speaking && !muted && tileStyles.speaking, styles.tile, className].filter(Boolean).join(" ")}>
             <Avatar person={person} speaking={speaking && !muted} still={still} />
             <div className={tileStyles.caption}>
                 {muted ? <MicOff size={14} className={tileStyles.micOff} aria-hidden="true" /> : null}
-                <span className={tileStyles.name}>{you ? `${name} (you)` : name}</span>
+                {/* The surname is its own span, so small tiles can show the first name only. */}
+                <span className={tileStyles.name}>
+                    {first}
+                    {rest.length ? <span data-surname="">{` ${rest.join(" ")}`}</span> : null}
+                    {you ? " (you)" : null}
+                </span>
                 {host ? <span className={tileStyles.host}>Host</span> : null}
             </div>
             {children}

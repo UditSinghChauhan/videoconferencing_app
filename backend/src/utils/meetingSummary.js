@@ -169,7 +169,7 @@ const getTopKeywords = (texts, participants = []) => {
 // ---------------------------------------------------------------------------
 
 /** Bumped when the recap's shape changes; older stored recaps are rebuilt on read. */
-const SUMMARY_VERSION = 2;
+const SUMMARY_VERSION = 3;
 const MAX_KEY_POINTS = 3;
 const EVERYONE = "Everyone";
 
@@ -220,6 +220,10 @@ const toTask = (text) => {
     return cleaned ? capitalize(cleaned) : "";
 };
 
+/** What someone can own: a thing, not a pronoun ("Gabe takes it" says nothing on its own). */
+const OBJECT_PRONOUN = /^(it|this|that|them|those|these|one)$/i;
+const LEADING_DETERMINER = /^(?:the|our|a|an|this|that|my|your|their|his|her)\s+/i;
+
 /** "the fix" -> "the onboarding fix" when a topic ends with that word. */
 const expandObject = (object, keywords) => {
     const match = object.match(/^(the|our)\s+([a-z-]+)$/i);
@@ -237,6 +241,7 @@ const parseCommitment = (clause, { speaker, label, resolveName, keywords }) => {
     const text = clause.replace(/[’]/g, "'");
     let owner = null;
     let task = null;
+    let owned = false;
 
     const owns = text.match(/^([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)\s+(?:owns|will own|is owning|takes)\s+(.+)$/);
     const will = text.match(/^([A-Za-z]+(?:\s[A-Z][a-z]+)?)(?:\s+will|'ll|\s+is going to|'m going to|\s+am going to)\s+(.+)$/);
@@ -248,7 +253,10 @@ const parseCommitment = (clause, { speaker, label, resolveName, keywords }) => {
 
     if (owns) {
         owner = resolveName(owns[1]);
-        task = owner ? `own ${expandObject(owns[2], keywords)}` : null;
+        // "Aarav owns the fix" is the task "Onboarding fix" with Aarav as owner, never "Own the …".
+        const object = expandObject(owns[2], keywords);
+        task = owner && !OBJECT_PRONOUN.test(object) ? object.replace(LEADING_DETERMINER, "") : null;
+        owned = true;
     } else if (will) {
         const subject = will[1].toLowerCase();
         owner = subject === "i" ? speaker : subject === "we" ? EVERYONE : SUBJECT_PRONOUNS.has(subject) ? null : resolveName(will[1]);
@@ -268,10 +276,12 @@ const parseCommitment = (clause, { speaker, label, resolveName, keywords }) => {
 
     const { text: withoutDue, due, by } = extractDue(task);
     const finalTask = toTask(withoutDue);
-    if (wordCount(finalTask) < 2) return null;
+    // An owned thing can be one word ("Docs"); any other task needs a verb and an object.
+    if (wordCount(finalTask) < (owned ? 1 : 2)) return null;
 
-    // `by` only shapes the summary sentence; it is not part of the stored item.
-    return due ? { owner, task: finalTask, due, by } : { owner, task: finalTask };
+    // `by` and `owned` only shape the summary sentence; they are not part of the stored item.
+    const extra = owned ? { owned } : {};
+    return due ? { owner, task: finalTask, due, by, ...extra } : { owner, task: finalTask, ...extra };
 };
 
 /** Same owner and the same last word ("the copy"): keep the first, adding a due date it lacked. */
@@ -311,10 +321,13 @@ const buildConclusion = ({ chatCount, participantCount, outcome, keyPoints, keyw
 
     if (outcome) {
         const when = outcome.due ? ` ${dueInSentence(outcome.due, outcome.by)}` : "";
-        // A team outcome reads "Agreed to…"; one person's commitment reads "Jordan will…".
+        // A team outcome reads "Agreed to…"; one person's commitment "Jordan will…"; ownership "Aarav owns the…".
+        const first = outcome.owner.split(" ")[0];
         const lead = outcome.owner === EVERYONE
             ? `Agreed to ${lowerFirst(outcome.task, names)}${when}`
-            : `${outcome.owner.split(" ")[0]} will ${lowerFirst(outcome.task, names)}${when}`;
+            : outcome.owned
+                ? `${first} owns the ${lowerFirst(outcome.task, names)}${when}`
+                : `${first} will ${lowerFirst(outcome.task, names)}${when}`;
         return support ? `${lead}; ${lowerFirst(stripEnd(support.text), names)}.` : `${lead}.`;
     }
 
@@ -393,7 +406,7 @@ const generateMeetingSummary = (meeting) => {
         .slice(0, MAX_KEY_POINTS)
         .map(({ speaker, text }) => ({ speaker, text }));
 
-    const actionItems = dedupeActions(actions.map(({ by: _by, ...item }) => item));
+    const actionItems = dedupeActions(actions.map(({ by: _by, owned: _owned, ...item }) => item));
 
     const highlights = activityLogs
         .filter((entry) => entry.type !== "chat")

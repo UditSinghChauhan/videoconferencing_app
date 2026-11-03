@@ -13,6 +13,17 @@
     height: 100%;
 }
 
+/* Initials on the person's hue, for circles too small to hold a face. */
+.monogram {
+    display: inline-grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    user-select: none;
+}
+
 .chip {
     display: inline-flex;
     align-items: center;
@@ -27,20 +38,15 @@
     white-space: nowrap;
 }
 
-.group {
-    display: inline-grid;
-    place-items: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--text);
-    color: var(--surface);
-}
-
 .stack {
     display: inline-flex;
 }
 
 .stack > .face + .face {
     margin-left: -6px;
+}
+
+/* Monograms overlap less, so every pair of initials stays readable. */
+.stack > .monogram + .monogram {
+    margin-left: -3px;
 }

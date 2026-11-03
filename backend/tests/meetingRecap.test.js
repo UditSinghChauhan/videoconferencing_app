@@ -64,7 +64,7 @@ test("ownership and commitment lines become action items with an owner and a due
     assert.deepEqual(summary.actionItems, [
         { owner: "Sofia Rossi", task: "Send the final copy", due: "Wednesday" },
         { owner: "Everyone", task: "Ship the release", due: "Thursday" },
-        { owner: "Aarav Mehta", task: "Own the onboarding fix" },
+        { owner: "Aarav Mehta", task: "Onboarding fix" },
         { owner: "Maya Patel", task: "Update the release plan", due: "Today" }
     ]);
 });
@@ -95,6 +95,7 @@ test("small talk produces no action items", () => {
 test("a call without an outcome is summarised by its top two topics", () => {
     const { conclusion } = generateMeetingSummary({
         activityLogs: [
+            ...["Jordan Lee", "Sofia Rossi"].map((username) => ({ type: "join", username, content: "joined the meeting" })),
             chat("Maya Patel", "The pricing page copy still feels long."),
             chat("Jordan Lee", "Pricing page traffic doubled after the launch email went out."),
             chat("Sofia Rossi", "The launch email had a broken link in the footer.")
@@ -148,7 +149,34 @@ test("an imperative with a day is a team commitment", () => {
     assert.deepEqual(summary.actionItems, [
         { owner: "Everyone", task: "Ship the release", due: "Thursday" },
         { owner: "Gabe Guest", task: "Follow up with QA" },
-        { owner: "Gabe Guest", task: "Own the QA follow up" }
+        { owner: "Gabe Guest", task: "QA follow up" }
     ]);
     assert.match(summary.conclusion, /^Agreed to ship the release on Thursday/);
+});
+
+test("ownership statements become task phrases, never 'Own the …'", () => {
+    const { actionItems } = generateMeetingSummary({
+        activityLogs: [
+            ...["Jordan Lee", "Sofia Rossi"].map((username) => ({ type: "join", username, content: "joined the meeting" })),
+            chat("Maya Patel", "The pricing page copy still feels long."),
+            chat("Maya Patel", "Jordan owns the pricing page, Sofia takes the launch email."),
+            chat("Aarav Mehta", "Aarav will own our checkout tests.")
+        ]
+    });
+    assert.deepEqual(actionItems, [
+        { owner: "Jordan Lee", task: "Pricing page" },
+        { owner: "Sofia Rossi", task: "Launch email" },
+        { owner: "Aarav Mehta", task: "Checkout tests" }
+    ]);
+    for (const item of actionItems) assert.doesNotMatch(item.task, /^(Own|Take)\b/);
+});
+
+test("an ownership line that leads the summary reads as ownership", () => {
+    const { conclusion } = generateMeetingSummary({
+        activityLogs: [
+            { type: "join", username: "Aarav Mehta", content: "joined the meeting" },
+            chat("Maya Patel", "Aarav owns the checkout fix.")
+        ]
+    });
+    assert.equal(conclusion, "Aarav owns the checkout fix.");
 });

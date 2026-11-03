@@ -15,7 +15,12 @@ export const recapToMarkdown = (recap: MeetingRecap): string => {
     if (facts.length) lines.push("", facts.join(" · "));
     if (summary.conclusion) lines.push("", summary.conclusion);
     if (actionItems.length) {
-        lines.push("", "## Action items", ...actionItems.map((item) => `- [ ] ${item.task} (${[item.owner, item.due].filter(Boolean).join(", ")})`));
+        // A team commitment has no single owner, so only its due date goes in the brackets.
+        const detail = (owner: string, due?: string) => [owner === "Everyone" ? null : owner, due].filter(Boolean).join(", ");
+        lines.push("", "## Action items", ...actionItems.map((item) => {
+            const extra = detail(item.owner, item.due);
+            return `- [ ] ${item.task}${extra ? ` (${extra})` : ""}`;
+        }));
     }
     if (summary.keyPoints.length) {
         lines.push("", "## Key points", ...summary.keyPoints.map((point) => `- ${point.text}${point.speaker ? ` (${point.speaker})` : ""}`));

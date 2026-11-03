@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { ButtonLink } from "../components/Button";
 import { Logo } from "../components/Logo";
+import { CAST, CAST_ORDER } from "../features/landing/cast/people";
 import { BENEFITS } from "../features/landing/content";
 import { Deferred } from "../features/landing/Deferred";
 import { Faq } from "../features/landing/faq/Faq";
@@ -12,6 +13,7 @@ import { LandingNav } from "../features/landing/nav/LandingNav";
 import { Reveal } from "../features/landing/Reveal";
 import { wakeServer } from "../lib/api";
 import { AUTHOR_URL, LINKEDIN_URL, REPOSITORY_URL } from "../lib/env";
+import { initialsFor } from "../lib/format";
 import styles from "./LandingPage.module.css";
 
 // Below the fold: the illustrated sections load as they approach the viewport.
@@ -30,6 +32,30 @@ function Divider() {
         <div className={styles.divider} aria-hidden="true">
             <span className={styles.plus} />
             <span className={styles.plus} />
+        </div>
+    );
+}
+
+/**
+ * Above the closing headline: the four people of the call fold into a small
+ * recap card, once, as the band comes into view. Pure CSS on the Reveal's
+ * `data-shown`, so it costs nothing until then. Decorative.
+ */
+function CallToNotes() {
+    return (
+        <div className={styles.fold} aria-hidden="true">
+            <span className={styles.foldCard} />
+            <span className={styles.foldPeople}>
+                {CAST_ORDER.map((id, index) => (
+                    <span key={id} className={styles.foldFace} style={{ background: CAST[id].hue, "--i": index } as React.CSSProperties}>
+                        {initialsFor(CAST[id].name)}
+                    </span>
+                ))}
+            </span>
+            <span className={styles.foldText}>
+                <strong>Meeting recap</strong>
+                <span>Notes for everyone</span>
+            </span>
         </div>
     );
 }
@@ -118,6 +144,7 @@ export default function LandingPage() {
 
                     <section className={styles.ctaWrap} aria-labelledby="cta-title">
                         <Reveal className={styles.cta}>
+                            <CallToNotes />
                             <h2 id="cta-title">Your next meeting can end with notes.</h2>
                             <p>Try a call with the demo cast, end it, and read the recap. It takes a minute.</p>
                             <div className={styles.actions}>

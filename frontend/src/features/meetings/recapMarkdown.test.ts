@@ -19,7 +19,7 @@ test("recapToMarkdown renders the recap in page order and only the sections that
 
     expect(markdown).toContain("# Meeting recap · kmt-vrqp-xhw");
     expect(markdown).toContain("25 min · Maya, Jordan");
-    expect(markdown).toContain("Agreed to ship the release on Thursday.\n\n## Action items\n- [ ] Ship the release (Everyone, Thursday)");
+    expect(markdown).toContain("Agreed to ship the release on Thursday.\n\n## Action items\n- [ ] Ship the release (Thursday)");
     expect(markdown).toContain("## Key points\n- Support tickets dropped by half. (Jordan)");
     expect(markdown).not.toContain("Highlights");
     expect(markdown).toContain("**Topics:** release, support tickets");

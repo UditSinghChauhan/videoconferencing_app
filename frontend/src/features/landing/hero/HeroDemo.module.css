@@ -1,9 +1,27 @@
-/* The hero composition. Product text is 13–14 px at every width. */
+/*
+ * The hero composition. Product text is 13–14 px at every width (12 px only
+ * for the name chips on phone-sized tiles).
+ *
+ * Desktop geometry, all relative to the stage (a size container):
+ *   --card     the recap card's width
+ *   --overlap  how far the card reaches over the window's right edge; this
+ *              strip is the outer ~11% of the right-hand tiles, and every
+ *              face sits in the middle 36–64% of its tile, so it never
+ *              covers one
+ *   --w        the window's width: as wide as possible while window plus
+ *              card still fit the stage
+ * The window is centred while the call runs; when the recap arrives it moves
+ * to the left edge (one 500 ms transform) and the card docks beside it.
+ */
 .stage {
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --card: clamp(300px, 31cqw, 352px);
+    --overlap: 56px;
+    --w: min(820px, 100cqw - var(--card) + var(--overlap));
+    container-type: inline-size;
     position: relative;
     width: 100%;
-    max-width: 1000px;
+    max-width: 1120px;
     margin-top: 56px;
     padding-bottom: 32px;
     text-align: left;
@@ -12,12 +30,18 @@
 /* ---------- The app window: light chrome, dark call ---------- */
 
 .window {
-    width: min(820px, 86%);
+    width: var(--w);
     overflow: hidden;
     border: 1px solid var(--hairline);
     border-radius: 14px;
     background: var(--surface);
     box-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 32px 64px -32px rgb(0 0 0 / 28%);
+    transform: translateX(calc((100cqw - var(--w)) / 2));
+    transition: transform 500ms var(--ease);
+}
+
+.stage[data-phase="recap"] .window {
+    transform: none;
 }
 
 .chrome {
@@ -34,9 +58,16 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+}
+
+.room > svg {
+    flex: none;
 }
 
 .code {
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-family: var(--font-mono);
     font-size: 0.8125rem;
     letter-spacing: 0.01em;
@@ -44,6 +75,7 @@
 
 .live {
     display: inline-flex;
+    flex: none;
     align-items: center;
     gap: 6px;
     font-weight: 550;
@@ -116,6 +148,10 @@
     transition: transform 160ms ease-out, box-shadow 160ms ease-out;
 }
 
+.chromeEnd {
+    display: none;
+}
+
 /* End is pressed: a short press, then the call steps back while the notes arrive. */
 .stage[data-phase="end"] .end {
     transform: scale(0.94);
@@ -131,20 +167,21 @@
     transform: scale(0.985);
 }
 
-/* ---------- The recap card, overlapping the window's lower right edge ---------- */
+/* ---------- The recap card, docked over the window's right edge ---------- */
 
 .recap {
     position: absolute;
-    right: 0;
-    bottom: 24px;
-    width: 400px;
+    top: 76px;
+    left: calc(var(--w) - var(--overlap));
+    width: var(--card);
     overflow: hidden;
     border: 1px solid var(--hairline);
     border-radius: 16px;
     background: var(--surface);
     box-shadow: 0 1px 2px rgb(0 0 0 / 5%), 0 28px 56px -24px rgb(0 0 0 / 30%);
     opacity: 0;
-    transform: translateY(16px);
+    /* Starts where the window starts (centred), 24 px further right, and travels with it. */
+    transform: translateX(calc((100cqw - var(--w)) / 2 + 24px));
     transition: opacity 500ms var(--ease), transform 500ms var(--ease);
 }
 
@@ -179,6 +216,7 @@
     font-weight: 500;
     line-height: 1.45;
     letter-spacing: -0.005em;
+    text-wrap: pretty;
 }
 
 .itemsLabel {
@@ -197,7 +235,7 @@
 
 .items li {
     display: grid;
-    grid-template-columns: auto 1fr auto auto;
+    grid-template-columns: auto 1fr auto 72px;
     align-items: center;
     gap: 8px;
     min-height: 34px;
@@ -215,23 +253,30 @@
     font-weight: 500;
 }
 
+/* A fixed, right-aligned column, with an em dash when there is no date. */
 .due {
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
+    text-align: right;
 }
 
-/* The lines write in: the summary unmasks left to right, then each item rises. */
+/*
+ * The card writes in while it docks, and is complete well before the hold:
+ * the summary unmasks from 60 ms, then the label and the first item rise
+ * together (the label never shows alone) and the second follows. All done
+ * by ~800 ms of a 3.4 s hold.
+ */
 .summary,
-.itemsLabel,
+.itemsBlock,
 .items li {
-    transition: opacity 400ms var(--ease), transform 400ms var(--ease), clip-path 700ms var(--ease);
+    transition: opacity 400ms var(--ease), transform 400ms var(--ease), clip-path 600ms var(--ease);
 }
 
 .stage:not([data-phase="recap"]) .summary {
     clip-path: inset(0 100% 0 0);
 }
 
-.stage:not([data-phase="recap"]) .itemsLabel,
+.stage:not([data-phase="recap"]) .itemsBlock,
 .stage:not([data-phase="recap"]) .items li {
     opacity: 0;
     transform: translateY(6px);
@@ -239,21 +284,21 @@
 
 .stage[data-phase="recap"] .summary {
     clip-path: inset(0 0 0 0);
-    transition-delay: 150ms;
+    transition-delay: 60ms;
 }
 
-.stage[data-phase="recap"] .itemsLabel { transition-delay: 600ms; }
-.stage[data-phase="recap"] .items li:nth-child(1) { transition-delay: 700ms; }
-.stage[data-phase="recap"] .items li:nth-child(2) { transition-delay: 800ms; }
+.stage[data-phase="recap"] .itemsBlock,
+.stage[data-phase="recap"] .items li:nth-child(1) { transition-delay: 300ms; }
+.stage[data-phase="recap"] .items li:nth-child(2) { transition-delay: 380ms; }
 
 /* Reset leaves quickly, so the loop never looks stuck. */
 .stage[data-phase="reset"] .recap {
     transition-duration: 300ms;
 }
 
-/* ---------- Phones: a phone-width call card with the recap overlapping below ---------- */
+/* ---------- Tablets and phones: the card always sits over the grid's lower edge ---------- */
 
-@media (max-width: 760px) {
+@media (max-width: 899px) {
     .stage {
         margin-top: 36px;
         padding-bottom: 0;
@@ -261,6 +306,8 @@
 
     .window {
         width: 100%;
+        transform: none;
+        transition: none;
     }
 
     .call {
@@ -275,17 +322,62 @@
         border-radius: 8px;
     }
 
-    .wide {
+    .controls {
         display: none;
     }
 
+    .chromeEnd {
+        display: inline-flex;
+        height: 28px;
+        margin-left: 8px;
+        padding: 0 10px;
+        font-size: 0.8125rem;
+    }
+
+    /*
+     * Always present, overlapping the bottom 24 px of the grid: on these tiles
+     * that is below every chin, and the name chips sit top-left. Its content
+     * rebuilds line by line when End is pressed, so the card is never blank
+     * and its height never changes.
+     */
     .recap {
         position: relative;
-        right: auto;
-        bottom: auto;
-        width: auto;
-        margin: -28px 10px 0;
+        top: auto;
+        left: auto;
+        width: calc(100% - 20px);
+        max-width: 520px;
+        margin: -22px auto 0;
+        opacity: 1;
+        transform: none;
+        transition: none;
     }
+
+    .stage:not([data-phase="recap"]) .summary {
+        clip-path: none;
+    }
+
+    .stage:not([data-phase="recap"]) .itemsBlock,
+    .stage:not([data-phase="recap"]) .items li {
+        opacity: 1;
+        transform: none;
+    }
+
+    .summary,
+    .itemsBlock,
+    .items li {
+        transition: none;
+    }
+
+    .stage[data-phase="recap"] .summary {
+        animation: rebuild-text 900ms var(--ease) both;
+    }
+
+    .stage[data-phase="recap"] .items li {
+        animation: rebuild-row 700ms var(--ease) both;
+    }
+
+    .stage[data-phase="recap"] .items li:nth-child(1) { animation-delay: 260ms; }
+    .stage[data-phase="recap"] .items li:nth-child(2) { animation-delay: 360ms; }
 
     .items li {
         grid-template-columns: auto 1fr auto;
@@ -296,14 +388,63 @@
     }
 }
 
+/* Phone-sized tiles: first name only, 12 px, top-left, where no face ever is. */
+@media (max-width: 600px) {
+    .code {
+        white-space: nowrap;
+    }
+
+    .timer {
+        display: none;
+    }
+}
+
+/* At 320 the room code, the live dot and End share 240 px: the dot alone says live. */
+@media (max-width: 360px) {
+    .liveWord {
+        display: none;
+    }
+
+    .tile > div {
+        top: 4px;
+        bottom: auto;
+        left: 4px;
+        gap: 4px;
+        padding: 1px 6px;
+        border-radius: 5px;
+        font-size: 0.75rem;
+        line-height: 18px;
+    }
+
+    .tile [data-surname] {
+        display: none;
+    }
+}
+
+@keyframes rebuild-text {
+    0% { clip-path: inset(0 0 0 0); opacity: 1; }
+    18% { clip-path: inset(0 0 0 0); opacity: 0; }
+    19% { clip-path: inset(0 100% 0 0); opacity: 1; }
+    100% { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+
+@keyframes rebuild-row {
+    0% { opacity: 1; transform: none; }
+    25% { opacity: 0; transform: translateY(0); }
+    26% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+    .window,
     .grid,
     .controls,
     .end,
     .recap,
     .summary,
-    .itemsLabel,
+    .itemsBlock,
     .items li {
         transition: none;
+        animation: none !important;
     }
 }
