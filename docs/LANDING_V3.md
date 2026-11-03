@@ -39,8 +39,8 @@ What v3 takes: the canvas + rails + "+" marks, the hero card, the nav-to-floatin
 | Surface (cards) | `#FFFFFF` |
 | Hairline | `#ECEAE6` |
 | Ink | `#17171A` |
-| Muted | `#6B6A70` (5.22:1 on canvas, 5.37:1 on white) |
-| Accent (text, CTA fill) | `#B4440A` (5.57:1 white on rust, 5.31:1 rust on canvas) |
+| Muted | `#6B6A70` (5.13:1 on canvas, 5.36:1 on white; measured by `frontend/scripts/contrast.mjs`) |
+| Accent (text, CTA fill) | `#B4440A` (5.57:1 white on rust, 5.34:1 rust on canvas) |
 | Room colours | only inside the call window |
 
 - Rails at the 1200 px container edges, full page height; a hairline divider between sections with "+" marks where it meets the rails.

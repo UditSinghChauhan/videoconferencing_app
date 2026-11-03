@@ -16,7 +16,7 @@ const JOINERS: { id: CastId; name: string }[] = [
 ];
 
 /** Three cards, each a different small piece of the product. Each plays once when it comes into view. */
-export function HowItWorks() {
+export default function HowItWorks() {
     const ref = useRef<HTMLOListElement>(null);
     const run = useInView(ref, { once: true, margin: "0px 0px -20% 0px" });
     const vignettes = [<Lobby key="start" />, <Invite key="share" />, <MiniRecap key="recap" />];

@@ -1,19 +1,5 @@
-import type { ReactNode } from "react";
-import { LazyMotion, MotionConfig, m, useReducedMotion } from "motion/react";
-
-const loadFeatures = () => import("./motionFeatures").then((module) => module.default);
-
-/** The landing page's easing: a long, soft ease-out. */
-const EASE_OUT = [0.16, 1, 0.3, 1] as const;
-
-/** Wraps the page once: animation features load lazily, and the visitor's reduced-motion setting is respected. */
-export function RevealProvider({ children }: { children: ReactNode }) {
-    return (
-        <LazyMotion features={loadFeatures} strict>
-            <MotionConfig reducedMotion="user">{children}</MotionConfig>
-        </LazyMotion>
-    );
-}
+import { createElement, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import styles from "./Reveal.module.css";
 
 interface RevealProps {
     children: ReactNode;
@@ -25,27 +11,36 @@ interface RevealProps {
 
 /**
  * Fades and rises 12 px into place once, when it enters the viewport:
- * 500 ms on the landing ease. Transform and opacity only, so nothing shifts
- * the layout. Under reduced motion the content is simply there.
+ * 500 ms on cubic-bezier(0.16, 1, 0.3, 1), 50 ms stagger. Transform and
+ * opacity only, so nothing shifts the layout. Plain CSS and one observer,
+ * so it adds nothing to the first paint (motion/react drives the deferred
+ * sections' own animations). Reduced motion: the content is simply there.
  */
 export function Reveal({ children, className, index = 0, as = "div" }: RevealProps) {
-    const reduced = useReducedMotion();
-    const Component = m[as];
+    const ref = useRef<HTMLElement>(null);
+    const [shown, setShown] = useState(false);
 
-    if (reduced) {
-        const Static = as;
-        return <Static className={className}>{children}</Static>;
-    }
+    useEffect(() => {
+        const element = ref.current;
+        if (!element) return;
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry?.isIntersecting) {
+                setShown(true);
+                observer.disconnect();
+            }
+        }, { rootMargin: "0px 0px -8% 0px" });
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, []);
 
-    return (
-        <Component
-            className={className}
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "0px 0px -8% 0px" }}
-            transition={{ duration: 0.5, ease: EASE_OUT, delay: index * 0.05 }}
-        >
-            {children}
-        </Component>
+    return createElement(
+        as,
+        {
+            ref,
+            className: [styles.reveal, className].filter(Boolean).join(" "),
+            "data-shown": shown || undefined,
+            style: { "--reveal-delay": `${index * 50}ms` } as CSSProperties
+        },
+        children
     );
 }

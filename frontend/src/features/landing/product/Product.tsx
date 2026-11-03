@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, MonitorUp, UserMinus, Wifi } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { RecapView } from "../../meetings/RecapView";
 import { recapToMarkdown } from "../../meetings/recapMarkdown";
 import { CAST, castByName, type CastId } from "../cast/people";
@@ -20,7 +21,7 @@ const avatarFor = (name: string) => {
 };
 
 /** The features: the real recap component with working copy, then small fragments that play on hover or focus. */
-export function Product() {
+export default function Product() {
     return (
         <div className={styles.product}>
             <RecapFeature />
@@ -37,6 +38,7 @@ export function Product() {
 
 function RecapFeature() {
     const [toast, setToast] = useState<string | null>(null);
+    const reduced = useReducedMotion();
 
     useEffect(() => {
         if (!toast) return;
@@ -71,7 +73,20 @@ function RecapFeature() {
                 </div>
             </div>
             <div className={styles.toastRegion} role="status" aria-live="polite">
-                {toast ? <span className={styles.toast}><Check size={15} aria-hidden="true" /> {toast}</span> : null}
+                <AnimatePresence>
+                    {toast ? (
+                        <motion.span
+                            key={toast}
+                            className={styles.toast}
+                            initial={reduced ? false : { opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={reduced ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, y: 4, transition: { duration: 0.15 } }}
+                            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                            <Check size={15} aria-hidden="true" /> {toast}
+                        </motion.span>
+                    ) : null}
+                </AnimatePresence>
             </div>
         </Reveal>
     );

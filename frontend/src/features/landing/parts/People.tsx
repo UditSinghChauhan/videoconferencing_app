@@ -7,7 +7,7 @@ import styles from "./People.module.css";
 export function Face({ person, size = 24 }: { person: CastId; size?: number }) {
     return (
         <span className={styles.face} style={{ width: size, height: size }} aria-hidden="true">
-            <Avatar person={person} crop="face" still />
+            <Avatar person={person} crop="face" still withoutRoom />
         </span>
     );
 }

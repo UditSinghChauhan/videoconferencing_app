@@ -263,6 +263,37 @@
     line-height: 1.55;
 }
 
+/* Reserved heights while the deferred sections load (measured at each width, so nothing moves). */
+.howPlaceholder {
+    min-height: 440px;
+}
+
+.productPlaceholder {
+    min-height: 1670px;
+}
+
+@media (max-width: 1100px) {
+    .productPlaceholder {
+        min-height: 2300px;
+    }
+}
+
+@media (max-width: 960px) {
+    .howPlaceholder {
+        min-height: 1150px;
+    }
+}
+
+@media (max-width: 760px) {
+    .howPlaceholder {
+        min-height: 1210px;
+    }
+
+    .productPlaceholder {
+        min-height: 3280px;
+    }
+}
+
 /* ---------- Final CTA: the page's single dark band ---------- */
 
 .ctaWrap {

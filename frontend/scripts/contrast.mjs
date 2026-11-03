@@ -1,4 +1,4 @@
-// Prints WCAG 2.1 contrast ratios for the landing palette in DESIGN.md.
+// Prints WCAG 2.1 contrast ratios for the landing and app palettes in DESIGN.md; exits non-zero on a failure.
 // Run: node frontend/scripts/contrast.mjs
 const lum = (hex) => {
     const [r, g, b] = hex.match(/\w\w/g).map((h) => parseInt(h, 16) / 255)
@@ -12,23 +12,34 @@ const ratio = (a, b) => {
 
 const pairs = [
     // [label, foreground, background, minimum]
+    // Landing v3 (light only)
+    ["landing ink / canvas", "#17171a", "#fbfaf8", 4.5],
+    ["landing ink / surface", "#17171a", "#ffffff", 4.5],
+    ["landing muted / canvas", "#6b6a70", "#fbfaf8", 4.5],
+    ["landing muted / surface", "#6b6a70", "#ffffff", 4.5],
+    ["landing muted / surface-2 (chips)", "#6b6a70", "#f4f2ee", 4.5],
+    ["landing rust text / canvas", "#b4440a", "#fbfaf8", 4.5],
+    ["landing rust text / surface", "#b4440a", "#ffffff", 4.5],
+    ["landing white / rust (CTA)", "#ffffff", "#b4440a", 4.5],
+    ["landing white / rust hover", "#ffffff", "#9a3a08", 4.5],
+    ["landing success / surface", "#12805c", "#ffffff", 4.5],
+    ["landing amber 'Reconnecting' / surface", "#9a5b00", "#ffffff", 4.5],
+    ["landing CTA band text / ink", "#f3f2ef", "#17171a", 4.5],
+    ["landing CTA band muted / ink", "#b9b8bd", "#17171a", 4.5],
+    ["landing focus ring / canvas (non-text)", "#e8590c", "#fbfaf8", 3],
+    // App (workspace and room)
     ["light text / bg", "#17171a", "#f6f5f2", 4.5],
     ["light text / surface", "#17171a", "#ffffff", 4.5],
     ["light muted / bg", "#5e5d63", "#f6f5f2", 4.5],
     ["light muted / surface-2", "#5e5d63", "#efede8", 4.5],
     ["light rust text / bg", "#b4440a", "#f6f5f2", 4.5],
-    ["light on-rust / rust", "#ffffff", "#b4440a", 4.5],
-    ["light on-rust / rust-hover", "#ffffff", "#9a3a08", 4.5],
     ["light ink button text", "#ffffff", "#17171a", 4.5],
     ["light focus ring / bg (non-text)", "#e8590c", "#f6f5f2", 3],
     ["light border-strong / bg (non-text)", "#cfcbc2", "#f6f5f2", 1],
     ["light success / bg", "#12805c", "#f6f5f2", 4.5],
-    ["frame text / room-bg", "#f3f2ef", "#0c0c0e", 4.5],
-    ["frame muted / room-tile", "#a3a2a8", "#1b1b1f", 4.5],
-    ["engineering link #ff9a5c / room-bg", "#ff9a5c", "#0c0c0e", 4.5],
-    ["figure media label #ff9a5c / room-tile", "#ff9a5c", "#1b1b1f", 4.5],
-    ["frame text / room-raised", "#f3f2ef", "#26262b", 4.5],
-    ["pause control on ink", "#ffffff", "#17171a", 4.5],
+    ["room text / room-bg", "#f3f2ef", "#0c0c0e", 4.5],
+    ["room muted / room-tile", "#a3a2a8", "#1b1b1f", 4.5],
+    ["room text / room-raised", "#f3f2ef", "#26262b", 4.5],
     ["dark text / bg", "#f3f2ef", "#111113", 4.5],
     ["dark muted / bg", "#a3a2a8", "#111113", 4.5],
     ["dark muted / surface", "#a3a2a8", "#1a1a1d", 4.5],
