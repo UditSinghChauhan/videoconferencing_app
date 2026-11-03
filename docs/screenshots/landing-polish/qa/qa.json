@@ -1,0 +1,92 @@
+{
+  "heroFrames": {
+    "320": {
+      "frames": 223,
+      "cardVisibleFrames": 223,
+      "framesCoveringAFace": 0,
+      "framesCoveringEnd": 0
+    },
+    "390": {
+      "frames": 223,
+      "cardVisibleFrames": 223,
+      "framesCoveringAFace": 0,
+      "framesCoveringEnd": 0
+    },
+    "768": {
+      "frames": 223,
+      "cardVisibleFrames": 223,
+      "framesCoveringAFace": 0,
+      "framesCoveringEnd": 0
+    },
+    "900": {
+      "frames": 223,
+      "cardVisibleFrames": 88,
+      "framesCoveringAFace": 0,
+      "framesCoveringEnd": 0
+    },
+    "1024": {
+      "frames": 223,
+      "cardVisibleFrames": 88,
+      "framesCoveringAFace": 0,
+      "framesCoveringEnd": 0
+    },
+    "1280": {
+      "frames": 222,
+      "cardVisibleFrames": 87,
+      "framesCoveringAFace": 0,
+      "framesCoveringEnd": 0
+    },
+    "1440": {
+      "frames": 223,
+      "cardVisibleFrames": 88,
+      "framesCoveringAFace": 0,
+      "framesCoveringEnd": 0
+    }
+  },
+  "overflow": {
+    "320": "none",
+    "390": "none",
+    "768": "none",
+    "1024": "none",
+    "1440": "none"
+  },
+  "console": [],
+  "focus": {
+    "390": {
+      "controls": 26,
+      "withoutVisibleRing": []
+    },
+    "1440": {
+      "controls": 29,
+      "withoutVisibleRing": []
+    }
+  },
+  "reducedMotion": {
+    "390": {
+      "hero": {
+        "phase": "recap",
+        "cardOpacity": "1",
+        "summaryClip": "inset(0px)"
+      },
+      "reconnect": {
+        "back": "1",
+        "lost": "0",
+        "animation": "none"
+      },
+      "ctaFoldTextOpacity": "1"
+    },
+    "1440": {
+      "hero": {
+        "phase": "recap",
+        "cardOpacity": "1",
+        "summaryClip": "inset(0px)"
+      },
+      "reconnect": {
+        "back": "1",
+        "lost": "0",
+        "animation": "none"
+      },
+      "ctaFoldTextOpacity": "1"
+    }
+  }
+}
