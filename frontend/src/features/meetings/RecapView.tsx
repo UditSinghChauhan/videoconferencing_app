@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { Check, ClipboardCopy } from "lucide-react";
+import { useId, useState, type ReactNode } from "react";
+import { Check, ClipboardCopy, Users } from "lucide-react";
 import { Avatar } from "../../components/Avatar";
 import { Button } from "../../components/Button";
 import { formatDateTime, formatDuration, formatTime, pluralize } from "../../lib/format";
@@ -17,41 +17,72 @@ interface RecapViewProps {
     transcriptOpen?: boolean;
     /** Build the recap in line by line, right after the host ends the call. */
     reveal?: boolean;
+    /** Level of the title; section headings sit one below. The landing page embeds the recap under its own h2. */
+    headingLevel?: 1 | 2 | 3;
+    /** Leave out the note on how recaps are written. */
+    hideFootnote?: boolean;
+    /** Called after Copy as Markdown, with whether it worked. */
+    onCopy?: (copied: boolean) => void;
+    /** Draws a person's avatar; defaults to initials on their hue. */
+    renderAvatar?: (name: string) => ReactNode;
 }
 
 type CopyState = "idle" | "copied" | "failed";
 
+/** An owner or speaker: avatar plus first name. "Everyone" gets a group mark instead of initials. */
+export function PersonChip({ name, avatar }: { name: string; avatar?: ReactNode }) {
+    const everyone = name === "Everyone";
+    return (
+        <span className={styles.person}>
+            {everyone ? (
+                <span className={styles.everyone} aria-hidden="true"><Users size={12} /></span>
+            ) : (
+                avatar ?? <Avatar name={name} size={20} />
+            )}
+            <span>{everyone ? "Everyone" : name}</span>
+        </span>
+    );
+}
+
 /** The recap of an ended meeting. Shared by the recap page and the public demo. */
-export function RecapView({ recap, notice, footnote, transcriptOpen = false, reveal = false }: RecapViewProps) {
+export function RecapView({ recap, notice, footnote, transcriptOpen = false, reveal = false, headingLevel = 1, hideFootnote = false, onCopy, renderAvatar }: RecapViewProps) {
     const [copy, setCopy] = useState<CopyState>("idle");
     const { summary } = recap;
+    const Title = `h${headingLevel}` as "h1" | "h2" | "h3";
+    const Heading = `h${headingLevel + 1}` as "h2" | "h3" | "h4";
+    // Unique ids, so two recaps on one page never share a heading id.
+    const uid = useId();
 
     const copyRecap = async () => {
         try {
             await navigator.clipboard.writeText(recapToMarkdown(recap));
             setCopy("copied");
+            onCopy?.(true);
         } catch (error) {
             console.warn("Copying the recap failed", error);
             setCopy("failed");
+            onCopy?.(false);
         }
         window.setTimeout(() => setCopy("idle"), 2000);
     };
 
     const duration = formatDuration(recap.durationMs);
     const transcript = recap.chat ?? [];
-    const hasContent = summary.keyPoints.length > 0 || summary.highlights.length > 0;
+    const actionItems = summary.actionItems ?? [];
+    const hasContent = summary.keyPoints.length > 0 || actionItems.length > 0;
+    const host = recap.hostName ?? null;
 
     return (
         <article className={styles.recap} data-testid="recap" data-reveal={reveal || undefined}>
             <header className={styles.header}>
                 {notice ? <p className={styles.notice} role="status">{notice}</p> : null}
                 <p className={styles.code}>{recap.meetingId}</p>
-                <h1 className={styles.title}>Meeting recap</h1>
+                <Title className={styles.title}>Meeting recap</Title>
                 <dl className={styles.facts}>
                     {recap.createdAt ? (<div><dt>Date</dt><dd>{formatDateTime(recap.createdAt)}</dd></div>) : null}
                     {duration ? (<div><dt>Duration</dt><dd>{duration}</dd></div>) : null}
                     {recap.participantCount ? (<div><dt>People</dt><dd>{pluralize(recap.participantCount, "person", "people")}</dd></div>) : null}
-                    {recap.hostUsername ? (<div><dt>Host</dt><dd>@{recap.hostUsername}</dd></div>) : null}
+                    {host ? (<div><dt>Host</dt><dd>{host}</dd></div>) : null}
                 </dl>
                 <div className={styles.headerActions}>
                     <Button
@@ -70,48 +101,48 @@ export function RecapView({ recap, notice, footnote, transcriptOpen = false, rev
             {!hasContent ? (
                 <div className={styles.emptyRecap}>
                     <strong>Not much to recap</strong>
-                    <p>Bridge builds recaps from chat messages and meeting activity. This call had no chat, so there are no key points.</p>
+                    <p>Bridge builds recaps from what people write in the chat. This call had no messages to work from, so there are no action items or key points.</p>
                 </div>
             ) : null}
 
-            {summary.keyPoints.length ? (
-                <section className={styles.section} aria-labelledby="key-points">
-                    <h2 id="key-points">Key points</h2>
-                    <ol className={styles.points}>
-                        {summary.keyPoints.map((point, index) => <li key={`${index}-${point}`}>{point}</li>)}
-                    </ol>
+            {actionItems.length ? (
+                <section className={styles.section} aria-labelledby={`${uid}-action-items`}>
+                    <Heading id={`${uid}-action-items`}>Action items</Heading>
+                    <ul className={styles.actions}>
+                        {actionItems.map((item, index) => (
+                            <li key={`${index}-${item.task}`}>
+                                <span className={styles.box} aria-hidden="true" />
+                                <span className={styles.task}>{item.task}</span>
+                                <PersonChip name={item.owner} avatar={renderAvatar?.(item.owner)} />
+                                {item.due ? <span className={styles.due}>{item.due}</span> : null}
+                            </li>
+                        ))}
+                    </ul>
                 </section>
             ) : null}
 
-            <div className={styles.columns}>
-                {summary.highlights.length ? (
-                    <section className={styles.section} aria-labelledby="highlights">
-                        <h2 id="highlights">What happened</h2>
-                        <ul className={styles.timeline}>
-                            {summary.highlights.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}
-                        </ul>
-                    </section>
-                ) : null}
-
-                <section className={styles.section} aria-labelledby="people">
-                    <h2 id="people">Who was there</h2>
-                    {summary.participantsInvolved.length ? (
-                        <ul className={styles.people}>
-                            {summary.participantsInvolved.map((name) => (
-                                <li key={name}><Avatar name={name} size={28} /> {name}</li>
-                            ))}
-                        </ul>
-                    ) : <p className={styles.muted}>No participant activity was recorded.</p>}
-                    {summary.keywords.length ? (
-                        <>
-                            <h3 className={styles.subheading}>Topics</h3>
-                            <ul className={styles.chips}>
-                                {summary.keywords.map((keyword) => <li key={keyword}>{keyword}</li>)}
-                            </ul>
-                        </>
-                    ) : null}
+            {summary.keyPoints.length ? (
+                <section className={styles.section} aria-labelledby={`${uid}-key-points`}>
+                    <Heading id={`${uid}-key-points`}>Key points</Heading>
+                    <ul className={styles.points}>
+                        {summary.keyPoints.map((point, index) => (
+                            <li key={`${index}-${point.text}`}>
+                                <p>{point.text}</p>
+                                {point.speaker ? <PersonChip name={point.speaker} avatar={renderAvatar?.(point.speaker)} /> : null}
+                            </li>
+                        ))}
+                    </ul>
                 </section>
-            </div>
+            ) : null}
+
+            {summary.keywords.length ? (
+                <section className={styles.section} aria-labelledby={`${uid}-topics`}>
+                    <Heading id={`${uid}-topics`}>Topics</Heading>
+                    <ul className={styles.chips}>
+                        {summary.keywords.map((keyword) => <li key={keyword}>{keyword}</li>)}
+                    </ul>
+                </section>
+            ) : null}
 
             {transcript.length ? (
                 <details className={styles.transcript} open={transcriptOpen}>
@@ -128,9 +159,9 @@ export function RecapView({ recap, notice, footnote, transcriptOpen = false, rev
                 </details>
             ) : null}
 
-            <p className={styles.footnote}>
-                {footnote ?? "Recaps are generated on the server from chat and activity using keyword frequency and sentence scoring. No audio is recorded and no external AI service is used."}
-            </p>
+            {hideFootnote ? null : <p className={styles.footnote}>
+                {footnote ?? "Recaps are written on the server from the chat by fixed rules: commitments become action items, recurring phrases become topics. No audio is recorded and no external AI service is used."}
+            </p>}
         </article>
     );
 }

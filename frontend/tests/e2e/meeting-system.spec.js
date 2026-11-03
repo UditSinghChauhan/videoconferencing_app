@@ -109,6 +109,7 @@ test.describe("Bridge meeting lifecycle", () => {
         // Only the host can remove people.
         await host.page.getByRole("button", { name: /People/ }).click();
         await host.page.getByRole("button", { name: "Remove Gabe Guest from the call" }).click();
+        await host.page.getByTestId("confirm-remove-participant").click();
         await expect(guest.page.getByRole("heading", { name: "You were removed from this meeting" })).toBeVisible();
         await expect(tiles(host.page)).toHaveCount(1);
 
@@ -117,8 +118,11 @@ test.describe("Bridge meeting lifecycle", () => {
         await host.page.getByTestId("confirm-end-meeting").click();
         await expect(host.page).toHaveURL(new RegExp(`/meetings/${meetingId}$`));
         await expect(host.page.getByRole("heading", { name: "Meeting recap" })).toBeVisible();
-        await expect(host.page.getByRole("heading", { name: "Key points" })).toBeVisible();
-        await expect(host.page.getByText("Ship the release Thursday", { exact: false }).first()).toBeVisible();
+        // Commitments in the chat become action items with an owner, and the host shows by display name.
+        await expect(host.page.getByRole("heading", { name: "Action items" })).toBeVisible();
+        await expect(host.page.getByTestId("recap")).toContainText("Follow up with QA");
+        await expect(host.page.getByTestId("recap")).toContainText("Hannah Host");
+        await expect(host.page.getByTestId("recap")).toContainText("Agreed to ship the release on Thursday");
         await expect(host.page.getByText(/Chat transcript · 2 messages/)).toBeVisible();
 
         // Both see it in history; the guest can open the recap too.
@@ -212,6 +216,7 @@ test.describe("Bridge meeting lifecycle", () => {
         await page.getByRole("button", { name: /People/ }).click();
         for (const name of ["Maya Patel", "Jordan Lee", "Aarav Mehta"]) {
             await page.getByRole("button", { name: `Remove ${name} from the call` }).click();
+            await page.getByTestId("confirm-remove-participant").click();
         }
         await expect(tiles(page)).toHaveCount(1);
         await page.getByRole("button", { name: "Close people" }).click();

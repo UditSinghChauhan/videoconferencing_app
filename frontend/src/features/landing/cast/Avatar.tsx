@@ -5,12 +5,14 @@ import styles from "./Cast.module.css";
 
 interface AvatarProps {
     person: CastId;
-    /** Mouth and hand move only while this person is the active speaker. */
+    /** The mouth moves only while this person is the active speaker. */
     speaking?: boolean;
     /** A neutral, motionless pose: reduced motion, posters and print. */
     still?: boolean;
     /** Leave out the room (for small chips); the person sits on the room's wall colour. */
     withoutRoom?: boolean;
+    /** "face" crops to head and shoulders for avatar chips; the default is the full 16:9 webcam frame. */
+    crop?: "frame" | "face";
     className?: string;
     /** Accessible name; without it the drawing is decorative (the tile around it names the person). */
     label?: string;
@@ -22,7 +24,10 @@ interface AvatarProps {
  * (breathing, a jittered blink, small head tilts) runs in CSS; the blink
  * timer is the only script and touches a data attribute, never React state.
  */
-export const Avatar = memo(function Avatar({ person, speaking = false, still = false, withoutRoom = false, className, label }: AvatarProps) {
+/** Head and shoulders, the same for everyone because every seat is centred at the same distance. */
+const FACE_VIEWBOX = "228 70 184 184";
+
+export const Avatar = memo(function Avatar({ person, speaking = false, still = false, withoutRoom = false, crop = "frame", className, label }: AvatarProps) {
     const member = CAST[person];
     const id = useId().replace(/:/g, "");
     const root = useRef<SVGSVGElement>(null);
@@ -32,7 +37,7 @@ export const Avatar = memo(function Avatar({ person, speaking = false, still = f
     return (
         <svg
             ref={root}
-            viewBox="0 0 640 360"
+            viewBox={crop === "face" ? FACE_VIEWBOX : "0 0 640 360"}
             preserveAspectRatio="xMidYMid slice"
             className={[styles.feed, className].filter(Boolean).join(" ")}
             data-speaking={speaking && !still ? "" : undefined}
@@ -48,7 +53,6 @@ export const Avatar = memo(function Avatar({ person, speaking = false, still = f
                 <g className={styles.breathe}>
                     <Person member={member} id={id} />
                 </g>
-                <Hand member={member} />
             </g>
         </svg>
     );
@@ -292,27 +296,6 @@ function Glasses() {
             <circle cx="18" cy="-3" r="14" />
             <path d="M-4 -4Q0 -7 4 -4M-32 -6L-46 -9M32 -6L46 -9" strokeLinecap="round" />
             <circle cx="-18" cy="-3" r="14" fill="#ffffff" opacity="0.06" stroke="none" />
-        </g>
-    );
-}
-
-/** A hand that rises into frame and gestures while this person speaks. */
-function Hand({ member }: { member: CastMember }) {
-    const { skin, clothes: c } = member;
-    const side = member.id === "jordan" || member.id === "sofia" ? -1 : 1;
-    return (
-        <g transform={`translate(${side * 128} 132) scale(${side} 1)`}>
-            <g className={styles.hand}>
-                <path d="M-27 96L-21 6L22 6L29 96Z" fill={c.outer} />
-                <rect x="-22" y="0" width="44" height="11" rx="3" fill={c.outerShade} />
-                <path d="M-18 3C-20 -15 -20 -29 -16 -39L16 -39C20 -29 20 -15 18 3Z" fill={skin.base} />
-                {[[-16, 25], [-8, 31], [0, 29], [8, 23]].map(([x, h]) => (
-                    <rect key={x} x={x} y={-37 - (h ?? 0)} width="8.4" height={(h ?? 0) + 6} rx="4.2" fill={skin.base} />
-                ))}
-                <path d="M-16 -12C-29 -19 -35 -30 -31 -36C-27 -41 -20 -35 -16 -28Z" fill={skin.base} />
-                <path d="M-8 -38V-30M0 -38V-30M8 -38V-31" stroke={skin.shade} strokeWidth="1.6" strokeLinecap="round" />
-                <path d="M10 -36C14 -24 15 -10 13 2" fill="none" stroke={skin.shade} strokeWidth="5" opacity="0.4" />
-            </g>
         </g>
     );
 }

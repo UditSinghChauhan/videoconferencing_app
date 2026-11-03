@@ -14,7 +14,7 @@ export interface CastMember {
     clothes: { outer: string; outerShade: string; inner: string };
     brow: string;
     room: RoomKind;
-    /** Where the person sits in the 640 × 360 frame, and how close to the camera. */
+    /** Where the person sits in the 640 × 360 frame, and how close to the camera. Centred for everyone, so any crop keeps the face. */
     seat: { x: number; y: number; scale: number };
     /** Head proportions, so the four faces are not one face recoloured. */
     head: { x: number; y: number };
@@ -43,8 +43,8 @@ export const CAST: Record<CastId, CastMember> = {
         hair: { base: "#231b1a", shade: "#140f0f" },
         brow: "#231b1a",
         room: "shelf",
-        seat: { x: 334, y: 172, scale: 1.12 },
-        head: { x: 0.97, y: 1.02 },
+        seat: { x: 320, y: 172, scale: 1.12 },
+        head: { x: 0.98, y: 1.01 },
         phase: 0
     },
     aarav: {
@@ -55,8 +55,8 @@ export const CAST: Record<CastId, CastMember> = {
         hair: { base: "#1b1615", shade: "#0f0c0b" },
         brow: "#1b1615",
         room: "lamp",
-        seat: { x: 306, y: 174, scale: 1.14 },
-        head: { x: 1.06, y: 1 },
+        seat: { x: 320, y: 172, scale: 1.12 },
+        head: { x: 1.03, y: 1 },
         phase: 1.3
     },
     sofia: {
@@ -67,8 +67,8 @@ export const CAST: Record<CastId, CastMember> = {
         hair: { base: "#cfc8bf", shade: "#a9a199" },
         brow: "#8f877f",
         room: "window",
-        seat: { x: 344, y: 170, scale: 1.1 },
-        head: { x: 1.01, y: 0.98 },
+        seat: { x: 320, y: 172, scale: 1.12 },
+        head: { x: 1, y: 0.99 },
         phase: 2.1
     },
     jordan: {
@@ -79,8 +79,8 @@ export const CAST: Record<CastId, CastMember> = {
         hair: { base: "#191617", shade: "#0d0b0c" },
         brow: "#191617",
         room: "print",
-        seat: { x: 318, y: 176, scale: 1.13 },
-        head: { x: 0.95, y: 1.03 },
+        seat: { x: 320, y: 172, scale: 1.12 },
+        head: { x: 0.97, y: 1.02 },
         phase: 0.7
     }
 };

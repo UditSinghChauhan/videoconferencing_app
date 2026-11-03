@@ -22,9 +22,24 @@ export interface MeetingParticipant {
     joinedAt: string;
 }
 
+/** A statement from the call; the speaker is shown as an avatar chip, never as a "Name:" prefix. */
+export interface KeyPoint {
+    speaker: string | null;
+    text: string;
+}
+
+export interface ActionItem {
+    owner: string;
+    task: string;
+    due?: string;
+}
+
 export interface MeetingSummaryContent {
+    version?: number;
     generatedAt: string | null;
-    keyPoints: string[];
+    keyPoints: KeyPoint[];
+    /** Absent on recaps from API versions before action items. */
+    actionItems?: ActionItem[];
     highlights: string[];
     keywords: string[];
     participantsInvolved: string[];
@@ -36,6 +51,8 @@ export interface Meeting {
     meetingId: string;
     hostId: string;
     hostUsername: string;
+    /** The host's display name; null when none was stored. */
+    hostName?: string | null;
     status: MeetingStatus;
     settings: MeetingSettings;
     createdAt: string;
@@ -59,6 +76,8 @@ export interface MeetingRecap {
     meetingId: string;
     status: MeetingStatus;
     hostUsername?: string;
+    /** The host's display name. The handle above is internal and never shown. */
+    hostName?: string | null;
     createdAt?: string;
     endedAt?: string | null;
     durationMs?: number | null;

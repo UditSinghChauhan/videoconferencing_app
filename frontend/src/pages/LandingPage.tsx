@@ -1,43 +1,55 @@
 import { lazy, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { LandingNav } from "../features/landing/nav/LandingNav";
+import { ArrowRight } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { ButtonLink } from "../components/Button";
-import { GithubIcon } from "../components/GithubIcon";
 import { Logo } from "../components/Logo";
-import { DECISIONS, E2E_SPEC_PATH, ENGINEERING } from "../features/landing/content";
+import { BENEFITS } from "../features/landing/content";
 import { Deferred } from "../features/landing/Deferred";
-import { Facts } from "../features/landing/facts/Facts";
-import { HeroStage } from "../features/landing/hero/HeroStage";
+import { Faq } from "../features/landing/faq/Faq";
+import { HeroDemo } from "../features/landing/hero/HeroDemo";
+import { LandingNav } from "../features/landing/nav/LandingNav";
+import { Reveal } from "../features/landing/Reveal";
 import { wakeServer } from "../lib/api";
-import { AUTHOR_URL, LINKEDIN_URL, PORTFOLIO_URL, REPOSITORY_URL } from "../lib/env";
+import { AUTHOR_URL, LINKEDIN_URL, REPOSITORY_URL } from "../lib/env";
 import styles from "./LandingPage.module.css";
 
-// Below the fold: each section's code loads as it approaches the viewport,
-// keeping the animation library and the demos out of the first paint.
-const SignatureChapter = lazy(() => import("../features/landing/chapter/SignatureChapter"));
-const Walkthrough = lazy(() => import("../features/landing/Walkthrough"));
-const Bento = lazy(() => import("../features/landing/bento/Bento"));
-const ArchitectureFigure = lazy(() => import("../features/landing/ArchitectureFigure"));
-const VerifiedTerminal = lazy(() => import("../features/landing/verified/VerifiedTerminal"));
-const ClosingLoop = lazy(() => import("../features/landing/closing/ClosingLoop"));
-
+// Below the fold: the illustrated sections load as they approach the viewport.
+const HowItWorks = lazy(() => import("../features/landing/how/HowItWorks"));
+const Product = lazy(() => import("../features/landing/product/Product"));
 
 const SECTION_LINKS = [
-    { href: "#signature", label: "How it works" },
-    { href: "#walkthrough", label: "Walkthrough" },
-    { href: "#engineering", label: "Engineering" },
-    { href: "#decisions", label: "Decisions" },
-    { href: "#verified", label: "Verified" },
-    { href: "/design-notes", label: "Design notes" }
+    { href: "#how-it-works", label: "How it works" },
+    { href: "#features", label: "Features" },
+    { href: "#faq", label: "FAQ" }
 ];
 
-const sourceUrl = (path: string) => `${REPOSITORY_URL}/blob/master/${path}`;
+/** A hairline across the page with a small "+" where it meets each rail. */
+function Divider() {
+    return (
+        <div className={styles.divider} aria-hidden="true">
+            <span className={styles.plus} />
+            <span className={styles.plus} />
+        </div>
+    );
+}
+
+/** The bydefault-style section opening: a small muted label, then a short centred heading. */
+function SectionHead({ id, label, title, children }: { id: string; label: string; title: string; children?: React.ReactNode }) {
+    return (
+        <Reveal className={styles.head}>
+            <p className={styles.label}>{label}</p>
+            <h2 id={id} className={styles.title}>{title}</h2>
+            {children ? <p className={styles.lede}>{children}</p> : null}
+        </Reveal>
+    );
+}
 
 export default function LandingPage() {
     const { status } = useAuth();
     const signedIn = status === "authenticated";
     const startHref = signedIn ? "/home" : "/auth?mode=signup";
+    const startLabel = signedIn ? "Go to your meetings" : "Start a meeting";
 
     // The API sleeps on free hosting. Start it booting once the page has
     // painted, so "Start a meeting" is usually instant by the time it is clicked.
@@ -50,149 +62,90 @@ export default function LandingPage() {
         <div className={styles.page}>
             <LandingNav signedIn={signedIn} links={SECTION_LINKS} />
 
-            <main id="main">
-                <section className={styles.hero} aria-labelledby="hero-title">
-                    <h1 id="hero-title" className={styles.headline}>
-                        Meetings that end with a <em>recap</em>.
-                    </h1>
-                    <p className={styles.lede}>
-                        Video calls for small teams. When the host ends one, everyone gets the key points and the full transcript.
-                    </p>
-                    <div className={styles.heroActions}>
-                        <ButtonLink to="/demo" size="lg" variant="accent">Try the live demo</ButtonLink>
-                        <ButtonLink to={startHref} size="lg" variant="secondary">
-                            {signedIn ? "Go to your meetings" : "Start a meeting"}
-                        </ButtonLink>
-                    </div>
-                    <p className={styles.heroNote}>The demo needs no account and runs in your browser.</p>
-
-<figure className={styles.heroFigure}>
-                        <HeroStage />
-                        <figcaption>
-                            Recorded from the running app with an illustrated demo cast. The recap is written on the server from the chat and activity, with no external AI.
-                        </figcaption>
-                    </figure>
-
-                    <Facts />
-                </section>
-
-                <Deferred id="signature" minHeight="calc(320vh + 240px)"><SignatureChapter /></Deferred>
-
-                <section id="walkthrough" className={styles.section} aria-labelledby="walkthrough-title">
-                    <div className={styles.intro}>
-                        <h2 id="walkthrough-title" className={styles.sectionTitle}>From link to recap.</h2>
-                    </div>
-                    <Deferred minHeight="1600px"><Walkthrough /></Deferred>
-                </section>
-
-<section className={styles.section} aria-labelledby="outcomes-title">
-                    <div className={styles.intro}>
-                        <h2 id="outcomes-title" className={styles.sectionTitle}>What you can count on.</h2>
-                    </div>
-                    <Deferred minHeight="1000px"><Bento /></Deferred>
-                </section>
-
-                <section id="engineering" className={styles.engineering} aria-labelledby="engineering-title" data-nav-theme="dark">
-                    <div className={styles.engineeringInner}>
-                        <div className={styles.intro}>
-                            <h2 id="engineering-title" className={styles.sectionTitle}>Built like a product, documented like a system.</h2>
-                            <p className={styles.engineeringLede}>
-                                Media flows peer to peer. The server only authenticates, relays signalling inside a room and keeps the record, which keeps it cheap to run. The trade-off is upload bandwidth, so Bridge is built for rooms of up to about six people; larger rooms would need an SFU.
-                            </p>
-                        </div>
-
-                        <Deferred minHeight="600px"><ArchitectureFigure /></Deferred>
-
-                        <ul className={styles.notes}>
-                            {ENGINEERING.map((note) => (
-                                <li key={note.label}>
-                                    <h3>{note.label}</h3>
-                                    <p>{note.detail}</p>
-                                    <a href={sourceUrl(note.path)} target="_blank" rel="noreferrer">
-                                        <code>{note.path.split("/").pop()}</code>
-                                        <span className="visually-hidden"> on GitHub, opens in a new tab</span>
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-
-                        <div className={styles.engineeringActions}>
-                            <a className={styles.outlineDark} href={sourceUrl("ARCHITECTURE.md")} target="_blank" rel="noreferrer">
-                                Read the architecture notes
-                            </a>
-                            <a className={styles.linkDark} href={REPOSITORY_URL} target="_blank" rel="noreferrer">
-                                <GithubIcon /> Source on GitHub
-                            </a>
-                        </div>
-                    </div>
-                </section>
-
-                <section id="decisions" className={styles.section} aria-labelledby="decisions-title">
-                    <div className={styles.intro}>
-                        <h2 id="decisions-title" className={styles.sectionTitle}>Why it is built this way.</h2>
-                        <p className={styles.sectionLede}>
-                            Three decisions that shape Bridge, each with the reason for it and what it costs.
+            <div className={styles.frame}>
+                <main id="main">
+                    <section className={styles.heroCard} aria-labelledby="hero-title">
+                        <h1 id="hero-title" className={styles.headline}>
+                            Meetings that end with a <em>recap</em>.
+                        </h1>
+                        <p className={styles.sub}>
+                            Video calls for small teams. When the host ends the call, everyone gets the summary, the action items and the transcript.
                         </p>
-                    </div>
-                    <ol className={styles.decisions}>
-                        {DECISIONS.map((item) => (
-                            <li key={item.decision} className={styles.decision}>
-                                <h3>{item.decision}</h3>
-                                <div className={styles.decisionBlock}>
-                                    <p className={styles.decisionLabel}>Why</p>
-                                    <p>{item.why}</p>
-                                </div>
-                                <div className={styles.decisionBlock}>
-                                    <p className={styles.decisionLabel}>Cost</p>
-                                    <p>{item.cost}</p>
-                                </div>
-                                {item.wouldChange ? (
-                                    <p className={styles.wouldChange}><strong>Would change when</strong> {item.wouldChange}</p>
-                                ) : null}
-                            </li>
+                        <div className={styles.actions}>
+                            <ButtonLink to="/demo" size="lg" variant="accent">Try the live demo</ButtonLink>
+                            <Link to={startHref} className={styles.textLink}>
+                                {startLabel} <ArrowRight size={16} aria-hidden="true" />
+                            </Link>
+                        </div>
+                        <p className={styles.note}>No account needed for the demo</p>
+                        <HeroDemo />
+                    </section>
+
+                    <Divider />
+
+                    <section className={styles.benefits} aria-labelledby="benefits-title">
+                        <h2 id="benefits-title" className="visually-hidden">Why Bridge</h2>
+                        {BENEFITS.map((benefit, index) => (
+                            <Reveal key={benefit.title} index={index} className={styles.benefit}>
+                                <h3>{benefit.title}</h3>
+                                <p>{benefit.body}</p>
+                            </Reveal>
                         ))}
-                    </ol>
-                </section>
+                    </section>
 
-                <section id="verified" className={styles.section} aria-labelledby="verified-title">
-                    <div className={styles.intro}>
-                        <h2 id="verified-title" className={styles.sectionTitle}>Tested end to end.</h2>
-                        <p className={styles.sectionLede}>
-                            Each flow runs in real browsers against the real API and database, in Playwright tests that ship with the code.{" "}
-                            <a className={styles.inlineLink} href={sourceUrl(E2E_SPEC_PATH)} target="_blank" rel="noreferrer">
-                                Read the test suite<span className="visually-hidden"> on GitHub, opens in a new tab</span>
-                            </a>.
-                        </p>
+                    <Divider />
+
+                    <section id="how-it-works" className={styles.section} aria-labelledby="how-title">
+                        <SectionHead id="how-title" label="How it works" title="From link to recap in three steps" />
+                        <Deferred className={styles.howPlaceholder}><HowItWorks /></Deferred>
+                    </section>
+
+                    <Divider />
+
+                    <section id="features" className={styles.section} aria-labelledby="features-title">
+                        <SectionHead id="features-title" label="Features" title="Everything a small team’s call needs" />
+                        <Deferred className={styles.productPlaceholder}><Product /></Deferred>
+                    </section>
+
+                    <Divider />
+
+                    <section id="faq" className={styles.section} aria-labelledby="faq-title">
+                        <SectionHead id="faq-title" label="FAQ" title="Questions, answered" />
+                        <Faq />
+                    </section>
+
+                    <Divider />
+
+                    <section className={styles.ctaWrap} aria-labelledby="cta-title">
+                        <Reveal className={styles.cta}>
+                            <h2 id="cta-title">Your next meeting can end with notes.</h2>
+                            <p>Try a call with the demo cast, end it, and read the recap. It takes a minute.</p>
+                            <div className={styles.actions}>
+                                <ButtonLink to="/demo" size="lg" variant="accent">Try the live demo</ButtonLink>
+                                <Link to={startHref} className={styles.ctaLink}>
+                                    {startLabel} <ArrowRight size={16} aria-hidden="true" />
+                                </Link>
+                            </div>
+                        </Reveal>
+                    </section>
+                </main>
+
+                <footer className={styles.footer}>
+                    <div className={styles.footerBrand}>
+                        <Logo />
+                        <p>Video calls for small teams that end with a written recap.</p>
                     </div>
-                    <Deferred minHeight="720px"><VerifiedTerminal /></Deferred>
-                </section>
-
-<section className={styles.closing} aria-labelledby="closing-title">
-                    <h2 id="closing-title" className={styles.closingTitle}>See a call turn into its recap.</h2>
-                    <div className={styles.heroActions}>
-                        <ButtonLink to="/demo" size="lg" variant="accent">Try the live demo</ButtonLink>
-                        <ButtonLink to={startHref} size="lg" variant="secondary">
-                            {signedIn ? "Go to your meetings" : "Start a meeting"}
-                        </ButtonLink>
-                    </div>
-                    <Deferred minHeight="460px"><ClosingLoop /></Deferred>
-                </section>
-            </main>
-
-<footer className={styles.footer}>
-                <div className={styles.footerInner}>
-                    <Logo />
-                    <p>
-                        Designed and built by <a href={AUTHOR_URL} target="_blank" rel="noreferrer">Udit Singh Chauhan</a>
-                    </p>
-                    <nav className={styles.footerLinks} aria-label="More">
-                        <Link to="/design-notes">Design notes</Link>
-                        {PORTFOLIO_URL ? <a href={PORTFOLIO_URL} target="_blank" rel="noreferrer">Portfolio</a> : null}
+                    <nav className={styles.footerLinks} aria-label="Footer">
+                        {signedIn ? <Link to="/home">Your meetings</Link> : <Link to="/auth">Sign in</Link>}
+                        <Link to="/demo">Live demo</Link>
                         <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">GitHub</a>
                         <a href={LINKEDIN_URL} target="_blank" rel="noreferrer">LinkedIn</a>
                     </nav>
-                </div>
-            </footer>
+                    <p className={styles.credit}>
+                        Designed and built by <a href={AUTHOR_URL} target="_blank" rel="noreferrer">Udit Singh Chauhan</a>
+                    </p>
+                </footer>
+            </div>
         </div>
     );
 }

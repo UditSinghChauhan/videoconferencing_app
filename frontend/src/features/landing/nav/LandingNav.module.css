@@ -1,138 +1,93 @@
-/* Section-aware landing nav: DESIGN.md, landing Rules 7. */
-
 .nav {
-    --nav-bg: var(--bg);
-    --nav-text: var(--text);
-    --nav-muted: var(--text-muted);
-    --nav-line: transparent;
-    --nav-mark-bg: var(--primary);
-    --nav-mark-deck: var(--bg);
-
-    position: sticky;
-    top: 0;
-    z-index: 30;
-    border-bottom: 1px solid var(--nav-line);
-    background: var(--nav-bg);
-    color: var(--nav-text);
-    transition:
-        background-color 150ms var(--ease),
-        border-color 150ms var(--ease),
-        color 150ms var(--ease);
-}
-
-.nav[data-scrolled] {
-    --nav-bg: color-mix(in srgb, var(--bg) 86%, transparent);
-    --nav-line: var(--border);
-}
-
-.nav[data-theme="dark"] {
-    --nav-bg: color-mix(in srgb, var(--room-bg) 88%, transparent);
-    --nav-text: var(--room-text);
-    --nav-muted: var(--room-muted);
-    --nav-line: var(--room-border);
-    --nav-mark-bg: var(--room-text);
-    --nav-mark-deck: var(--room-bg);
-}
-
-/* The logo's mark follows the nav theme. */
-.nav [aria-label="Bridge home"] rect {
-    fill: var(--nav-mark-bg);
-    transition: fill 150ms var(--ease);
-}
-
-.nav [aria-label="Bridge home"] path:last-child {
-    stroke: var(--nav-mark-deck);
-    transition: stroke 150ms var(--ease);
-}
-
-.nav[data-theme="dark"] :focus-visible {
-    outline-color: #ff9a5c;
-}
-
-.inner {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 20;
     display: flex;
+    justify-content: center;
+    padding: 0 12px;
+    pointer-events: none;
+}
+
+.bar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    gap: var(--space-8);
+    gap: 16px;
+    width: 100%;
     max-width: 1200px;
-    height: 64px;
-    margin: 0 auto;
-    padding: 0 var(--space-10);
+    height: 56px;
+    padding: 0 12px 0 20px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 0%);
+    pointer-events: auto;
+    transform: translateY(8px);
+    transition:
+        transform 250ms var(--ease-out),
+        background-color 250ms var(--ease-out),
+        border-color 250ms var(--ease-out),
+        box-shadow 250ms var(--ease-out);
+}
+
+.nav[data-scrolled] .bar {
+    border-color: var(--hairline);
+    background: rgb(255 255 255 / 85%);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 8px 24px -12px rgb(0 0 0 / 14%);
+    transform: translateY(12px);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    backdrop-filter: blur(16px) saturate(1.4);
 }
 
 .links {
     display: flex;
-    gap: var(--space-6);
+    gap: 4px;
 }
 
 .links a,
-.actions a {
+.signIn {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2);
-    min-height: 44px;
-    border-radius: var(--radius-sm);
-    color: var(--nav-muted);
-    font-size: var(--text-base);
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
     font-weight: 500;
     text-decoration: none;
-    transition: color 150ms var(--ease);
+    transition: color 150ms ease, background-color 150ms ease;
 }
 
 .links a:hover,
-.actions a:hover {
-    color: var(--nav-text);
+.signIn:hover {
+    background: rgb(23 23 26 / 5%);
+    color: var(--text);
 }
 
 .actions {
     display: flex;
     align-items: center;
-    gap: var(--space-6);
-    margin-left: auto;
+    justify-content: flex-end;
+    gap: 8px;
 }
 
-/* Mid widths: keep the chapter and the case study, drop the section anchors. */
-@media (max-width: 1099px) {
-    .links a:not(:first-child):not(:last-child) {
-        display: none;
+@media (max-width: 760px) {
+    .bar {
+        grid-template-columns: 1fr auto;
+        height: 52px;
+        padding: 0 8px 0 14px;
     }
-}
 
-@media (max-width: 1023px) {
-    .inner {
-        padding: 0 var(--space-8);
-    }
-}
-
-@media (max-width: 767px) {
     .links {
         display: none;
     }
-}
 
-@media (max-width: 639px) {
-    .inner {
-        padding: 0 var(--space-5);
-    }
-
-    .actions {
-        gap: var(--space-4);
-    }
-
-    .github span {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
+    .signIn {
+        padding: 0 8px;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .nav,
-    .nav [aria-label="Bridge home"] rect,
-    .nav [aria-label="Bridge home"] path:last-child,
-    .links a,
-    .actions a {
+    .bar {
         transition: none;
     }
 }

@@ -2,7 +2,7 @@
 
 Bridge is a real-time video collaboration platform built for fast meetings, secure authentication, live participant sync, and persistent meeting insights. It combines a React frontend, an Express + MongoDB backend, Socket.IO for live coordination, and browser-level Playwright coverage for the full meeting lifecycle.
 
-![Bridge landing page: the headline, the live demo action, and a recorded call ending in its recap](docs/screenshots/bridge-landing/after-1280-fold.png)
+![Bridge landing page: the headline, the live demo action, and a call with its recap card](docs/screenshots/landing-v3/after/1440-00-first-screen.png)
 
 ![Bridge Meeting Room — Live room with participants, chat, and controls](docs/bridge-meeting-room.png)
 
@@ -99,8 +99,9 @@ Bridge now includes both API-level certification work and browser-level E2E vali
   - The room grid reflowing when the window narrows
   - Axe WCAG 2.1 AA checks on the landing, auth, demo and not-found pages
 
-The landing page's "Verified" list is checked against these tests by a unit test, so it cannot
-claim a flow that is not covered.
+Every product claim on the landing page names the file that makes it true, and a unit test
+(`frontend/src/features/landing/content.test.ts`) fails the build if one stops matching. The
+engineering write-up that used to be on the page is in [docs/CASE_STUDY.md](docs/CASE_STUDY.md).
 
 To run the suite without a local MongoDB, start a throwaway in-memory one first:
 

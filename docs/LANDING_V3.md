@@ -1,0 +1,114 @@
+# Landing v3: fewer, better things
+
+Status: implemented on `feat/landing-v3`. Before and after screenshots live in `docs/screenshots/landing-v3/`.
+
+## Why a third version
+
+v2 ("Faces in, notes out") proved the product was real, but it said so six times. Measured on 2026-11-03 before any change:
+
+| | Desktop 1440 | Phone 390 |
+|---|---|---|
+| Page height | 11,969 px | 15,723 px |
+| Times the 4-person call grid is drawn | 6 (hero, pinned chapter, 3 walkthrough steps, 2 bento tiles, closing loop) | same |
+| Dark surfaces | black browser bar, black room frames on every capture, a full black Engineering band | same |
+| Nav | 7 links + Sign in + GitHub, translucent: headings show through it | wraps to a menu |
+
+Content that was engineering documentation rather than product marketing (Engineering notes, the architecture figure, Decisions, Verified, the 0.4 s / 0 bytes / 8 flows panel and `/design-notes`) moved to `docs/CASE_STUDY.md`.
+
+The recap the page showed off also looked machine-made: "The meeting focused mainly on release checklist, onboarding fix, release plan and involved Maya Patel, Aarav Mehta, Sofia Rossi, Jordan Lee.", key points that were raw chat lines ("Aarav Mehta: The onboarding fix…"), a host shown as `@maya_epkkn`, and a demo that lasted "1 min". v3 fixes the summariser first (see "Recap output" below), because the page is only as good as the thing it shows.
+
+## Reference study: bydefault.so
+
+Studied at 1440 × 900 and 390 × 844 with Playwright on 2026-11-03, scrolled top to bottom (desktop 10,463 px, phone 13,646 px). Techniques only; none of its brand, copy or assets are used.
+
+1. **Canvas and rails.** The page ground is a near-white grey (`rgb(247 247 247)`); content cards are white. Two 1 px hairline verticals run the full page height at the container edges (about 1190 px apart), so every section sits inside the same visible column. Between sections a hairline horizontal crosses the rails, and a small "+" mark sits where the two meet. On a phone the rails sit right at the 8–16 px gutter.
+2. **Hero in a card.** The first screen is a white card with a 12–16 px radius inside the rails, lifted by a layered, very soft shadow (`0 17px 23px rgb(0 0 0/4%)` stacked with three smaller ones and a `0 0 0 1px rgb(0 0 0/5%)` ring) instead of a border. Centred headline, one sub line, one input + accent button, one small social line.
+3. **Nav that becomes a floating bar.** At the top the nav is a plain row: logo, four text links centred, Sign in as text, one small accent button. After scrolling it becomes a white rounded bar (radius 16, inset about 6 px from the top, the width of the container) with a soft shadow; links stay the same, nothing else changes. On a phone it is logo, the accent button and a menu icon, also floating.
+4. **Small centred section headings.** Each section opens with a tiny muted label (a 13 px pill with an icon, e.g. "How it works", "FAQ"), then a 44 px Geist 500 heading tracked -0.02em, then one or two muted sentences, all centred. Headings are short statements, not slogans.
+5. **Product UI as real HTML.** Every product picture is live markup inside a white card with a header row (a 40–44 px row with a small label and sometimes a status on the right), table rows separated by hairlines, small brand icons, real-looking numbers. Nothing is a screenshot, so it stays sharp at every width and text can be 13–14 px.
+6. **Only two dark bands.** One dark product walkthrough in the middle and the closing CTA + footer at the end. Everything else is light, so the dark moments carry weight.
+7. **FAQ accordion.** A single white card, centred, about 680 px wide, rows split by hairlines, a "+" that becomes "−", the open answer in muted 15 px text, and a "Still have questions?" line below.
+
+What v3 takes: the canvas + rails + "+" marks, the hero card, the nav-to-floating-bar change, the label + heading pattern, product UI as HTML cards with a header row, the FAQ card. What v3 does differently: one dark band, not two (the closing CTA card); Bridge keeps its own voice: Instrument Serif h1 with the italic rust "recap", the warm canvas, the rust accent and the illustrated cast.
+
+## Visual system
+
+| Role | Value |
+|---|---|
+| Canvas | `#FBFAF8` |
+| Surface (cards) | `#FFFFFF` |
+| Hairline | `#ECEAE6` |
+| Ink | `#17171A` |
+| Muted | `#6B6A70` (5.13:1 on canvas, 5.36:1 on white; measured by `frontend/scripts/contrast.mjs`) |
+| Accent (text, CTA fill) | `#B4440A` (5.57:1 white on rust, 5.34:1 rust on canvas) |
+| Room colours | only inside the call window |
+
+- Rails at the 1200 px container edges, full page height; a hairline divider between sections with "+" marks where it meets the rails.
+- h1 Instrument Serif 84 px (desktop) to 48 px (phone), italic rust "recap". h2 Geist 500, 36 px, -0.02em, centred, with a 13 px muted label above. Body Geist 17 px. Product UI text 13–14 px, never smaller.
+- Cards: white, radius 16, 1 px hairline, `0 1px 2px rgb(0 0 0/4%), 0 12px 32px -16px rgb(0 0 0/12%)`; header row 44 px with a 13 px label.
+- Motion: reveal is opacity 0→1 and y 12→0 over 500 ms `cubic-bezier(0.16,1,0.3,1)`, 50 ms stagger, once. Hover lift 2 px with a deeper shadow, 200 ms. Nav change 250 ms. No pinned or scroll-scrubbed sections. `prefers-reduced-motion` shows the final state.
+- The landing page is light only (`color-scheme: light` on the page root); the app keeps its light and dark themes.
+
+## Structure (7 sections)
+
+1. **Nav**: logo; How it works, Features, FAQ; Sign in; "Try the demo". Floating rounded bar after 24 px of scroll.
+2. **Hero card**: h1, one sub line, "Try the live demo", "Start a meeting →", "No account needed". One composition: a light-chrome app window holding the dark 2×2 call with the cast; the white recap card overlaps its lower right edge. An 8 s DOM loop: the speaking ring moves, End is pressed, the grid dims, the recap card rises and writes in, holds, resets.
+3. **Benefit strip**: three hairline cells (Join from a link · Notes the second it ends · Private by design).
+4. **How it works**: three cards, each a different small vignette (lobby device check, invite link + joined list, mini recap with a checked action item). No call grid.
+5. **Features**: one large card with the full recap rendered in HTML and a working Copy as Markdown + toast; a 2×2 of small fragments that animate on hover or focus (chat, host controls with confirm, screen share, reconnecting); a meeting-history card.
+6. **FAQ**: five questions in an accordion with a smooth height animation.
+7. **Final CTA**: the page's only dark band, a rounded dark card inside the rails; then the footer on the light canvas.
+
+Each visual idea appears once: the 2×2 call grid is drawn only in the hero.
+
+## Recap output
+
+`backend/src/utils/meetingSummary.js` (and its browser copy for the demo, kept identical by a parity test) now produces:
+
+- `conclusion`: one sentence from the outcome lines and the top two topics, e.g. "Agreed to ship the release on Thursday; the onboarding fix merges before lunch." Never a list of attendees.
+- `keyPoints`: `{ speaker, text }` statements without the "Name:" prefix (the UI shows the speaker as an avatar chip). Older string key points still render.
+- `actionItems`: `{ owner, task, due? }` from ownership and commitment lines (owns, I'll, will, next step, deadline, by &lt;day&gt;).
+- The recap shows the host's display name, never the internal handle.
+
+## Results (measured 2026-11-03, production build)
+
+| | Before (v2) | After (v3) |
+|---|---|---|
+| Page height at 1440 × 900 | 11,969 px | **5,707 px** |
+| Page height at 768 × 1024 | not captured | 6,957 px |
+| Page height at 390 × 844 | 15,723 px | **7,837 px** |
+| Times the 2×2 call grid is drawn | 6 | 1 |
+| Dark surfaces | browser bars, room frames, Engineering band | the call window, one CTA card |
+| Nav items | 7 links + Sign in + GitHub | 3 links + Sign in + Try the demo |
+| Lighthouse mobile (perf / a11y / best practices / SEO) | 96 / 100 / 100 / 100 (v2 notes) | **97–98 / 100 / 100 / 100**, LCP 2.0–2.2 s, CLS 0 |
+
+Heights come from `document.documentElement.scrollHeight` after scrolling the page once (`docs/screenshots/landing-v3/*/heights.json`). Lighthouse 12.6 ran three times against `vite preview`; the range is shown.
+
+Screenshots: `docs/screenshots/landing-v3/before/` (1440 and 390, one file per v2 section) and `docs/screenshots/landing-v3/after/` (1440, 768 and 390, one file per v3 section, `NN-first-screen.png` pairs with the before file of the same width). `after/scroll-1440.mp4` is a 41 s recording: one full hero loop, then a scroll to the footer.
+
+## What was removed and where it went
+
+| Removed | Where its content is now |
+|---|---|
+| "Faces in, notes out" pinned chapter (`chapter/`) | The idea lives in the hero loop; the code is deleted |
+| Facts panel: 0.4 s / 0 bytes / 8 flows (`facts/`) | `docs/CASE_STUDY.md`, "Facts that were on the landing page" |
+| Walkthrough with screenshot crops (`Walkthrough.tsx`, `public/landing/step-*`) | Replaced by the How it works vignettes |
+| Outcomes bento (`bento/`) | Replaced by the Features section |
+| Engineering band and `ArchitectureFigure` | `docs/CASE_STUDY.md`, "Engineering" and "Architecture" |
+| Decisions | `docs/CASE_STUDY.md`, "Decisions" |
+| Verified terminal (`verified/`, `e2e-run.json`, `scripts/e2e-durations.mjs`) | `docs/CASE_STUDY.md`, "Verified"; the tests themselves are unchanged |
+| Closing grid-to-recap loop (`closing/`) | Replaced by the dark CTA card |
+| `/design-notes` route, its nav and footer links | `docs/CASE_STUDY.md`; its images moved to `docs/case-study/` |
+| Paper grain (`public/landing/grain.webp`) | Deleted |
+| Black browser-chrome bars (`AppFrame`) and the hero video (`HeroRecording`, `public/landing/hero*`) | Replaced by the light-chrome DOM window |
+| Capture pipeline for those recordings (`scripts/capture-landing.mjs`, `scripts/render-cast.mjs`) | Deleted; `scripts/capture-showcase.mjs` now renders the OG image and cover from the v3 hero |
+| The cast's gesture hand | Deleted (it floated free of the body at small sizes) |
+| Landing dark mode | The landing page is light only; the app keeps its themes |
+
+## Deviations from the brief, and why
+
+- **Benefit "Join from a link: no install, no account for guests"** became "Open it in the browser. Nothing to install." Real meetings require an account (`/room/:id` is behind `RequireAuth`); only the demo needs none. The FAQ says so plainly.
+- **Lobby "mic level"**: the lobby has no level meter. The vignette shows what the lobby does: the speaking ring on the self-preview and the device checks turning on.
+- **"Mini recap with a check-marked action item"**: action items are not checkable in the app, so the check marks delivery ("In 4 people's history") instead of completion.
+- **Host controls "remove with a confirm"**: the app removed people without asking. The confirm dialog was built in the room first (`RoomView.tsx`), and the e2e tests click it.
+- **Reveal** is CSS plus one IntersectionObserver rather than `motion/react`: it keeps the animation library out of the first paint (Lighthouse 93 → 97–98). `motion/react` drives the deferred sections (in-view triggers, the copy toast).

@@ -46,8 +46,11 @@ const describe = (meeting: Meeting) => {
     if (people) parts.push(pluralize(people, "person", "people"));
     const duration = formatDuration(meeting.durationMs);
     if (meeting.status === "ended" && duration) parts.push(duration);
-    if (meeting.currentUserRole === "host" || meeting.hostUsername) {
-        parts.push(meeting.status === "active" && meeting.currentUserRole === "host" ? "You're hosting" : `Host @${meeting.hostUsername}`);
+    if (meeting.status === "active" && meeting.currentUserRole === "host") {
+        parts.push("You're hosting");
+    } else if (meeting.hostName) {
+        // The display name only: the handle is an internal identifier.
+        parts.push(`Host ${meeting.hostName}`);
     }
     return parts.join(" · ");
 };

@@ -1,0 +1,371 @@
+.steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: var(--card-radius);
+    background: var(--surface);
+    box-shadow: var(--card-shadow);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--hairline);
+}
+
+.step {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.vignette {
+    display: grid;
+    place-items: center;
+    height: 256px;
+    padding: 20px;
+    border-bottom: 1px solid var(--hairline);
+    background: var(--bg);
+}
+
+.text {
+    padding: 20px 20px 24px;
+}
+
+.text h3 {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 550;
+    letter-spacing: -0.01em;
+}
+
+.text p {
+    margin: 6px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+/* ---------- 1. Lobby ---------- */
+
+.lobby {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+    gap: 10px;
+    width: 100%;
+    max-width: 264px;
+}
+
+.preview {
+    border-radius: 12px;
+}
+
+.devices {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.device {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+
+.ready {
+    position: absolute;
+    left: 30px;
+    color: var(--success);
+    font-weight: 550;
+    opacity: 0;
+}
+
+.checking,
+.ready {
+    transition: opacity 300ms ease-out;
+}
+
+.steps[data-run] .checking {
+    opacity: 0;
+    transition-delay: 700ms;
+}
+
+.steps[data-run] .ready {
+    opacity: 1;
+    transition-delay: 800ms;
+}
+
+.steps[data-run] .second .checking { transition-delay: 1100ms; }
+.steps[data-run] .second .ready { transition-delay: 1200ms; }
+
+.steps[data-run] .device svg {
+    color: var(--success);
+    transition: color 300ms ease-out 800ms;
+}
+
+/* ---------- 2. Invite ---------- */
+
+.invite {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    max-width: 300px;
+}
+
+.field {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 4px 0 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: var(--surface);
+    font-size: 0.8125rem;
+}
+
+.url {
+    flex: 1;
+    overflow: hidden;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.url strong {
+    color: var(--accent-text);
+    font-weight: 550;
+}
+
+.copy {
+    position: relative;
+    display: grid;
+    flex: none;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 7px;
+    background: var(--text);
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 550;
+}
+
+.copyIdle,
+.copyDone {
+    display: inline-flex;
+    grid-area: 1 / 1;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: opacity 200ms ease-out;
+}
+
+.copyDone {
+    opacity: 0;
+}
+
+.steps[data-run] .copyIdle {
+    opacity: 0;
+    transition-delay: 500ms;
+}
+
+.steps[data-run] .copyDone {
+    opacity: 1;
+    transition-delay: 500ms;
+}
+
+.joined {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.joined li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    padding: 0 10px 0 6px;
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    background: var(--surface);
+    font-size: 0.8125rem;
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+    transition: opacity 400ms var(--ease-out), transform 400ms var(--ease-out);
+}
+
+.steps[data-run] .joined li {
+    opacity: 1;
+    transform: none;
+}
+
+.steps[data-run] .joined li:nth-child(1) { transition-delay: 900ms; }
+.steps[data-run] .joined li:nth-child(2) { transition-delay: 1150ms; }
+.steps[data-run] .joined li:nth-child(3) { transition-delay: 1400ms; }
+
+.joinName {
+    flex: 1;
+    font-weight: 500;
+}
+
+.joinTag {
+    color: var(--success);
+    font-weight: 550;
+}
+
+/* ---------- 3. Mini recap ---------- */
+
+.mini {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    max-width: 300px;
+    padding: 16px;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.miniSummary {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+.miniItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 0 8px;
+    border-radius: 8px;
+    background: var(--bg);
+    font-size: 0.8125rem;
+}
+
+.box {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 4px;
+}
+
+.miniTask {
+    flex: 1;
+    font-weight: 500;
+}
+
+.sent {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+.sentCheck {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--success);
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 300ms var(--ease-out) 900ms, transform 400ms var(--ease-out) 900ms;
+}
+
+.steps[data-run] .sentCheck {
+    opacity: 1;
+    transform: none;
+}
+
+.miniSummary,
+.miniItem {
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 400ms var(--ease-out), transform 400ms var(--ease-out);
+}
+
+.steps[data-run] .miniSummary,
+.steps[data-run] .miniItem {
+    opacity: 1;
+    transform: none;
+}
+
+.steps[data-run] .miniSummary { transition-delay: 300ms; }
+.steps[data-run] .miniItem { transition-delay: 550ms; }
+
+@media (max-width: 960px) {
+    .steps {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+        margin: 0 auto;
+    }
+
+    .vignette {
+        height: auto;
+        min-height: 0;
+        padding: 20px 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .steps * {
+        transition: none !important;
+    }
+
+    .checking,
+    .copyIdle {
+        opacity: 0;
+    }
+
+    .ready,
+    .copyDone,
+    .joined li,
+    .miniSummary,
+    .miniItem {
+        opacity: 1;
+        transform: none;
+    }
+
+    .sentCheck {
+        opacity: 1;
+        transform: none;
+    }
+}

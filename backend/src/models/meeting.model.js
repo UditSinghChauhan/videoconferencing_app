@@ -40,8 +40,15 @@ const meetingActivitySchema = new Schema(
 
 const meetingSummarySchema = new Schema(
     {
+        // 1: key points as "Name: line" strings. 2: { speaker, text } key points and action items.
+        version: { type: Number, default: 1 },
         generatedAt: { type: Date, default: null },
-        keyPoints: { type: [String], default: [] },
+        // Mixed so that recaps stored as strings still load; the service serves both as { speaker, text }.
+        keyPoints: { type: [Schema.Types.Mixed], default: [] },
+        actionItems: {
+            type: [new Schema({ owner: String, task: String, due: String }, { _id: false })],
+            default: []
+        },
         highlights: { type: [String], default: [] },
         keywords: { type: [String], default: [] },
         participantsInvolved: { type: [String], default: [] },

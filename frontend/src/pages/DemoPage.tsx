@@ -24,7 +24,8 @@ export default function DemoPage() {
     const [ending, setEnding] = useState(false);
     const [speakerId, setSpeakerId] = useState<string | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [startedAt] = useState(() => Date.now() - 4 * 60_000);
+    // The call is already under way when a visitor walks in, so the recap reads like a real stand-up.
+    const [startedAt] = useState(() => Date.now() - 15 * 60_000);
     const [recap, setRecap] = useState<MeetingRecap | null>(null);
     const activity = useRef<ActivityEntry[]>([]);
     const timers = useRef<number[]>([]);
@@ -118,6 +119,7 @@ export default function DemoPage() {
             meetingId: DEMO_MEETING_ID,
             status: "ended",
             hostUsername: "you",
+            hostName: "You",
             createdAt: new Date(startedAt).toISOString(),
             endedAt: endedAt.toISOString(),
             durationMs: endedAt.getTime() - startedAt,
@@ -147,7 +149,7 @@ export default function DemoPage() {
                         notice="Demo ended. This is the recap Bridge writes when a host ends a call."
                         transcriptOpen
                         reveal
-                        footnote="In the demo the recap is built in your browser by the same rules the server uses: keyword frequency and sentence scoring over the chat and activity log. No audio is recorded and no external AI is used."
+                        footnote="In the demo the recap is built in your browser by the same rules the server uses: commitments in the chat become action items and recurring phrases become topics. No audio is recorded and no external AI is used."
                     />
                 </main>
             </div>

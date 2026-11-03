@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import { Meeting } from "../models/meeting.model.js";
 import { AppError } from "../utils/appError.js";
 import { generateMeetingCode } from "../utils/meetingCode.js";
-import { generateMeetingSummary } from "../utils/meetingSummary.js";
+import { generateMeetingSummary, SUMMARY_VERSION } from "../utils/meetingSummary.js";
 
 const MAX_CODE_ATTEMPTS = 5;
 const HISTORY_LIMIT = 50;
@@ -31,14 +31,46 @@ const appendActivityLog = (meeting, { type, userId = null, username = null, cont
     });
 };
 
+/** Older recaps stored key points as "Name: line" strings; serve every key point as { speaker, text }. */
+const serializeKeyPoint = (point) => {
+    if (point && typeof point === "object") {
+        return { speaker: point.speaker || null, text: point.text || "" };
+    }
+    const match = String(point).match(/^([^:]{1,60}):\s+(.+)$/);
+    return match ? { speaker: match[1], text: match[2] } : { speaker: null, text: String(point) };
+};
+
 const serializeSummary = (summary = {}) => ({
     generatedAt: summary.generatedAt || null,
-    keyPoints: summary.keyPoints || [],
+    keyPoints: (summary.keyPoints || []).map(serializeKeyPoint),
+    actionItems: (summary.actionItems || []).map(({ owner, task, due }) => (due ? { owner, task, due } : { owner, task })),
     highlights: summary.highlights || [],
     keywords: summary.keywords || [],
     participantsInvolved: summary.participantsInvolved || [],
     conclusion: summary.conclusion || ""
 });
+
+/**
+ * The host as people know them: the display name stored when they joined, or
+ * the name the activity log recorded. Never the internal handle; null if no
+ * display name was ever stored.
+ */
+const getHostDisplayName = (meeting) => {
+    const host = (meeting.participants || []).find((participant) => participant.role === "host");
+    if (host?.name) return host.name;
+
+    const created = (meeting.activityLogs || []).find((entry) => entry.type === "join" && /^created/.test(entry.content || ""));
+    if (created?.username && created.username !== meeting.hostUsername) return created.username;
+
+    return null;
+};
+
+/** Recaps written by the first summariser are rebuilt from the stored log when read, so old meetings read naturally too. */
+const currentSummary = (meeting) => {
+    const stored = meeting.summary?.toObject?.() ?? meeting.summary ?? {};
+    if (stored.version === SUMMARY_VERSION || !meeting.activityLogs?.length) return stored;
+    return { ...generateMeetingSummary(meeting), generatedAt: stored.generatedAt || meeting.endedAt || null };
+};
 
 const serializeParticipant = (participant) => ({
     userId: participant.userId,
@@ -66,6 +98,7 @@ const serializeMeeting = (meeting, currentUserId = null) => {
         meetingId: meeting.meetingId,
         hostId: meeting.hostId,
         hostUsername: meeting.hostUsername,
+        hostName: getHostDisplayName(meeting),
         status: meeting.status,
         settings: meeting.settings,
         createdAt: meeting.createdAt,
@@ -76,7 +109,7 @@ const serializeMeeting = (meeting, currentUserId = null) => {
         participantCount: meeting.participants.length,
         durationMs: getDurationMs(meeting),
         participants: activeParticipants.map(serializeParticipant),
-        summary: meeting.status === "ended" ? serializeSummary(meeting.summary) : null
+        summary: meeting.status === "ended" ? serializeSummary(currentSummary(meeting)) : null
     };
 };
 
@@ -382,11 +415,12 @@ const getMeetingSummary = async ({ meetingId, user }) => {
         meetingId: meeting.meetingId,
         status: meeting.status,
         hostUsername: meeting.hostUsername,
+        hostName: getHostDisplayName(meeting),
         createdAt: meeting.createdAt,
         endedAt: meeting.endedAt,
         durationMs: getDurationMs(meeting),
         participantCount: meeting.participants.length,
-        summary: serializeSummary(meeting.summary),
+        summary: serializeSummary(currentSummary(meeting)),
         chat
     };
 };
@@ -452,6 +486,7 @@ const markParticipantDisconnected = async ({ meetingId, user }) => {
 };
 
 export {
+    getHostDisplayName,
     addMeetingChatMessage,
     getMeetingRealtimePolicy,
     createMeeting,

@@ -11,7 +11,7 @@ interface Options {
 /**
  * Plays a speaker timeline on the wall clock and returns the current speaker.
  * Re-renders only when the speaker changes. `loopStart` is the epoch time of
- * the loop's t = 0 (render-cast.mjs reads it to trim recordings to the loop).
+ * the loop's t = 0.
  */
 export function useSpeakerTimeline({ timeline = CAST_TIMELINE, playing = true }: Options = {}) {
     const [speaker, setSpeaker] = useState<CastId | null>(null);

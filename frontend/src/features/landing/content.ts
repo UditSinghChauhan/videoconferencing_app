@@ -1,153 +1,139 @@
-/** Copy and claims for the landing page. Every claim here points at real code or a real test. */
+/**
+ * Copy for the landing page. Every product claim names the file that makes
+ * it true and a line that must exist there; content.test.ts fails the build
+ * if a claim stops matching the code.
+ */
 
-export const E2E_SPEC_PATH = "frontend/tests/e2e/meeting-system.spec.js";
-
-export interface Crop {
-    x: number;
-    y: number;
-    width: number;
+export interface Evidence {
+    /** Repository-relative path. */
+    path: string;
+    /** Text that must appear in that file. */
+    contains: string;
 }
 
-export interface WalkthroughStep {
-    id: "start" | "share" | "recap";
+export interface Claim {
     title: string;
     body: string;
-    image: { desktop: string; mobile: string; alt: string; desktopHeight: number; mobileHeight: number };
-    /**
-     * The walkthrough camera: where it starts and ends while this step is in
-     * view, in capture pixels (the desktop capture is 1280 px wide). A crop
-     * at most 740 px wide keeps interface text at 13 px or more in the pane.
-     */
-    camera: { from: Crop; to: Crop };
+    evidence: Evidence[];
 }
 
-export const WALKTHROUGH: WalkthroughStep[] = [
+export const BENEFITS: Claim[] = [
     {
-        id: "start",
+        title: "Join from a link",
+        body: "Open it in the browser. Nothing to install.",
+        evidence: [{ path: "frontend/src/features/room/SidePanel.tsx", contains: "Copy invite link" }]
+    },
+    {
+        title: "Notes the second it ends",
+        body: "Summary, action items and transcript for everyone.",
+        evidence: [
+            { path: "backend/src/services/meeting.service.js", contains: "meeting.summary = generateMeetingSummary(meeting);" },
+            { path: "frontend/src/features/meetings/RecapView.tsx", contains: "Action items" }
+        ]
+    },
+    {
+        title: "Private by design",
+        body: "Video goes directly between you, never through our server.",
+        evidence: [{ path: "frontend/src/features/room/peerMesh.ts", contains: "new RTCPeerConnection" }]
+    }
+];
+
+export const STEPS: (Claim & { heading: string })[] = [
+    {
         title: "Start",
-        body: "One click makes a room with a readable code like kmt-vrqp-xhw. The lobby checks your camera and mic, then the invite link is one tap away.",
-        image: {
-            desktop: "/landing/step-start-desktop.webp",
-            mobile: "/landing/step-start-mobile.webp",
-            desktopHeight: 1600,
-            mobileHeight: 1688,
-            alt: "A new Bridge room with only the host, Maya Patel, on camera, and the invite link just copied."
-        },
-        camera: { from: { x: 0, y: 0, width: 700 }, to: { x: 260, y: 150, width: 740 } }
+        heading: "Check your camera, then start",
+        body: "One click makes a room. The lobby checks your camera and microphone before anyone sees you.",
+        evidence: [{ path: "frontend/src/features/room/Lobby.tsx", contains: "deviceCopy(micStatus, micOn, \"Microphone\")" }]
     },
     {
-        id: "share",
         title: "Share",
-        body: "People join from the link in their browser, with nothing to install. Everyone sees who is speaking, who is muted, and the chat as it happens.",
-        image: {
-            desktop: "/landing/step-share-desktop.webp",
-            mobile: "/landing/step-share-mobile.webp",
-            desktopHeight: 1600,
-            mobileHeight: 1688,
-            alt: "The same room with four people on camera, Maya, Aarav, Sofia and Jordan, and the chat with messages about the release checklist and Thursday's deadline."
-        },
-        camera: { from: { x: 20, y: 70, width: 740 }, to: { x: 540, y: 40, width: 740 } }
+        heading: "Send the link, people join",
+        body: "Copy the invite link. People join in their browser and appear the moment they arrive.",
+        evidence: [{ path: "frontend/src/features/room/SidePanel.tsx", contains: "Link copied" }]
     },
     {
-        id: "recap",
         title: "Recap",
-        body: "When the host ends the call, the server writes the recap: key points, what happened, topics and the full transcript, saved to everyone's history.",
-        image: {
-            desktop: "/landing/step-recap-desktop.webp",
-            mobile: "/landing/step-recap-mobile.webp",
-            desktopHeight: 3050,
-            mobileHeight: 4402,
-            alt: "The meeting recap: three key points taken from the chat, who was there, topics such as release checklist and onboarding fix, and the five-message transcript."
-        },
-        camera: { from: { x: 240, y: 90, width: 720 }, to: { x: 240, y: 860, width: 720 } }
+        heading: "End the call, get the notes",
+        body: "The host ends the call and everyone gets the summary and action items in their history.",
+        evidence: [{ path: "backend/src/utils/meetingSummary.js", contains: "actionItems" }]
     }
 ];
 
-/** The capture width every crop above is measured against. */
-export const CAPTURE_WIDTH = 1280;
-
-export interface Decision {
-    decision: string;
-    why: string;
-    cost: string;
-    /** Only where ARCHITECTURE.md ("Scalability & Future Improvements") names the change. */
-    wouldChange?: string;
-}
-
-/** The trade-offs behind the build, stated the way they would be in a design review. */
-export const DECISIONS: Decision[] = [
-    {
-        decision: "A peer-to-peer mesh, not a media server.",
-        why: "Small rooms get the lowest latency, and the server never pays for media: it only authenticates, relays signalling and keeps the record.",
-        cost: "Each person uploads a stream to everyone else, so rooms top out at about six.",
-        wouldChange: "rooms need more than about six people: the same signalling would front an SFU."
+export const FEATURES: Record<"recap" | "chat" | "host" | "screen" | "reconnect" | "history", Claim> = {
+    recap: {
+        title: "A recap you can paste anywhere",
+        body: "Summary, action items with owners, key points and topics. Copy it as Markdown for Slack, Notion or email.",
+        evidence: [{ path: "frontend/src/features/meetings/recapMarkdown.ts", contains: "## Action items" }]
     },
-    {
-        decision: "A rule-based recap, not an LLM.",
-        why: "The same call always produces the same notes, nothing leaves the server, it costs nothing per meeting, and it is tested like any other function.",
-        cost: "It selects sentences rather than writing a summary.",
-        wouldChange: "summary quality matters more than determinism: an LLM layer would sit behind the same recap interface."
+    chat: {
+        title: "Chat during the call",
+        body: "Messages arrive for everyone at once, and they become the recap.",
+        evidence: [{ path: "backend/src/controllers/socketManager.js", contains: "\"chat-message\"" }]
     },
-    {
-        decision: "Short access tokens and rotating refresh tokens.",
-        why: "A leaked access token is useful for 15 minutes. Refresh tokens live in httpOnly cookies, are stored only as hashes, rotate on every use, and a replayed one is rejected.",
-        cost: "Rotation turns two refreshes racing in one tab into a false replay, so the client shares a single refresh request between every caller."
+    host: {
+        title: "Host controls",
+        body: "Only the host can remove someone, and Bridge asks first.",
+        evidence: [
+            { path: "frontend/src/features/room/RoomView.tsx", contains: "from the call?" },
+            { path: "backend/src/services/meeting.service.js", contains: "const removeParticipant" }
+        ]
+    },
+    screen: {
+        title: "Screen share",
+        body: "Share a window or a whole screen; it is shown in full, never cropped.",
+        evidence: [{ path: "frontend/src/features/room/ControlBar.tsx", contains: "onToggleScreen" }]
+    },
+    reconnect: {
+        title: "Back after a drop",
+        body: "If the network blinks, Bridge reconnects you to the same call on its own.",
+        evidence: [
+            { path: "frontend/src/features/room/RoomView.tsx", contains: "Reconnecting…" },
+            { path: "frontend/src/features/room/useMeetingConnection.ts", contains: "reconnectionAttempts" }
+        ]
+    },
+    history: {
+        title: "Meeting history",
+        body: "Every call you were in, with its recap, a click away.",
+        evidence: [{ path: "frontend/src/pages/HistoryPage.tsx", contains: "MeetingList" }]
     }
-];
-
-
-export interface EngineeringNote {
-    label: string;
-    detail: string;
-    path: string;
-}
-
-export const ENGINEERING: EngineeringNote[] = [
-    { label: "WebRTC mesh", detail: "Perfect negotiation with fixed transceivers, so muting, camera and screen share swap tracks without renegotiating.", path: "frontend/src/features/room/peerMesh.ts" },
-    { label: "Socket.IO signalling", detail: "Authenticated handshake, relays scoped to one room, and per-socket media state.", path: "backend/src/controllers/socketManager.js" },
-    { label: "Sessions", detail: "15-minute access tokens, rotating refresh tokens in httpOnly cookies, a CSRF check on refresh, and sign out of every device.", path: "backend/src/services/auth.service.js" },
-    { label: "Reconnects", detail: "Network drops rejoin automatically, and opening a second tab hands over instead of duplicating you.", path: "frontend/src/features/room/useMeetingConnection.ts" },
-    { label: "Validation and roles", detail: "Zod-validated routes, and host-only actions checked on the server.", path: "backend/src/validators" },
-    { label: "Recap engine", detail: "A deterministic summariser: keyword frequency and sentence scoring over chat and activity. No external AI.", path: "backend/src/utils/meetingSummary.js" }
-];
-
-export interface VerifiedFlow {
-    flow: string;
-    /** One line on what the test actually checks. */
-    detail: string;
-    /** Exact title of the Playwright test that covers the flow. */
-    test: string;
-    /** A line that must exist in the spec, pinning the step inside the test. */
-    step: string;
-}
-
-const LIFECYCLE = "two people meet, chat, mute, leave, get removed, and the host ends with a recap";
-const RETURNING = "a returning user signs in and stays signed in after a reload";
-const OUTSIDERS = "people outside a meeting cannot read its recap, and unknown codes are explained";
-
-/** Line of each test's declaration in the spec, for deep links. content.test.ts keeps these honest. */
-export const TEST_LINES: Record<string, number> = {
-    [LIFECYCLE]: 43,
-    [OUTSIDERS]: 138,
-    [RETURNING]: 161
 };
 
-export const VERIFIED: VerifiedFlow[] = [
-    { flow: "Register", detail: "A new account is created from the sign-up form and lands on the dashboard.", test: RETURNING, step: 'await page.getByRole("button", { name: "Create account" }).click();' },
-    { flow: "Sign in", detail: "In a fresh browser, the same person signs in with their username and password.", test: RETURNING, step: 'await page.getByRole("button", { name: "Sign in" }).click();' },
-    { flow: "Stay signed in after a reload", detail: "A full page reload keeps the session and the dashboard.", test: RETURNING, step: "await page.reload();" },
-    { flow: "Create a meeting and join by link", detail: "The host gets a readable code; a guest pastes the full invite link and joins.", test: LIFECYCLE, step: "// Guest joins by pasting the full invite link." },
-    { flow: "Chat in real time", detail: "Messages arrive both ways between two browsers.", test: LIFECYCLE, step: "// Chat both ways." },
-    { flow: "Only the host can remove people", detail: "A participant's remove request gets HTTP 403; the host's succeeds.", test: LIFECYCLE, step: "expect(forbidden.status()).toBe(403);" },
-    { flow: "End the meeting and open its recap", detail: "Ending lands the host on the recap with key points and the transcript.", test: LIFECYCLE, step: "// Host ends the meeting and lands on the recap." },
-    { flow: "Outsiders get a 403 on a recap", detail: "Someone who was not in the call gets HTTP 403 for its summary.", test: OUTSIDERS, step: "expect((await summaryResponse).status()).toBe(403);" }
-];
+export interface Question {
+    question: string;
+    answer: string;
+    evidence: Evidence[];
+}
 
-/** Facts under the hero. Each is measured or structural, never a vanity number. */
-export const FACTS = [
-    // Measured locally with scripts/measure-wake.mjs: confirm End -> key points visible.
-    { value: "0.4 s", label: "from the host pressing End to the recap on screen" },
-    { value: "0 bytes", label: "of audio or video pass through the server: media is peer to peer" },
-    // Counted from VERIFIED, so the number and the list cannot disagree.
-    { value: `${VERIFIED.length} flows`, label: "tested end to end in real browsers, against the real API and database" }
+export const FAQ: Question[] = [
+    {
+        question: "Is it free?",
+        answer: "Yes. There is no paid plan and no card to enter. Bridge runs on free hosting, so the first visit after a quiet spell can take a few seconds while the server wakes up.",
+        evidence: [{ path: "frontend/src/lib/api.ts", contains: "export const wakeServer" }]
+    },
+    {
+        question: "Do guests need an account?",
+        answer: "To join a real meeting, yes: a free account needs only a name, a username and a password, no email. The live demo needs no account at all.",
+        evidence: [
+            { path: "backend/src/validators/user.schemas.js", contains: "const registerSchema = z.object({" },
+            { path: "frontend/src/App.tsx", contains: "<Route path=\"/demo\" element={<DemoPage />} />" }
+        ]
+    },
+    {
+        question: "How many people can join?",
+        answer: "About six. Video goes straight from each person to everyone else, so every extra person adds an upload stream, and most connections run out of room after about six.",
+        evidence: [{ path: "frontend/src/features/room/peerMesh.ts", contains: "new RTCPeerConnection" }]
+    },
+    {
+        question: "Is the recap made by AI?",
+        answer: "No. When the host ends the call, the server applies fixed rules to the chat: commitments like “I’ll” or “owns” become action items and recurring phrases become topics. No external AI service is used, and the same chat always gives the same recap.",
+        evidence: [{ path: "backend/src/utils/meetingSummary.js", contains: "Deterministic, no external AI" }]
+    },
+    {
+        question: "Where is my data stored?",
+        answer: "Your account, meetings, chat messages and recaps are kept in Bridge’s database so they appear in your history; passwords are stored only as hashes. Audio and video are never recorded or stored.",
+        evidence: [
+            { path: "backend/src/models/meeting.model.js", contains: "activityLogs" },
+            { path: "backend/package.json", contains: "bcryptjs" }
+        ]
+    }
 ];
