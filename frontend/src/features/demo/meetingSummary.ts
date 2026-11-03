@@ -340,9 +340,9 @@ const buildConclusion = ({ chatCount, participantCount, outcome, keyPoints, keyw
     }
 
     const topics = keywords.slice(0, 2);
-    // The supporting clause: the strongest third-person statement about a top topic.
+    // The supporting clause: the strongest third-person statement about one of the topics.
     const support = keyPoints.find((point) =>
-        topics.some((topic) => point.text.toLowerCase().includes(topic.toLowerCase()))
+        keywords.some((topic) => point.text.toLowerCase().includes(topic.toLowerCase()))
         && !/^(I|I'm|I'll|I've|We|We're)\b/.test(point.text)
         && (!outcome || !point.text.toLowerCase().includes(outcome.task.toLowerCase())));
 
