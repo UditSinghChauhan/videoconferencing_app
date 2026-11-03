@@ -1,0 +1,146 @@
+/* The illustrated cast: idle life and speaking motion. DESIGN.md, "Cast". */
+
+.feed {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.feed g {
+    transform-box: fill-box;
+}
+
+/* Breathing: 1.000 to 1.006, from the bottom of the frame. */
+.breathe {
+    transform-origin: 50% 100%;
+    animation: breathe 4.6s ease-in-out infinite;
+    animation-delay: var(--phase, 0s);
+}
+
+/* Small head tilts on a slow, uneven loop (rotate, so a nod can translate at the same time). */
+.tilt {
+    transform-origin: 50% 85%;
+    animation: tilt 11s ease-in-out infinite;
+    animation-delay: var(--phase, 0s);
+}
+
+.nod {
+    transform-origin: 50% 100%;
+}
+
+.eye {
+    transform-origin: 50% 55%;
+    transition: transform 60ms ease-out;
+}
+
+.feed[data-blink] .eye {
+    transform: scaleY(0.1);
+}
+
+.mouthClosed {
+    transition: opacity 120ms ease-out;
+}
+
+.mouthOpen {
+    opacity: 0;
+    transform: scaleY(0.2);
+    transform-origin: 50% 0;
+    transition: opacity 120ms ease-out;
+}
+
+.hand {
+    transform-origin: 50% 100%;
+    translate: 0 170px;
+    transition: translate 560ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Speaking: the mouth talks, the head nods a little, a hand comes up and gestures. */
+.feed[data-speaking] .mouthClosed {
+    opacity: 0;
+}
+
+.feed[data-speaking] .mouthOpen {
+    opacity: 1;
+    animation: talk 1.3s linear infinite;
+}
+
+.feed[data-speaking] .nod {
+    animation: nod 1.9s ease-in-out infinite;
+}
+
+.feed[data-speaking] .hand {
+    translate: 0 0;
+    animation: gesture 2.4s ease-in-out infinite;
+    animation-delay: 300ms;
+}
+
+@keyframes breathe {
+    0%,
+    100% { transform: scale(1); }
+    50% { transform: scale(1.006); }
+}
+
+@keyframes tilt {
+    0%,
+    100% { rotate: 0deg; }
+    22% { rotate: -1.6deg; }
+    48% { rotate: 0.4deg; }
+    70% { rotate: 1.4deg; }
+}
+
+@keyframes nod {
+    0%,
+    100% { translate: 0 0; }
+    35% { translate: 0 2.5px; }
+    60% { translate: 0 -1px; }
+}
+
+/* Uneven openings so the mouth reads as speech, not a metronome. */
+@keyframes talk {
+    0% { transform: scaleY(0.25); }
+    9% { transform: scaleY(0.9); }
+    18% { transform: scaleY(0.45); }
+    27% { transform: scaleY(1); }
+    38% { transform: scaleY(0.3); }
+    47% { transform: scaleY(0.75); }
+    58% { transform: scaleY(0.2); }
+    66% { transform: scaleY(0.85); }
+    76% { transform: scaleY(0.5); }
+    88% { transform: scaleY(0.95); }
+    100% { transform: scaleY(0.25); }
+}
+
+@keyframes gesture {
+    0%,
+    100% { rotate: -4deg; }
+    30% { rotate: 6deg; }
+    55% { rotate: -2deg; }
+    80% { rotate: 8deg; }
+}
+
+/* Reduced motion and posters: a neutral pose, nothing moves. */
+.feed[data-still] *,
+.feed[data-still] {
+    animation: none !important;
+    transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .feed *,
+    .feed {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .feed .mouthOpen {
+        opacity: 0;
+    }
+
+    .feed .mouthClosed {
+        opacity: 1;
+    }
+
+    .feed .hand {
+        translate: 0 170px;
+    }
+}

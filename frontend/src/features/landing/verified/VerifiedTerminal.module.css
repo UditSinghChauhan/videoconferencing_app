@@ -1,0 +1,175 @@
+/* Tested end to end, as a terminal that runs the suite (landing Rules 6). */
+
+.terminal {
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    background: var(--room-bg);
+    box-shadow: var(--shadow-lg);
+    color: var(--room-text);
+}
+
+.bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    background: var(--room-tile);
+}
+
+.barTitle {
+    color: var(--room-muted);
+    font-size: var(--text-sm);
+}
+
+.body {
+    padding: var(--space-6) var(--space-8) var(--space-8);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.line {
+    position: relative;
+    margin: 0;
+}
+
+/* Slides off the line to "type" it in; the colour of the terminal. */
+.cover {
+    position: absolute;
+    inset: -1px -2px;
+    background: var(--room-bg);
+    pointer-events: none;
+}
+
+.command {
+    margin-bottom: var(--space-5);
+    color: var(--room-muted);
+}
+
+.prompt {
+    margin-right: var(--space-2);
+    color: #ff9a5c;
+}
+
+.groups,
+.flows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.group + .group {
+    margin-top: var(--space-5);
+}
+
+.test {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    align-items: baseline;
+}
+
+.pass {
+    display: inline-block;
+    color: #3ccf91;
+    font-weight: 700;
+}
+
+.testLink {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-3);
+    border-radius: var(--radius-sm);
+    color: var(--room-text);
+    text-decoration: none;
+}
+
+.testLink:hover .testTitle {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.testLink:focus-visible {
+    outline-color: #ff9a5c;
+}
+
+.file {
+    color: #ff9a5c;
+}
+
+.duration {
+    color: var(--room-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Flows proven by the test: check · flow · what it checks, on one shared grid. */
+.flows {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 19rem) minmax(0, 1fr);
+    column-gap: var(--space-3);
+    margin-top: var(--space-2);
+    padding-left: calc(20px + var(--space-3));
+}
+
+.flow {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: baseline;
+    padding: 3px 0;
+}
+
+.check {
+    align-self: center;
+    color: #3ccf91;
+}
+
+.flowName {
+    font-family: var(--font-sans);
+    font-size: var(--text-md);
+    font-weight: 600;
+}
+
+.flowDetail {
+    color: var(--room-muted);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+}
+
+.summary {
+    margin-top: var(--space-6);
+}
+
+.passed {
+    color: #3ccf91;
+}
+
+.ran {
+    color: var(--room-muted);
+}
+
+@media (max-width: 1023px) {
+    .flows {
+        grid-template-columns: 20px minmax(0, 1fr);
+        padding-left: 0;
+    }
+
+    .flowDetail {
+        grid-column: 2;
+    }
+}
+
+@media (max-width: 639px) {
+    .body {
+        padding: var(--space-5);
+        font-size: 13px;
+    }
+
+    .test {
+        grid-template-columns: 20px minmax(0, 1fr);
+    }
+
+    .duration {
+        grid-column: 2;
+    }
+}

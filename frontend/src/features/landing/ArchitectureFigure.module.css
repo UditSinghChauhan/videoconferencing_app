@@ -5,181 +5,241 @@
     background: var(--room-tile);
 }
 
-.diagram {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* Browser A, media link, Browser B. Columns 1fr 1.2fr 1fr: browser centres sit at 15.625% from each edge. */
-.peers {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr 1fr;
-    align-items: center;
+.svg {
+    display: block;
     width: 100%;
+    height: auto;
+    overflow: visible;
 }
 
 .node {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    padding: var(--space-4);
-    border-radius: var(--radius-lg);
-    background: var(--room-raised);
-    text-align: center;
+    fill: var(--room-raised);
 }
 
-.node strong {
-    color: var(--room-text);
-    font-size: var(--text-md);
+.nodeName {
+    fill: var(--room-text);
+    font-family: var(--font-sans);
+    font-size: 19px;
     font-weight: 600;
+    text-anchor: middle;
 }
 
-.node span {
-    color: var(--room-muted);
-    font-size: var(--text-sm);
+.nodeStack,
+.label,
+.labelStart {
+    fill: var(--room-muted);
+    font-family: var(--font-sans);
+    font-size: 15.5px;
 }
 
-.wide {
-    width: min(100%, 440px);
+.nodeStack,
+.label {
+    text-anchor: middle;
+}
+
+.mediaLabel {
+    fill: #ff9a5c;
+    font-family: var(--font-sans);
+    font-size: 15.5px;
+    text-anchor: middle;
 }
 
 .media {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0 var(--space-3);
+    stroke: var(--accent);
+    stroke-width: 2.5;
+    stroke-dasharray: 7 7;
 }
 
-.mediaLine {
-    width: 100%;
-    border-top: 2px dashed var(--accent);
+.wire {
+    stroke: var(--room-muted);
+    stroke-width: 1.5;
 }
 
-.media .label {
-    margin-top: var(--space-2);
-    color: #ff9a5c;
+/* --- Traffic, a 4 s loop. Every element moves with transform; nothing else animates. --- */
+.packet {
+    fill: var(--accent);
 }
 
-.label {
-    color: var(--room-muted);
-    font-size: var(--text-sm);
-    line-height: 1.4;
-    text-align: center;
+.signal {
+    fill: var(--room-text);
 }
 
-/* Both browsers drop a line down and meet above the API, so each visibly talks to the server.
-   These are the figure's connectors (content), not dividers. taste-skill-ignore */
-.fork {
-    position: relative;
-    width: calc(100% - 2 * 15.625%);
-    height: 56px;
-    border: 1px solid var(--room-muted);
-    border-top: 0;
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
+.packet,
+.signal,
+.dbFlash {
+    opacity: 0;
+    animation-duration: 4s;
+    /* Three passes, then still (WCAG 2.2.2): the figure stays readable without motion. */
+    animation-iteration-count: 3;
+    animation-timing-function: linear;
+    animation-play-state: paused;
 }
 
-.fork .label {
-    position: absolute;
-    left: 50%;
-    bottom: 0;
-    transform: translate(-50%, 50%);
-    padding: 0 var(--space-3);
-    background: var(--room-tile);
-    white-space: nowrap;
+.diagram[data-playing] .packet,
+.diagram[data-playing] .signal,
+.diagram[data-playing] .dbFlash {
+    animation-play-state: running;
 }
 
-.stem {
-    width: 1px;
-    height: 32px;
-    background: var(--room-muted);
+.mediaAB { animation-name: media-ab; }
+.later { animation-delay: -2s; }
+.mediaBA { animation-name: media-ba; animation-delay: -1s; }
+.toApi { animation-name: to-api; }
+.toB { animation-name: to-b; }
+.write { animation-name: write; }
+
+.dbFlash {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    animation-name: flash;
 }
 
-.stemLabelled {
-    position: relative;
-    height: 40px;
+@keyframes media-ab {
+    0% { transform: translateX(0); opacity: 0; }
+    6% { opacity: 1; }
+    44% { opacity: 1; }
+    50% { transform: translateX(380px); opacity: 0; }
+    100% { transform: translateX(380px); opacity: 0; }
 }
 
-.stemLabelled .label {
-    position: absolute;
-    left: var(--space-3);
-    top: 50%;
-    transform: translateY(-50%);
-    white-space: nowrap;
+@keyframes media-ba {
+    0% { transform: translateX(0); opacity: 0; }
+    6% { opacity: 1; }
+    44% { opacity: 1; }
+    50% { transform: translateX(-380px); opacity: 0; }
+    100% { transform: translateX(-380px); opacity: 0; }
 }
 
+/* Signalling: Browser A to the API (0-25 %), then the API to Browser B (25-50 %). */
+@keyframes to-api {
+    0% { transform: translate(0, 0); opacity: 0; }
+    3% { opacity: 1; }
+    25% { transform: translate(200px, 110px); opacity: 1; }
+    27%,
+    100% { transform: translate(200px, 110px); opacity: 0; }
+}
+
+@keyframes to-b {
+    0%,
+    25% { transform: translate(0, 0); opacity: 0; }
+    27% { opacity: 1; }
+    48% { transform: translate(200px, -110px); opacity: 1; }
+    50%,
+    100% { transform: translate(200px, -110px); opacity: 0; }
+}
+
+/* The recap is saved: a write pulse from the API to MongoDB (60-72 %), and the store lights. */
+@keyframes write {
+    0%,
+    58% { transform: translateY(0); opacity: 0; }
+    60% { opacity: 1; }
+    72% { transform: translateY(54px); opacity: 1; }
+    74%,
+    100% { transform: translateY(54px); opacity: 0; }
+}
+
+@keyframes flash {
+    0%,
+    72% { opacity: 0; }
+    76% { opacity: 1; }
+    92%,
+    100% { opacity: 0; }
+}
+
+/* Below 1024 px: the ordered list says the same thing in reading order. */
 .list {
-    display: grid;
-    gap: var(--space-4);
+    display: none;
     margin: 0;
     padding: 0;
     list-style: none;
-    counter-reset: step;
+    counter-reset: hop;
 }
 
 .list li {
-    display: grid;
-    gap: var(--space-1);
-    padding-left: var(--space-10);
     position: relative;
+    padding: var(--space-4) 0 var(--space-4) var(--space-10);
     color: var(--room-text);
     font-size: var(--text-base);
     line-height: 1.5;
-    counter-increment: step;
+    counter-increment: hop;
 }
 
 .list li::before {
-    content: counter(step);
+    content: counter(hop);
     position: absolute;
     left: 0;
-    top: 0;
+    top: var(--space-4);
     display: grid;
     place-items: center;
-    width: 28px;
-    height: 28px;
-    border-radius: var(--radius-full);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
     background: var(--room-raised);
-    color: var(--room-text);
+    color: #ff9a5c;
     font-size: var(--text-sm);
-    font-variant-numeric: tabular-nums;
+    font-weight: 600;
 }
 
 .list strong {
-    color: var(--room-text);
+    display: block;
+    margin-bottom: var(--space-1);
     font-weight: 600;
 }
 
 .caption {
-    margin-top: var(--space-8);
+    margin-top: var(--space-6);
     color: var(--room-muted);
     font-size: var(--text-sm);
+    line-height: 1.45;
     text-align: center;
 }
 
-/* Diagram from 640 px; the list stays for screen readers. */
-@media (min-width: 640px) {
+/* Screen readers always get the list. */
+@media (min-width: 1024px) {
     .list {
         position: absolute;
         width: 1px;
         height: 1px;
-        margin: -1px;
         overflow: hidden;
         clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
+        display: block;
     }
 }
 
-@media (max-width: 639px) {
-    .figure {
-        padding: var(--space-6) var(--space-5);
-    }
-
+@media (max-width: 1023px) {
     .diagram {
         display: none;
     }
 
+    .list {
+        display: block;
+    }
+
+    .figure {
+        padding: var(--space-6);
+    }
+
     .caption {
         text-align: left;
+    }
+}
+
+/* Reduced motion: a still figure (one packet at rest on each link). */
+@media (prefers-reduced-motion: reduce) {
+    .packet,
+    .signal,
+    .dbFlash {
+        animation: none;
+    }
+
+    .mediaAB:not(.later) {
+        opacity: 1;
+        transform: translateX(190px);
+    }
+
+    .toApi {
+        opacity: 1;
+        transform: translate(100px, 55px);
     }
 }

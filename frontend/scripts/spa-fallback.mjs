@@ -7,7 +7,7 @@ import { copyFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
 // Keep in sync with the static paths in src/App.tsx.
-const STATIC_ROUTES = ["demo", "auth", "home", "history"];
+const STATIC_ROUTES = ["demo", "auth", "home", "history", "design-notes"];
 const buildDir = new URL("../build/", import.meta.url).pathname;
 const index = join(buildDir, "index.html");
 

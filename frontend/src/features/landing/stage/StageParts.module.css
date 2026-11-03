@@ -1,0 +1,56 @@
+.tile {
+    isolation: isolate;
+}
+
+/* The cast drawing fills the tile like a camera feed. */
+.tile > svg {
+    position: absolute;
+    inset: 0;
+}
+
+.tile > div {
+    z-index: 1;
+}
+
+/* The room's chat becomes a fixed full-screen sheet under 900 px; on the landing page it stays in place. */
+.chat[class] {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    width: 100%;
+    border-radius: var(--radius-lg);
+    animation: none;
+}
+
+.chatTitle {
+    font-size: var(--text-md);
+    font-weight: 600;
+}
+
+.message {
+    margin-top: var(--space-3);
+}
+
+/* Decisions and deadlines, marked in rust: the lines the recap is built from. */
+.decision {
+    padding: 1px 3px;
+    margin: 0 -3px;
+    border-radius: 4px;
+    background: rgba(255, 122, 51, 0.2);
+    box-shadow: inset 0 -2px 0 rgba(255, 122, 51, 0.7);
+    color: var(--room-text);
+}
+
+.controls {
+    padding: 0;
+}
+
+.controls > div > span {
+    cursor: default;
+}
+
+@media (max-width: 640px) {
+    .wideOnly {
+        display: none;
+    }
+}

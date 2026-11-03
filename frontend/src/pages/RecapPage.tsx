@@ -95,6 +95,7 @@ export default function RecapPage() {
             <RecapView
                 recap={recap}
                 notice={justEnded ? "Meeting ended. Here's the recap." : null}
+                reveal={justEnded}
             />
         </PageShell>
     );

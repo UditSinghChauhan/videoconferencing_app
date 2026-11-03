@@ -24,6 +24,9 @@ type Phase =
     | { kind: "not-found" }
     | { kind: "ended"; canViewRecap: boolean };
 
+/** How long the room takes to fold away after the host ends the call (RoomView.module.css). */
+const ROOM_FOLD_MS = 460;
+
 export default function RoomPage() {
     const { roomId: rawRoomId = "" } = useParams();
     const meetingId = parseMeetingInput(rawRoomId);
@@ -50,6 +53,7 @@ function MeetingRoom({ meetingId }: { meetingId: string }) {
     const [joining, setJoining] = useState(false);
     const [joinError, setJoinError] = useState<string | null>(null);
     const [removingId, setRemovingId] = useState<string | null>(null);
+    const [ending, setEnding] = useState(false);
 
     const notify = useCallback((message: string) => toast.show(message, "error"), [toast]);
     const localMedia = useLocalMedia({ onError: notify });
@@ -126,6 +130,11 @@ function MeetingRoom({ meetingId }: { meetingId: string }) {
         try {
             if (isHost) {
                 await meetingsApi.end(meetingId);
+                // Let the room fold away before the recap builds in (instant under reduced motion).
+                setEnding(true);
+                if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+                    await new Promise((resolve) => window.setTimeout(resolve, ROOM_FOLD_MS));
+                }
                 localMedia.release();
                 navigate(`/meetings/${encodeURIComponent(meetingId)}`, { replace: true, state: { justEnded: true } });
                 return;
@@ -217,7 +226,8 @@ function MeetingRoom({ meetingId }: { meetingId: string }) {
     }, [connection.peers, connection.roster, inCall, mediaState, phase, user?.id]);
 
     // Terminal states reported by the server take precedence over local phase.
-    if (inCall && connection.status === "ended") {
+    // While the host's own room folds away, the server's "ended" event is expected: keep the room until the recap opens.
+    if (inCall && connection.status === "ended" && !ending) {
         return (
             <StatusScreen
                 title="The host ended the meeting"
@@ -374,6 +384,7 @@ function MeetingRoom({ meetingId }: { meetingId: string }) {
                     onSendMessage={connection.sendMessage}
                     onRemovePerson={removePerson}
                     onLeave={leave}
+                    ending={ending}
                 />
             );
         default:

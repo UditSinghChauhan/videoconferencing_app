@@ -15,6 +15,9 @@
       name="description"
       content="Bridge is a browser-based video meeting app for small teams: start a room in one click, share the code, and get an automatic recap when the host ends the call."
     />
+    <!-- The hero's first frame is the largest paint on the landing page; fetch it before the script runs. -->
+    <link rel="preload" as="image" href="/landing/hero-phone-poster.webp" media="(max-width: 639px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/landing/hero-poster.webp" media="(min-width: 640px)" fetchpriority="high" />
     <meta property="og:title" content="Bridge · Video meetings that end with a recap" />
     <meta
       property="og:description"

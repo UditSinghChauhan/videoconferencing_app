@@ -37,6 +37,8 @@ export interface RoomViewProps {
     onRemovePerson: (person: PersonModel) => void;
     /** Host: ends the meeting for everyone. Participant: leaves. */
     onLeave: () => Promise<void> | void;
+    /** The call has ended: the room folds away before the recap opens. */
+    ending?: boolean;
 }
 
 function useElapsed(startedAt: number) {
@@ -66,6 +68,11 @@ export function RoomView(props: RoomViewProps) {
             setSeenCount(messages.length);
         }
     }, [messages.length, panel]);
+
+    // Close the confirmation as soon as the call is over, so the room can fold away.
+    useEffect(() => {
+        if (props.ending) setConfirmLeave(false);
+    }, [props.ending]);
 
     const unread = panel === "chat" ? 0 : messages.slice(seenCount).filter((message) => !message.isOwn).length;
 
@@ -115,7 +122,7 @@ export function RoomView(props: RoomViewProps) {
     };
 
     return (
-        <div className={styles.room}>
+        <div className={styles.room} data-ending={props.ending || undefined}>
             <header className={styles.header}>
                 <div className={styles.identity}>
                     <LogoMark size={24} />

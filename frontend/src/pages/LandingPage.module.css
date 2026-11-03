@@ -1,61 +1,14 @@
 /* Landing page. Values and section rules: DESIGN.md, "Landing page". */
 
+/* Warm paper with a faint grain (a 3 KB tile, under 4 % opacity). */
 .page {
     overflow-x: clip;
-    background: var(--bg);
+    background: var(--bg) url("/landing/grain.webp") repeat;
+    background-size: 180px;
 }
 
-.page section[id] {
+.page [id] {
     scroll-margin-top: 80px;
-}
-
-/* ---------- Navigation ---------- */
-
-.nav {
-    position: sticky;
-    top: 0;
-    z-index: 30;
-    background: var(--bg);
-}
-
-.navInner {
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    max-width: var(--content-width);
-    height: 64px;
-    margin: 0 auto;
-    padding: 0 var(--space-10);
-}
-
-.navLinks {
-    display: flex;
-    gap: var(--space-6);
-}
-
-.navLinks a,
-.navActions a {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-height: 44px;
-    color: var(--text-muted);
-    font-size: var(--text-base);
-    font-weight: 500;
-    text-decoration: none;
-    transition: color var(--duration-fast) var(--ease);
-}
-
-.navLinks a:hover,
-.navActions a:hover {
-    color: var(--text);
-}
-
-.navActions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-6);
-    margin-left: auto;
 }
 
 /* ---------- Shared type ---------- */
@@ -95,7 +48,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: var(--content-width);
+    max-width: 1280px;
     margin: 0 auto;
     padding: var(--space-16) var(--space-10) 0;
     text-align: center;
@@ -146,77 +99,25 @@
 
 .heroFigure {
     width: 100%;
-    max-width: 1040px;
-    margin: var(--space-12) 0 0;
+    max-width: 1200px;
+    margin: 0;
 }
 
 .heroFigure figcaption {
     max-width: 60ch;
-    margin: var(--space-4) auto 0;
+    margin: var(--space-6) auto 0;
     color: var(--text-muted);
     font-size: var(--text-sm);
     line-height: 1.45;
 }
 
-/* ---------- Facts ---------- */
 
-.facts {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-10);
-    width: 100%;
-    max-width: 1040px;
-    margin: var(--space-16) 0 0;
-    padding: var(--space-10) var(--space-12);
-    border-radius: var(--radius-xl);
-    background: var(--surface);
-    text-align: left;
-}
 
-.facts dt {
-    font-family: var(--font-display);
-    font-size: var(--text-5xl);
-    letter-spacing: -0.02em;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
 
-.facts dd {
-    max-width: 28ch;
-    margin: var(--space-3) 0 0;
-    color: var(--text);
-    font-size: var(--text-md);
-    line-height: 1.5;
-}
 
-/* ---------- Outcomes ---------- */
 
-.outcomes {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-12);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
 
-.outcomes h3 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--text-2xl);
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    line-height: 1.12;
-    text-wrap: balance;
-}
 
-.outcomes p {
-    max-width: 34ch;
-    margin: var(--space-4) 0 0;
-    color: var(--text);
-    font-size: var(--text-md);
-    line-height: 1.55;
-}
 
 /* ---------- Engineering (the one dark surface) ---------- */
 
@@ -323,23 +224,25 @@
 
 .decisions {
     display: grid;
-    gap: var(--space-3);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-/* One panel per decision: the decision set large, then why and what it costs. */
-.decisions li {
-    display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: var(--space-12);
-    padding: var(--space-10);
-    border-radius: var(--radius-lg);
+/* One card per decision: the decision set in serif, then why, what it costs, and when it would change. */
+.decision {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    padding: var(--space-8);
+    border-radius: 20px;
     background: var(--surface);
+    box-shadow: var(--shadow-sm);
 }
 
-.decisions h3 {
+.decision h3 {
     margin: 0;
     font-family: var(--font-display);
     font-size: var(--text-2xl);
@@ -349,75 +252,34 @@
     text-wrap: balance;
 }
 
-.decisions p {
+.decisionBlock p {
     margin: 0;
-    font-size: var(--text-md);
+    font-size: var(--text-base);
     line-height: 1.55;
 }
 
-.decisions p + p {
-    margin-top: var(--space-4);
-    color: var(--text-muted);
+.decisionBlock .decisionLabel {
+    margin-bottom: var(--space-1);
+    color: var(--accent-text);
+    font-size: var(--text-sm);
+    font-weight: 600;
 }
 
-.decisions strong {
+.wouldChange {
+    margin: auto 0 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+}
+
+.wouldChange strong {
     color: var(--text);
     font-weight: 600;
 }
 
 /* ---------- Verified ---------- */
-
-.verified {
-    display: grid;
-    gap: var(--space-8);
-    padding: var(--space-8) var(--space-10);
-    border-radius: var(--radius-lg);
-    background: var(--surface);
-}
-
-/* One row per test: the flows it proves, then the test's own title. */
-.verifiedGroup {
-    display: grid;
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    gap: var(--space-12);
-    align-items: start;
-}
-
-.verifiedGroup ul {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3) var(--space-6);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.verifiedGroup li {
-    display: grid;
-    grid-template-columns: 18px minmax(0, 1fr);
-    gap: var(--space-3);
-    align-items: start;
-    font-size: var(--text-md);
-    font-weight: 550;
-    line-height: 1.4;
-}
-
-.pass {
-    margin-top: 2px;
-    color: var(--success);
-}
-
-.testName {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: var(--text-sm);
-    line-height: 1.45;
-}
-
-.testName code {
-    overflow-wrap: anywhere;
-    font-family: var(--font-mono);
-}
 
 .inlineLink {
     color: var(--text);
@@ -437,19 +299,7 @@
     text-align: center;
 }
 
-.builder {
-    max-width: 52ch;
-    margin: var(--space-16) 0 0;
-    color: var(--text);
-    font-size: var(--text-md);
-    line-height: 1.6;
-}
 
-.builder a {
-    color: var(--text);
-    font-weight: 550;
-    text-underline-offset: 3px;
-}
 
 .closingTitle {
     margin: 0;
@@ -503,6 +353,10 @@
 /* ---------- 768 px and below ---------- */
 
 @media (max-width: 1023px) {
+    .decisions {
+        grid-template-columns: 1fr;
+    }
+
     .navInner,
     .hero,
     .section,
@@ -527,29 +381,9 @@
         padding-bottom: var(--space-24);
     }
 
-    .outcomes {
-        grid-template-columns: 1fr;
-        gap: var(--space-10);
-    }
 
-    .decisions li {
-        grid-template-columns: 1fr;
-        gap: var(--space-5);
-    }
 
-    .facts {
-        gap: var(--space-6);
-        padding: var(--space-8);
-    }
 
-    .facts dt {
-        font-size: var(--text-4xl);
-    }
-
-    .verifiedGroup {
-        grid-template-columns: 1fr;
-        gap: var(--space-3);
-    }
 }
 
 @media (max-width: 767px) {
@@ -605,21 +439,7 @@
     }
 
     .sectionTitle,
-    .builder {
-    max-width: 52ch;
-    margin: var(--space-16) 0 0;
-    color: var(--text);
-    font-size: var(--text-md);
-    line-height: 1.6;
-}
-
-.builder a {
-    color: var(--text);
-    font-weight: 550;
-    text-underline-offset: 3px;
-}
-
-.closingTitle {
+    .closingTitle {
         font-size: var(--text-3xl);
     }
 
@@ -627,31 +447,10 @@
         margin-bottom: var(--space-8);
     }
 
-    .outcomes h3 {
-        font-size: var(--text-2xl);
-    }
 
-    .decisions li {
-        padding: var(--space-6);
-    }
 
-    .facts {
-        grid-template-columns: 1fr;
-        margin-top: var(--space-10);
-        padding: var(--space-6);
-    }
 
-    .facts dt {
-        font-size: var(--text-4xl);
-    }
 
-    .verified {
-        padding: var(--space-6);
-    }
-
-    .verifiedGroup ul {
-        grid-template-columns: 1fr;
-    }
 
 
 

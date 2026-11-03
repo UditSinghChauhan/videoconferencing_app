@@ -1,0 +1,71 @@
+.blocks {
+    display: grid;
+    gap: var(--space-16);
+    max-width: 720px;
+    margin: var(--space-12) auto 0;
+    padding: 0;
+    list-style: none;
+}
+
+.block h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.block p {
+    margin: var(--space-2) 0 var(--space-6);
+    color: var(--text-muted);
+    font-size: var(--text-md);
+    line-height: 1.5;
+}
+
+.room {
+    position: relative;
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border-radius: var(--radius-xl);
+    background: var(--room-bg);
+    box-shadow: var(--shadow-lg);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+}
+
+.chat {
+    max-width: 420px;
+    padding: var(--space-3);
+    border-radius: var(--radius-xl);
+    background: var(--room-bg);
+    box-shadow: var(--shadow-lg);
+}
+
+.stack {
+    position: relative;
+    display: grid;
+    width: 70%;
+    margin: var(--space-6) auto var(--space-8);
+}
+
+.stackTile {
+    grid-area: 1 / 1;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    border-radius: var(--radius-lg);
+}
+
+.controls {
+    transform-origin: 100% 50%;
+}
+
+@media (max-width: 639px) {
+    .block h3 {
+        font-size: var(--text-2xl);
+    }
+}

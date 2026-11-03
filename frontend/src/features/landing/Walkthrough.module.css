@@ -1,8 +1,9 @@
+/* Walkthrough: text steps on the left, a camera over the product on the right. */
+
 .layout {
     display: grid;
-    grid-template-columns: 4fr 8fr;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
     gap: var(--space-12);
-    align-items: start;
 }
 
 .steps {
@@ -11,184 +12,153 @@
     list-style: none;
 }
 
-/* Each step is tall enough that scrolling advances one step at a time. */
+/* Each step is about 60vh, its copy centred in that band. */
 .step {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 62vh;
-    padding-left: var(--space-8);
+    display: grid;
+    align-items: center;
+    min-height: 60vh;
 }
 
-.step::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: calc(50% - 64px);
-    width: 2px;
-    height: 128px;
-    border-radius: 2px;
-    background: var(--accent-text);
-    transform: scaleY(0);
-    transition: transform var(--duration) var(--ease);
+.step:first-child {
+    min-height: 40vh;
+    align-items: start;
 }
 
-.step[data-active]::before {
-    transform: scaleY(1);
-}
-
-.number {
+.stepCopy {
     color: var(--text-muted);
-    font-size: var(--text-sm);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
+    transition: color 200ms var(--ease);
+}
+
+.step[data-active] .stepCopy {
+    color: var(--text);
 }
 
 .title {
-    margin: var(--space-2) 0 var(--space-4);
-    color: var(--text-muted);
+    margin: 0;
     font-family: var(--font-display);
     font-size: var(--text-4xl);
     font-weight: 400;
     letter-spacing: -0.02em;
     line-height: 1.05;
-    transition: color var(--duration) var(--ease);
 }
 
 .body {
-    max-width: 36ch;
-    margin: 0;
-    color: var(--text);
-    font-size: var(--text-lg);
+    max-width: 34ch;
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-md);
     line-height: 1.55;
-}
-
-.step[data-active] .title {
-    color: var(--text);
-}
-
-.inlineShot {
-    display: none;
 }
 
 .paneColumn {
     position: sticky;
-    top: calc(50vh - 280px);
+    top: 112px;
+    align-self: start;
+    display: grid;
+    gap: var(--space-4);
+}
+
+.progress {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.count {
+    color: var(--accent-text);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.rail {
+    position: relative;
+    flex: 1;
+    height: 2px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--border);
+}
+
+.fill {
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    transform-origin: 0 50%;
+}
+
+.pane {
+    --frame-radius: var(--radius-xl);
 }
 
 .viewport {
     position: relative;
-    aspect-ratio: 16 / 10;
+    width: 100%;
     overflow: hidden;
     background: var(--room-bg);
 }
 
-/* Width and left come from the step's crop (Walkthrough.tsx), so text stays near real size. */
 .paneShot {
     position: absolute;
     top: 0;
+    left: 0;
+    width: 100%;
     max-width: none;
     height: auto;
+    transform-origin: 0 0;
     opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 240ms var(--ease), transform 240ms var(--ease);
+    transition: opacity 320ms var(--ease);
+    will-change: transform;
 }
 
 .paneShot[data-active] {
     opacity: 1;
-    transform: translateY(0);
 }
 
-/* The recap is a long page: once it is in view, glide down to the transcript. */
-.paneShot[data-step="recap"][data-active] {
-    animation: read-recap 9s var(--ease) 1200ms forwards;
+/* Under 1024 px: stacked steps, each with its own capture. */
+.stacked {
+    display: grid;
+    gap: var(--space-16);
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
-@keyframes read-recap {
-    from { transform: translateY(0); }
-    to { transform: translateY(var(--glide)); }
+.stackedStep .title {
+    margin-top: var(--space-2);
+    font-size: var(--text-3xl);
 }
 
-/* Below 1024 px: no sticky pane; each step is its text followed by its own capture. */
-@media (max-width: 1023px) {
-    .layout {
-        grid-template-columns: 1fr;
-        gap: 0;
-    }
+.inlineShot {
+    margin-top: var(--space-6);
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    background: var(--room-bg);
+    box-shadow: var(--shadow-lg);
+}
 
-    .paneColumn {
-        display: none;
-    }
+.inlineShot img {
+    width: 100%;
+    height: auto;
+}
 
-    .step {
-        min-height: 0;
-        padding: 0 0 var(--space-16);
-    }
-
-    .step::before {
-        display: none;
-    }
-
-    .title {
-        color: var(--text);
-        font-size: var(--text-2xl);
-    }
-
-    .body {
-        max-width: 60ch;
-    }
-
-    .number {
-        display: inline-grid;
-        place-items: center;
-        width: 28px;
-        height: 28px;
-        border-radius: var(--radius-full);
-        background: var(--surface-2);
-        color: var(--text);
-    }
-
-    .inlineShot {
-        display: block;
-        overflow: hidden;
-        margin-top: var(--space-6);
-        border-radius: var(--radius-xl);
-        background: var(--room-bg);
-    }
-
-    .inlineShot img {
-        display: block;
-        width: 100%;
-        height: auto;
-    }
-
-    /* The recap is a long page: show its top, where the key points are. */
-    .inlineShot[data-step="recap"] {
-        max-height: 560px;
-        background: var(--surface);
-    }
+.inlineShot[data-step="recap"] {
+    max-height: 70vh;
 }
 
 @media (max-width: 639px) {
     .inlineShot {
-        max-width: 320px;
-        max-height: 600px;
+        max-width: 360px;
+        border-radius: 28px;
+    }
+
+    .inlineShot[data-step="recap"] {
+        max-height: 640px;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .paneShot,
-    .step::before,
-    .title {
-        transition: none;
-    }
-
+    .stepCopy,
     .paneShot {
-        transform: none;
-    }
-
-    .paneShot[data-step="recap"][data-active] {
-        animation: none;
+        transition: none;
     }
 }

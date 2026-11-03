@@ -1,0 +1,59 @@
+.card {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+    color: var(--text);
+    text-align: left;
+}
+
+.head {
+    display: grid;
+    gap: var(--space-1);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--border);
+}
+
+.title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    letter-spacing: -0.015em;
+    line-height: 1.05;
+}
+
+.meta,
+.label {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+.label {
+    margin-top: var(--space-1);
+    color: var(--text);
+    font-weight: 600;
+}
+
+.points {
+    gap: var(--space-2);
+}
+
+.points li {
+    padding: var(--space-3) var(--space-4) var(--space-3) var(--space-10);
+    font-size: var(--text-sm);
+    line-height: 1.45;
+}
+
+.points li::before {
+    left: var(--space-3);
+    top: var(--space-3);
+    width: 20px;
+    height: 20px;
+}
+
+.chips li {
+    font-size: var(--text-sm);
+}

@@ -1,25 +1,38 @@
-import { useEffect } from "react";
+import { lazy, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Check } from "lucide-react";
+import { LandingNav } from "../features/landing/nav/LandingNav";
 import { useAuth } from "../auth/AuthContext";
 import { ButtonLink } from "../components/Button";
 import { GithubIcon } from "../components/GithubIcon";
 import { Logo } from "../components/Logo";
-import { ArchitectureFigure } from "../features/landing/ArchitectureFigure";
-import { DECISIONS, E2E_SPEC_PATH, ENGINEERING, FACTS, OUTCOMES, VERIFIED } from "../features/landing/content";
-import { HeroRecording } from "../features/landing/HeroRecording";
-import { Walkthrough } from "../features/landing/Walkthrough";
+import { DECISIONS, E2E_SPEC_PATH, ENGINEERING } from "../features/landing/content";
+import { Deferred } from "../features/landing/Deferred";
+import { Facts } from "../features/landing/facts/Facts";
+import { HeroStage } from "../features/landing/hero/HeroStage";
 import { wakeServer } from "../lib/api";
-import { AUTHOR_URL, LINKEDIN_URL, REPOSITORY_URL } from "../lib/env";
+import { AUTHOR_URL, LINKEDIN_URL, PORTFOLIO_URL, REPOSITORY_URL } from "../lib/env";
 import styles from "./LandingPage.module.css";
 
-const sourceUrl = (path: string) => `${REPOSITORY_URL}/blob/master/${path}`;
+// Below the fold: each section's code loads as it approaches the viewport,
+// keeping the animation library and the demos out of the first paint.
+const SignatureChapter = lazy(() => import("../features/landing/chapter/SignatureChapter"));
+const Walkthrough = lazy(() => import("../features/landing/Walkthrough"));
+const Bento = lazy(() => import("../features/landing/bento/Bento"));
+const ArchitectureFigure = lazy(() => import("../features/landing/ArchitectureFigure"));
+const VerifiedTerminal = lazy(() => import("../features/landing/verified/VerifiedTerminal"));
+const ClosingLoop = lazy(() => import("../features/landing/closing/ClosingLoop"));
 
-/** Verified flows grouped under the Playwright test that proves them, in first-seen order. */
-const verifiedByTest = [...VERIFIED.reduce((groups, item) => {
-    groups.set(item.test, [...(groups.get(item.test) ?? []), item.flow]);
-    return groups;
-}, new Map<string, string[]>())];
+
+const SECTION_LINKS = [
+    { href: "#signature", label: "How it works" },
+    { href: "#walkthrough", label: "Walkthrough" },
+    { href: "#engineering", label: "Engineering" },
+    { href: "#decisions", label: "Decisions" },
+    { href: "#verified", label: "Verified" },
+    { href: "/design-notes", label: "Design notes" }
+];
+
+const sourceUrl = (path: string) => `${REPOSITORY_URL}/blob/master/${path}`;
 
 export default function LandingPage() {
     const { status } = useAuth();
@@ -35,23 +48,7 @@ export default function LandingPage() {
 
     return (
         <div className={styles.page}>
-            <header className={styles.nav}>
-                <div className={styles.navInner}>
-                    <Logo />
-                    <nav className={styles.navLinks} aria-label="Sections">
-                        <a href="#walkthrough">Walkthrough</a>
-                        <a href="#engineering">Engineering</a>
-                        <a href="#decisions">Decisions</a>
-                        <a href="#verified">Verified</a>
-                    </nav>
-                    <div className={styles.navActions}>
-                        {signedIn ? <Link to="/home">Your meetings</Link> : <Link to="/auth">Sign in</Link>}
-                        <a href={REPOSITORY_URL} target="_blank" rel="noreferrer" className={styles.navGithub}>
-                            <GithubIcon /> <span>GitHub</span>
-                        </a>
-                    </div>
-                </div>
-            </header>
+            <LandingNav signedIn={signedIn} links={SECTION_LINKS} />
 
             <main id="main">
                 <section className={styles.hero} aria-labelledby="hero-title">
@@ -69,45 +66,33 @@ export default function LandingPage() {
                     </div>
                     <p className={styles.heroNote}>The demo needs no account and runs in your browser.</p>
 
-                    <figure className={styles.heroFigure}>
-                        <HeroRecording address="bridgefrontend.onrender.com" />
+<figure className={styles.heroFigure}>
+                        <HeroStage />
                         <figcaption>
-                            Recorded from the running app: four people, one call, and the recap the server writes when the host ends it. No external AI.
+                            Recorded from the running app with an illustrated demo cast. The recap is written on the server from the chat and activity, with no external AI.
                         </figcaption>
                     </figure>
 
-                    <dl className={styles.facts}>
-                        {FACTS.map((fact) => (
-                            <div key={fact.value + fact.label}>
-                                <dt>{fact.value}</dt>
-                                <dd>{fact.label}</dd>
-                            </div>
-                        ))}
-                    </dl>
+                    <Facts />
                 </section>
+
+                <Deferred id="signature" minHeight="calc(320vh + 240px)"><SignatureChapter /></Deferred>
 
                 <section id="walkthrough" className={styles.section} aria-labelledby="walkthrough-title">
                     <div className={styles.intro}>
                         <h2 id="walkthrough-title" className={styles.sectionTitle}>From link to recap.</h2>
                     </div>
-                    <Walkthrough />
+                    <Deferred minHeight="1600px"><Walkthrough /></Deferred>
                 </section>
 
-                <section className={styles.section} aria-labelledby="outcomes-title">
+<section className={styles.section} aria-labelledby="outcomes-title">
                     <div className={styles.intro}>
                         <h2 id="outcomes-title" className={styles.sectionTitle}>What you can count on.</h2>
                     </div>
-                    <ul className={styles.outcomes}>
-                        {OUTCOMES.map((outcome) => (
-                            <li key={outcome.title}>
-                                <h3>{outcome.title}</h3>
-                                <p>{outcome.body}</p>
-                            </li>
-                        ))}
-                    </ul>
+                    <Deferred minHeight="1000px"><Bento /></Deferred>
                 </section>
 
-                <section id="engineering" className={styles.engineering} aria-labelledby="engineering-title">
+                <section id="engineering" className={styles.engineering} aria-labelledby="engineering-title" data-nav-theme="dark">
                     <div className={styles.engineeringInner}>
                         <div className={styles.intro}>
                             <h2 id="engineering-title" className={styles.sectionTitle}>Built like a product, documented like a system.</h2>
@@ -116,7 +101,7 @@ export default function LandingPage() {
                             </p>
                         </div>
 
-                        <ArchitectureFigure />
+                        <Deferred minHeight="600px"><ArchitectureFigure /></Deferred>
 
                         <ul className={styles.notes}>
                             {ENGINEERING.map((note) => (
@@ -151,12 +136,19 @@ export default function LandingPage() {
                     </div>
                     <ol className={styles.decisions}>
                         {DECISIONS.map((item) => (
-                            <li key={item.decision}>
+                            <li key={item.decision} className={styles.decision}>
                                 <h3>{item.decision}</h3>
-                                <div>
-                                    <p><strong>Why.</strong> {item.why}</p>
-                                    <p><strong>Trade-off.</strong> {item.cost}</p>
+                                <div className={styles.decisionBlock}>
+                                    <p className={styles.decisionLabel}>Why</p>
+                                    <p>{item.why}</p>
                                 </div>
+                                <div className={styles.decisionBlock}>
+                                    <p className={styles.decisionLabel}>Cost</p>
+                                    <p>{item.cost}</p>
+                                </div>
+                                {item.wouldChange ? (
+                                    <p className={styles.wouldChange}><strong>Would change when</strong> {item.wouldChange}</p>
+                                ) : null}
                             </li>
                         ))}
                     </ol>
@@ -172,56 +164,33 @@ export default function LandingPage() {
                             </a>.
                         </p>
                     </div>
-                    <div className={styles.verified}>
-                        {verifiedByTest.map(([test, flows]) => (
-                            <div key={test} className={styles.verifiedGroup}>
-                                <ul>
-                                    {flows.map((flow) => (
-                                        <li key={flow}>
-                                            <Check size={18} aria-hidden="true" className={styles.pass} />
-                                            <span>
-                                                {flow}
-                                                <span className="visually-hidden">: passing</span>
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <p className={styles.testName}>
-                                    <span className="visually-hidden">Covered by the test </span>
-                                    <code>{test}</code>
-                                </p>
-                            </div>
-                        ))}
-                    </div>
+                    <Deferred minHeight="720px"><VerifiedTerminal /></Deferred>
                 </section>
 
-                <section className={styles.closing} aria-labelledby="closing-title">
+<section className={styles.closing} aria-labelledby="closing-title">
                     <h2 id="closing-title" className={styles.closingTitle}>See a call turn into its recap.</h2>
                     <div className={styles.heroActions}>
                         <ButtonLink to="/demo" size="lg" variant="accent">Try the live demo</ButtonLink>
+                        <ButtonLink to={startHref} size="lg" variant="secondary">
+                            {signedIn ? "Go to your meetings" : "Start a meeting"}
+                        </ButtonLink>
                     </div>
-                    <p className={styles.heroNote}>
-                        Or <Link to={startHref}>{signedIn ? "go to your meetings" : "create an account"}</Link> and host a real one.
-                    </p>
-                    <p className={styles.builder}>
-                        Bridge was designed, engineered and tested end to end by{" "}
-                        <a href={AUTHOR_URL} target="_blank" rel="noreferrer">Udit Singh Chauhan</a>: product, interface, realtime
-                        backend and the test suite.{" "}
-                        <a href={LINKEDIN_URL} target="_blank" rel="noreferrer">Get in touch on LinkedIn</a>.
-                    </p>
+                    <Deferred minHeight="460px"><ClosingLoop /></Deferred>
                 </section>
             </main>
 
-            <footer className={styles.footer}>
+<footer className={styles.footer}>
                 <div className={styles.footerInner}>
                     <Logo />
                     <p>
-                        Designed and built by <a href={AUTHOR_URL} target="_blank" rel="noreferrer">Udit Singh Chauhan</a>.
+                        Designed and built by <a href={AUTHOR_URL} target="_blank" rel="noreferrer">Udit Singh Chauhan</a>
                     </p>
-                    <div className={styles.footerLinks}>
+                    <nav className={styles.footerLinks} aria-label="More">
+                        <Link to="/design-notes">Design notes</Link>
+                        {PORTFOLIO_URL ? <a href={PORTFOLIO_URL} target="_blank" rel="noreferrer">Portfolio</a> : null}
                         <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">GitHub</a>
                         <a href={LINKEDIN_URL} target="_blank" rel="noreferrer">LinkedIn</a>
-                    </div>
+                    </nav>
                 </div>
             </footer>
         </div>

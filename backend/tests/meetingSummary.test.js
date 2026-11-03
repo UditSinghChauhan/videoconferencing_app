@@ -14,7 +14,7 @@ test("an empty meeting summarizes without inventing content", () => {
     assert.match(summary.conclusion, /without enough activity/);
 });
 
-test("keywords are ranked by frequency and exclude stop words", () => {
+test("keywords are noun phrases ranked by how often their words recur, without stop words", () => {
     const summary = generateMeetingSummary(buildMeeting([
         {
             type: "chat",
@@ -25,8 +25,9 @@ test("keywords are ranked by frequency and exclude stop words", () => {
         { type: "chat", username: "alice", content: "pipeline pipeline notes" }
     ]));
 
-    assert.equal(summary.keywords[0], "pipeline");
-    assert.ok(summary.keywords.includes("deployment"));
+    // "pipeline" recurs, so the phrase that contains it ranks first and stands in for the single word.
+    assert.equal(summary.keywords[0], "deployment pipeline");
+    assert.ok(!summary.keywords.includes("pipeline"), "a word already inside a phrase is not repeated");
     assert.ok(!summary.keywords.includes("should"), "stop words must be filtered out");
     assert.ok(!summary.keywords.includes("before"), "stop words must be filtered out");
     assert.ok(!summary.keywords.includes("the"), "short words must be filtered out");

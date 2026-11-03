@@ -2,16 +2,23 @@
 
 export const E2E_SPEC_PATH = "frontend/tests/e2e/meeting-system.spec.js";
 
+export interface Crop {
+    x: number;
+    y: number;
+    width: number;
+}
+
 export interface WalkthroughStep {
     id: "start" | "share" | "recap";
     title: string;
     body: string;
     image: { desktop: string; mobile: string; alt: string; desktopHeight: number; mobileHeight: number };
     /**
-     * The part of the 1280 px-wide desktop capture the pane shows, in capture
-     * pixels, so interface text stays near its real size instead of shrinking.
+     * The walkthrough camera: where it starts and ends while this step is in
+     * view, in capture pixels (the desktop capture is 1280 px wide). A crop
+     * at most 740 px wide keeps interface text at 13 px or more in the pane.
      */
-    crop: { x: number; y?: number; width: number };
+    camera: { from: Crop; to: Crop };
 }
 
 export const WALKTHROUGH: WalkthroughStep[] = [
@@ -24,9 +31,9 @@ export const WALKTHROUGH: WalkthroughStep[] = [
             mobile: "/landing/step-start-mobile.webp",
             desktopHeight: 1600,
             mobileHeight: 1688,
-            alt: "A new Bridge room with only the host, Maya Patel, and the invite link just copied."
+            alt: "A new Bridge room with only the host, Maya Patel, on camera, and the invite link just copied."
         },
-        crop: { x: 0, width: 1280 }
+        camera: { from: { x: 0, y: 0, width: 700 }, to: { x: 260, y: 150, width: 740 } }
     },
     {
         id: "share",
@@ -37,9 +44,9 @@ export const WALKTHROUGH: WalkthroughStep[] = [
             mobile: "/landing/step-share-mobile.webp",
             desktopHeight: 1600,
             mobileHeight: 1688,
-            alt: "The same room with four people. Jordan Lee is muted, and the chat shows messages about the release checklist and Thursday's deadline."
+            alt: "The same room with four people on camera, Maya, Aarav, Sofia and Jordan, and the chat with messages about the release checklist and Thursday's deadline."
         },
-        crop: { x: 460, width: 820 }
+        camera: { from: { x: 20, y: 70, width: 740 }, to: { x: 540, y: 40, width: 740 } }
     },
     {
         id: "recap",
@@ -49,10 +56,10 @@ export const WALKTHROUGH: WalkthroughStep[] = [
             desktop: "/landing/step-recap-desktop.webp",
             mobile: "/landing/step-recap-mobile.webp",
             desktopHeight: 3050,
-            mobileHeight: 4326,
-            alt: "The meeting recap: three key points taken from the chat, who was there, topics such as release and onboarding, and the five-message transcript."
+            mobileHeight: 4402,
+            alt: "The meeting recap: three key points taken from the chat, who was there, topics such as release checklist and onboarding fix, and the five-message transcript."
         },
-        crop: { x: 230, y: 64, width: 820 }
+        camera: { from: { x: 240, y: 90, width: 720 }, to: { x: 240, y: 860, width: 720 } }
     }
 ];
 
@@ -63,6 +70,8 @@ export interface Decision {
     decision: string;
     why: string;
     cost: string;
+    /** Only where ARCHITECTURE.md ("Scalability & Future Improvements") names the change. */
+    wouldChange?: string;
 }
 
 /** The trade-offs behind the build, stated the way they would be in a design review. */
@@ -70,12 +79,14 @@ export const DECISIONS: Decision[] = [
     {
         decision: "A peer-to-peer mesh, not a media server.",
         why: "Small rooms get the lowest latency, and the server never pays for media: it only authenticates, relays signalling and keeps the record.",
-        cost: "Each person uploads a stream to everyone else, so rooms top out at about six. Past that, the same signalling would front an SFU."
+        cost: "Each person uploads a stream to everyone else, so rooms top out at about six.",
+        wouldChange: "rooms need more than about six people: the same signalling would front an SFU."
     },
     {
         decision: "A rule-based recap, not an LLM.",
         why: "The same call always produces the same notes, nothing leaves the server, it costs nothing per meeting, and it is tested like any other function.",
-        cost: "It selects sentences rather than writing a summary. An LLM summary is the next step, behind the same recap interface."
+        cost: "It selects sentences rather than writing a summary.",
+        wouldChange: "summary quality matters more than determinism: an LLM layer would sit behind the same recap interface."
     },
     {
         decision: "Short access tokens and rotating refresh tokens.",
@@ -84,20 +95,6 @@ export const DECISIONS: Decision[] = [
     }
 ];
 
-export const OUTCOMES = [
-    {
-        title: "Everyone leaves with the same notes.",
-        body: "Ending the call produces key points and the full transcript, kept in each person's history and copyable as Markdown."
-    },
-    {
-        title: "A host can remove anyone, and the server enforces it.",
-        body: "Removing someone or ending the call is checked by the API, so a participant cannot do it by calling the endpoint directly."
-    },
-    {
-        title: "Join from a link, in a browser, in seconds.",
-        body: "No install and no account for the demo. A lobby checks your devices first, and a dropped connection rejoins on its own."
-    }
-];
 
 export interface EngineeringNote {
     label: string;
@@ -116,6 +113,8 @@ export const ENGINEERING: EngineeringNote[] = [
 
 export interface VerifiedFlow {
     flow: string;
+    /** One line on what the test actually checks. */
+    detail: string;
     /** Exact title of the Playwright test that covers the flow. */
     test: string;
     /** A line that must exist in the spec, pinning the step inside the test. */
@@ -124,16 +123,24 @@ export interface VerifiedFlow {
 
 const LIFECYCLE = "two people meet, chat, mute, leave, get removed, and the host ends with a recap";
 const RETURNING = "a returning user signs in and stays signed in after a reload";
+const OUTSIDERS = "people outside a meeting cannot read its recap, and unknown codes are explained";
+
+/** Line of each test's declaration in the spec, for deep links. content.test.ts keeps these honest. */
+export const TEST_LINES: Record<string, number> = {
+    [LIFECYCLE]: 43,
+    [OUTSIDERS]: 138,
+    [RETURNING]: 161
+};
 
 export const VERIFIED: VerifiedFlow[] = [
-    { flow: "Register", test: RETURNING, step: 'await page.getByRole("button", { name: "Create account" }).click();' },
-    { flow: "Sign in", test: RETURNING, step: 'await page.getByRole("button", { name: "Sign in" }).click();' },
-    { flow: "Stay signed in after a reload", test: RETURNING, step: "await page.reload();" },
-    { flow: "Create a meeting and join it by link", test: LIFECYCLE, step: "// Guest joins by pasting the full invite link." },
-    { flow: "Chat in real time", test: LIFECYCLE, step: "// Chat both ways." },
-    { flow: "Only the host can remove people", test: LIFECYCLE, step: "expect(forbidden.status()).toBe(403);" },
-    { flow: "End the meeting and open its recap", test: LIFECYCLE, step: "// Host ends the meeting and lands on the recap." },
-    { flow: "Outsiders get a 403 on a recap", test: "people outside a meeting cannot read its recap, and unknown codes are explained", step: "expect((await summaryResponse).status()).toBe(403);" }
+    { flow: "Register", detail: "A new account is created from the sign-up form and lands on the dashboard.", test: RETURNING, step: 'await page.getByRole("button", { name: "Create account" }).click();' },
+    { flow: "Sign in", detail: "In a fresh browser, the same person signs in with their username and password.", test: RETURNING, step: 'await page.getByRole("button", { name: "Sign in" }).click();' },
+    { flow: "Stay signed in after a reload", detail: "A full page reload keeps the session and the dashboard.", test: RETURNING, step: "await page.reload();" },
+    { flow: "Create a meeting and join by link", detail: "The host gets a readable code; a guest pastes the full invite link and joins.", test: LIFECYCLE, step: "// Guest joins by pasting the full invite link." },
+    { flow: "Chat in real time", detail: "Messages arrive both ways between two browsers.", test: LIFECYCLE, step: "// Chat both ways." },
+    { flow: "Only the host can remove people", detail: "A participant's remove request gets HTTP 403; the host's succeeds.", test: LIFECYCLE, step: "expect(forbidden.status()).toBe(403);" },
+    { flow: "End the meeting and open its recap", detail: "Ending lands the host on the recap with key points and the transcript.", test: LIFECYCLE, step: "// Host ends the meeting and lands on the recap." },
+    { flow: "Outsiders get a 403 on a recap", detail: "Someone who was not in the call gets HTTP 403 for its summary.", test: OUTSIDERS, step: "expect((await summaryResponse).status()).toBe(403);" }
 ];
 
 /** Facts under the hero. Each is measured or structural, never a vanity number. */
