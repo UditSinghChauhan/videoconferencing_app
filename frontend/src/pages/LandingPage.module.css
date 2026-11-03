@@ -321,12 +321,107 @@
     text-wrap: balance;
 }
 
-.cta p {
+.cta > p {
     max-width: 30rem;
     margin: 14px 0 0;
     color: #b9b8bd;
     font-size: 1.0625rem;
     line-height: 1.55;
+    text-wrap: balance;
+}
+
+/*
+ * The fold: four monograms, spread out, slide together and shrink into the
+ * left of a small recap card that fades up behind them; then its text
+ * arrives. One pass, 500–700 ms per part on the page's ease, on reveal only.
+ */
+.fold {
+    --fold-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    margin-bottom: 28px;
+    padding: 0 14px 0 8px;
+    text-align: left;
+}
+
+.foldCard {
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: 12px;
+    background: #26262b;
+    box-shadow: 0 12px 28px -14px rgb(0 0 0 / 60%);
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 500ms var(--fold-ease) 450ms, transform 500ms var(--fold-ease) 450ms;
+}
+
+.foldPeople {
+    position: relative;
+    display: inline-flex;
+}
+
+.foldFace {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px #26262b;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    /* Spread: 32 px apart and a little larger, centred over the card. */
+    transform: translateX(calc(64px + var(--i) * 22px)) scale(1.25);
+    transition: transform 700ms var(--fold-ease) calc(200ms + var(--i) * 40ms);
+}
+
+.foldFace + .foldFace {
+    margin-left: -3px;
+}
+
+.foldText {
+    position: relative;
+    display: grid;
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 400ms var(--fold-ease) 700ms, transform 400ms var(--fold-ease) 700ms;
+}
+
+.foldText strong {
+    color: #f3f2ef;
+    font-weight: 550;
+}
+
+.foldText span {
+    color: #b9b8bd;
+}
+
+.foldText > * {
+    white-space: nowrap;
+}
+
+.cta[data-shown] .foldCard,
+.cta[data-shown] .foldFace,
+.cta[data-shown] .foldText {
+    opacity: 1;
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .foldCard,
+    .foldFace,
+    .foldText {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
 }
 
 .cta .actions {
