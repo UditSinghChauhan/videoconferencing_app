@@ -39,7 +39,11 @@
     grid-template-columns: 300px 1fr;
 }
 
+/* A column: the text at the top, the export's ten lines at the foot, level with the pane's fade. */
 .recapText {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     padding: 32px 28px;
     border-right: 1px solid var(--hairline);
 }
@@ -61,7 +65,9 @@
 
 /* The real export, as code: monospace belongs here. */
 .markdown {
-    margin: 24px 0 0;
+    align-self: stretch;
+    margin: auto 0 0;
+    padding-top: 24px;
 }
 
 .markdown figcaption {
@@ -70,10 +76,14 @@
     font-size: 0.8125rem;
 }
 
+/* Ten lines of the export, fading out: enough to see the shape, never a wall of code. */
 .markdown pre {
+    max-height: calc(10 * 1.6em + 14px);
     margin: 0;
-    padding: 14px;
+    padding: 14px 14px 0;
     overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+    mask-image: linear-gradient(to bottom, #000 60%, transparent);
     border: 1px solid var(--hairline);
     border-radius: 10px;
     background: var(--bg);
@@ -104,9 +114,23 @@
     text-underline-offset: 3px;
 }
 
+/*
+ * The pane takes the left column's height (its content is out of flow), so the
+ * card has no empty column: the recap runs to the card's edge and fades.
+ */
 .recapPane {
-    padding: 28px 36px 32px;
+    position: relative;
+    min-height: 600px;
     background: var(--bg);
+}
+
+.recapPaneInner {
+    position: absolute;
+    inset: 0;
+    padding: 28px 36px 0;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent);
 }
 
 /* The embedded recap: tighter than the full page, same component. */
@@ -196,6 +220,8 @@
 .fragment {
     position: relative;
     display: grid;
+    /* minmax(0, 1fr): the track never grows to its content's min-content, so nothing spills past the card. */
+    grid-template-columns: minmax(0, 1fr);
     place-items: center;
     height: 188px;
     padding: 16px;
@@ -262,7 +288,7 @@
 
 .small:hover .message:not(.incoming),
 .small:focus-within .message:not(.incoming) {
-    transform: translateY(-64px);
+    transform: translateY(var(--chat-step, -64px));
 }
 
 .small:hover .message:first-child,
@@ -328,11 +354,14 @@
     background: var(--danger-soft, rgb(196 50 10 / 8%));
 }
 
+/* The confirm opens as one compact row under the roster, inside the card at every width. */
 .confirm {
-    display: grid;
-    gap: 10px;
-    margin-top: 10px;
-    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 8px 8px 12px;
     border: 1px solid var(--hairline);
     border-radius: 12px;
     background: var(--surface);
@@ -352,12 +381,16 @@
 }
 
 .confirm strong {
+    min-width: 0;
+    overflow: hidden;
     font-weight: 550;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .confirmActions {
     display: flex;
-    justify-content: flex-end;
+    flex: none;
     gap: 6px;
 }
 
@@ -380,83 +413,37 @@
     color: #fff;
 }
 
-/* ---------- Screen share: two faces at rest; on hover the shared screen takes the stage ---------- */
+/* ---------- Screen share: the shared screen fills the tile, the presenter sits in the corner ---------- */
 
 .screen {
     position: relative;
-    display: grid;
-    gap: 10px;
-    justify-items: center;
-    width: 100%;
-    max-width: 300px;
-}
-
-.strip {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
     padding: 6px;
     border-radius: 12px;
     background: var(--room-bg);
-    transition: opacity 300ms var(--ease-out);
+    box-shadow: 0 16px 32px -18px rgb(0 0 0 / 45%);
 }
 
-.mini {
-    border-radius: 6px;
-}
-
-.mini > div {
-    display: none;
-}
-
-.shared {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    overflow: hidden;
-    border: 1px solid var(--hairline);
-    border-radius: 12px;
-    background: var(--surface);
-    box-shadow: 0 16px 32px -16px rgb(0 0 0 / 30%);
-    opacity: 0;
-    transform: translateY(10px) scale(0.97);
-    transition: opacity 350ms var(--ease-out), transform 350ms var(--ease-out);
-}
-
-.small:hover .shared,
-.small:focus-within .shared {
-    opacity: 1;
-    transform: none;
-}
-
-.small:hover .strip,
-.small:focus-within .strip {
-    opacity: 0.4;
-}
-
-.slideBar {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    height: 28px;
-    padding: 0 10px;
-    border-bottom: 1px solid var(--hairline);
-    color: var(--accent-text);
-    font-size: 0.8125rem;
-    font-weight: 550;
-}
-
+/* A slide from the presenter's screen, shown whole (screen shares are never cropped). */
 .slide {
     display: grid;
-    gap: 5px;
-    padding: 10px 12px 12px;
+    align-content: start;
+    gap: 4px;
+    height: 100%;
+    padding: 38px 14px 10px;
+    border-radius: 7px;
+    background: #fff;
+    color: var(--text);
     font-size: 0.8125rem;
 }
 
 .slide strong {
+    margin-bottom: 2px;
+    font-size: 0.9375rem;
     font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
 .slide span {
@@ -466,10 +453,18 @@
 }
 
 .slide i {
-    width: 11px;
-    height: 11px;
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 13px;
+    height: 13px;
     border: 1.5px solid var(--border-strong);
-    border-radius: 3px;
+    border-radius: 4px;
+    color: #fff;
+}
+
+.slide i svg {
+    opacity: 0;
 }
 
 .slide i.done {
@@ -477,132 +472,208 @@
     background: var(--success);
 }
 
-.shareButton {
+.slide i.done svg {
+    opacity: 1;
+}
+
+/* On hover or focus the last item gets ticked, live on the shared screen. */
+.slide i.pending {
+    transition: background-color 250ms var(--ease-out), border-color 250ms var(--ease-out);
+}
+
+.slide i.pending svg {
+    transform: scale(0.6);
+    transition: opacity 200ms var(--ease-out), transform 250ms var(--ease-out);
+}
+
+.small:hover .slide i.pending,
+.small:focus-within .slide i.pending {
+    border-color: var(--success);
+    background: var(--success);
+    transition-delay: 200ms;
+}
+
+.small:hover .slide i.pending svg,
+.small:focus-within .slide i.pending svg {
+    opacity: 1;
+    transform: none;
+    transition-delay: 250ms;
+}
+
+.presenting {
+    position: absolute;
+    top: 12px;
+    left: 12px;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 30px;
-    padding: 0 12px;
-    border: 1px solid var(--hairline);
+    gap: 5px;
+    height: 24px;
+    padding: 0 8px;
     border-radius: 999px;
-    background: var(--surface);
-    font-size: 0.8125rem;
-    font-weight: 550;
-    transition: background-color 200ms ease-out, color 200ms ease-out;
-}
-
-.small:hover .shareButton,
-.small:focus-within .shareButton {
-    border-color: transparent;
-    background: var(--accent-text);
+    background: rgb(12 12 14 / 78%);
     color: #fff;
+    font-size: 0.75rem;
+    font-weight: 550;
+    white-space: nowrap;
 }
 
-/* ---------- Reconnect ---------- */
+/* The presenter's camera, as a thumbnail over the slide's empty corner. */
+.presenter {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 24%;
+    border-radius: 6px;
+    box-shadow: 0 0 0 1.5px var(--room-bg), 0 6px 14px -6px rgb(0 0 0 / 50%);
+}
+
+.presenter > div {
+    display: none;
+}
+
+/* ---------- Back after a drop: a 4 s loop on one tile ---------- */
 
 .reconnect {
-    display: grid;
-    justify-items: center;
-    gap: 18px;
+    --loop: 4s;
+    position: relative;
+    height: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    padding: 6px;
+    border-radius: 12px;
+    background: var(--room-bg);
+    box-shadow: 0 16px 32px -18px rgb(0 0 0 / 45%);
 }
 
-.pill {
-    display: grid;
-    height: 36px;
-    min-width: 200px;
-    padding: 0 14px;
-    border: 1px solid var(--hairline);
-    border-radius: 999px;
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
-    font-size: 0.8125rem;
-    font-weight: 550;
+.reconnectTile {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    border-radius: 7px;
+    animation: video-drop var(--loop) var(--ease-out) infinite;
 }
 
-.pill > span {
-    display: inline-flex;
-    grid-area: 1 / 1;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+.reconnectTile > div {
+    display: none;
 }
 
-.liveDot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-}
-
-.stateLost {
-    color: #9a5b00;
-    opacity: 0;
-}
-
-.stateBack {
-    color: var(--success);
-    opacity: 0;
-}
-
+/* The resting state is the end of the story, which is what reduced motion shows. */
 .bars {
+    position: absolute;
+    top: 14px;
+    right: 14px;
     display: flex;
     align-items: flex-end;
-    gap: 4px;
-    height: 24px;
+    gap: 2px;
+    height: 14px;
+    padding: 4px 5px;
+    box-sizing: content-box;
+    border-radius: 6px;
+    background: rgb(12 12 14 / 66%);
 }
 
 .bars span {
-    width: 6px;
-    border-radius: 2px;
-    background: var(--success);
+    width: 3px;
+    border-radius: 1px;
+    background: #3ccf91;
 }
 
-.bars span:nth-child(1) { height: 30%; }
-.bars span:nth-child(2) { height: 50%; }
-.bars span:nth-child(3) { height: 70%; }
-.bars span:nth-child(4) { height: 85%; }
-.bars span:nth-child(5) { height: 100%; }
+.bars span:nth-child(1) { height: 35%; }
+.bars span:nth-child(2) { height: 55%; }
+.bars span:nth-child(3) { height: 78%; }
+.bars span:nth-child(4) { height: 100%; }
 
-.small:hover .stateLive,
-.small:focus-within .stateLive {
-    animation: state-live 2.4s var(--ease-out) forwards;
+/* The first bar holds a weak signal; the other three drop and refill one after another. */
+.bars span:nth-child(1) { animation: bar-weak var(--loop) var(--ease-out) infinite; }
+.bars span:nth-child(n + 2) { animation: bar-refill var(--loop) var(--ease-out) infinite; }
+.bars span:nth-child(3) { animation-name: bar-refill-2; }
+.bars span:nth-child(4) { animation-name: bar-refill-3; }
+
+.status {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    display: grid;
+    height: 26px;
+    padding: 0 9px;
+    border-radius: 6px;
+    background: rgb(12 12 14 / 78%);
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 550;
 }
 
-.small:hover .stateLost,
-.small:focus-within .stateLost {
-    animation: state-lost 2.4s var(--ease-out) forwards;
+.status > span {
+    display: inline-flex;
+    grid-area: 1 / 1;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
 }
 
-.small:hover .stateBack,
-.small:focus-within .stateBack {
-    animation: state-back 2.4s var(--ease-out) forwards;
+.stateLost {
+    opacity: 0;
+    animation: chip-lost var(--loop) var(--ease-out) infinite;
 }
 
-.small:hover .bars span,
-.small:focus-within .bars span {
-    animation: signal 2.4s var(--ease-out) forwards;
+.stateBack {
+    color: #6ee0ad;
+    animation: chip-back var(--loop) var(--ease-out) infinite;
 }
 
-@keyframes state-live {
-    0%, 8% { opacity: 1; }
-    14%, 100% { opacity: 0; }
+.spinner {
+    width: 11px;
+    height: 11px;
+    border: 1.5px solid rgb(255 255 255 / 30%);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 800ms linear infinite;
 }
 
-@keyframes state-lost {
-    0%, 10% { opacity: 0; }
-    16%, 58% { opacity: 1; }
-    64%, 100% { opacity: 0; }
+@keyframes video-drop {
+    0% { opacity: 1; filter: none; }
+    7%, 64% { opacity: 0.38; filter: grayscale(0.7) blur(1.5px); }
+    74%, 100% { opacity: 1; filter: none; }
 }
 
-@keyframes state-back {
-    0%, 60% { opacity: 0; }
-    68%, 100% { opacity: 1; }
+@keyframes bar-weak {
+    0%, 100% { background: #3ccf91; }
+    6%, 50% { background: #f0b45b; }
+    56% { background: #3ccf91; }
 }
 
-@keyframes signal {
-    0%, 10% { opacity: 1; background: var(--success); }
-    16%, 58% { opacity: 0.25; background: #9a5b00; }
-    66%, 100% { opacity: 1; background: var(--success); }
+@keyframes bar-refill {
+    0% { opacity: 1; }
+    6%, 50% { opacity: 0.18; }
+    56%, 100% { opacity: 1; }
+}
+
+@keyframes bar-refill-2 {
+    0% { opacity: 1; }
+    6%, 55% { opacity: 0.18; }
+    61%, 100% { opacity: 1; }
+}
+
+@keyframes bar-refill-3 {
+    0% { opacity: 1; }
+    6%, 60% { opacity: 0.18; }
+    66%, 100% { opacity: 1; }
+}
+
+@keyframes chip-lost {
+    0%, 3% { opacity: 0; }
+    8%, 68% { opacity: 1; }
+    72%, 100% { opacity: 0; }
+}
+
+@keyframes chip-back {
+    0% { opacity: 1; }
+    4%, 70% { opacity: 0; }
+    76%, 100% { opacity: 1; }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* ---------- Meeting history ---------- */
@@ -675,8 +746,16 @@
         display: none;
     }
 
+    /* One column: the recap is the card's last row, so it runs in full. */
     .recapPane {
+        min-height: 0;
+    }
+
+    .recapPaneInner {
+        position: static;
         padding: 20px 20px 28px;
+        -webkit-mask-image: none;
+        mask-image: none;
     }
 
     .bento {
@@ -693,7 +772,7 @@
         display: none;
     }
 
-    .recapPane {
+    .recapPaneInner {
         padding: 16px 14px 24px;
     }
 
@@ -710,17 +789,52 @@
         grid-template-areas: "chat" "host" "screen" "reconnect" "history";
     }
 
-    .fragment {
-        height: 156px;
-    }
-
     .chatCard .fragment {
         height: 196px;
     }
 
+
+
     /* Two past meetings are enough to read the idea on a phone. */
     .history li:nth-child(n + 3) {
         display: none;
+    }
+}
+
+/* The narrowest phones: the confirm wraps (question above, buttons below) and the roster tightens to fit. */
+@media (max-width: 360px) {
+    .hostCard .fragment {
+        padding: 12px;
+    }
+
+    .roster li {
+        height: 40px;
+    }
+
+    .confirm {
+        flex-wrap: wrap;
+    }
+
+    .confirm strong {
+        flex: 1 0 100%;
+    }
+
+    .confirmActions {
+        margin-left: auto;
+    }
+
+    /* Two lines per bubble, and a longer step, so the incoming message never lands on the one above. */
+    .chat {
+        --chat-step: -88px;
+    }
+
+    .message p {
+        display: -webkit-box;
+        /* The clamp alone leaks the third line into the bubble's padding. */
+        max-height: calc(2 * 1.4em + 14px);
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
     }
 }
 
