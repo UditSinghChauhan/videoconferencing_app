@@ -14,6 +14,8 @@ interface ControlBarProps {
     unread: number;
     participantCount: number;
     leaveLabel: string;
+    /** A quiet nudge beside End, e.g. when the demo script is over. */
+    leaveHint?: string | null;
     onToggleMic: () => void;
     onToggleCamera: () => void;
     onToggleScreen: () => void;
@@ -98,7 +100,11 @@ export function ControlBar(props: ControlBarProps) {
                 ) : null}
             </div>
 
-            <div className={styles.group}>
+            <div className={`${styles.group} ${styles.endGroup}`}>
+                {/* Always mounted, so screen readers announce the hint when it appears. */}
+                <span className={styles.hint} role="status" data-shown={props.leaveHint ? "" : undefined} data-testid="leave-hint">
+                    {props.leaveHint}
+                </span>
                 <ControlButton
                     label={`People (${participantCount})`}
                     pressed={panel === "people"}

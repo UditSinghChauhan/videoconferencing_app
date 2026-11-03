@@ -57,7 +57,11 @@ export const VideoTile = memo(function VideoTile({ tile, width, height, variant 
                 muted={tile.isLocal}
             />
 
-            {!showVideo ? (
+            {!showVideo && tile.illustration ? (
+                <div className={styles.illustration}>{tile.illustration(speaking && !micOff)}</div>
+            ) : null}
+
+            {!showVideo && !tile.illustration ? (
                 <div className={styles.placeholder}>
                     <Avatar name={tile.name} size={variant === "strip" ? 40 : 72} />
                 </div>

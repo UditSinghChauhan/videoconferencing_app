@@ -8,14 +8,17 @@ import { OwnerChip } from "../parts/People";
 import { CastTile } from "../stage/StageParts";
 import styles from "./HeroDemo.module.css";
 
-type Phase = "talk" | "end" | "recap" | "reset";
+type Phase = "talk" | "end" | "ended" | "recap";
 
 const LOOP_MS = 8000;
 const GRID: CastId[] = ["maya", "aarav", "sofia", "jordan"];
 
 /**
- * The loop, in ms: three people speak in turn, End is pressed, the call dims
- * while the recap rises and writes in, it holds, then everything resets.
+ * The loop, in ms. It starts, and resets, on the bright live call with the
+ * speaking ring moving between three people. End is pressed, the call dims
+ * for 1.3 s while the recap arrives and writes in, then the call brightens
+ * again and the recap card holds the focus until the loop goes back to the
+ * live call. The dimmed state is never the first frame.
  */
 interface Step {
     at: number;
@@ -30,8 +33,8 @@ const TIMELINE: Step[] = [
     { at: 1300, phase: "talk", speaker: "aarav" },
     { at: 2600, phase: "talk", speaker: "sofia" },
     { at: 3700, phase: "end", speaker: null },
-    { at: 4100, phase: "recap", speaker: null },
-    { at: 7500, phase: "reset", speaker: null }
+    { at: 4000, phase: "ended", speaker: null },
+    { at: 5300, phase: "recap", speaker: null }
 ];
 
 const stateAt = (ms: number) => {
@@ -88,7 +91,14 @@ export function HeroDemo() {
     const items = (STANDUP_RECAP.actionItems ?? []).slice(0, 2);
 
     return (
-        <div ref={ref} className={styles.stage} data-phase={phase} aria-hidden="true">
+        <div
+            ref={ref}
+            className={styles.stage}
+            data-phase={phase}
+            // The recap is on screen from the moment the call ends until the loop returns to the live call.
+            data-notes={phase === "ended" || phase === "recap" ? "" : undefined}
+            aria-hidden="true"
+        >
             <div className={styles.window}>
                 <div className={styles.chrome}>
                     <span className={styles.room}>
