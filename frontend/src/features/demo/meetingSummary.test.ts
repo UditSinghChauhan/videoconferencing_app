@@ -38,8 +38,20 @@ const fixtures: Record<string, ActivityEntry[]> = {
         ["Jordan Lee", "Sure. Let's freeze the scope tomorrow."],
         ["Aarav Mehta", "PR is up, I'll drop the link in the channel."],
         ["Sofia Rossi", "Next step: we ship the release Thursday, and that deadline is firm."]
-    ] as const).map(([username, content]): ActivityEntry => ({ type: "chat", username, content }))
+    ] as const).map(([username, content]): ActivityEntry => ({ type: "chat", username, content })),
+    // Ownership: task phrases, and an owner line that leads the summary.
+    ownership: [
+        { type: "join", username: "Aarav Mehta", content: "joined the meeting" },
+        { type: "chat", username: "Maya Patel", content: "Aarav owns the checkout fix, and Maya takes our docs." }
+    ]
 };
+
+test("ownership lines become task phrases, never 'Own the …'", () => {
+    const { actionItems, conclusion } = generateMeetingSummary(standUp);
+    expect(actionItems).toContainEqual({ owner: "Aarav Mehta", task: "Onboarding fix" });
+    expect(actionItems?.every((item) => !/^Own\b/.test(item.task))).toBe(true);
+    expect(conclusion).not.toMatch(/\bown the\b/i);
+});
 
 test("the demo recap's topics are noun phrases", () => {
     expect(generateMeetingSummary(standUp).keywords).toEqual([
