@@ -1,0 +1,741 @@
+.product {
+    display: grid;
+    gap: 16px;
+}
+
+.card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: var(--card-radius);
+    background: var(--surface);
+    box-shadow: var(--card-shadow);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    height: 44px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--hairline);
+    font-size: 0.8125rem;
+    font-weight: 550;
+}
+
+.headerMeta {
+    overflow: hidden;
+    color: var(--text-muted);
+    font-weight: 400;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- The large recap card ---------- */
+
+.recapLayout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+}
+
+.recapText {
+    padding: 32px 28px;
+    border-right: 1px solid var(--hairline);
+}
+
+.recapText h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 550;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+}
+
+.recapText p {
+    margin: 10px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+}
+
+/* The real export, as code: monospace belongs here. */
+.markdown {
+    margin: 24px 0 0;
+}
+
+.markdown figcaption {
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+.markdown pre {
+    margin: 0;
+    padding: 14px;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    background: var(--bg);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.markdown code {
+    font-family: var(--font-mono);
+}
+
+.more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    margin-top: 8px;
+    color: var(--accent-text);
+    font-size: 0.9375rem;
+    font-weight: 550;
+    text-decoration: none;
+}
+
+.more:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.recapPane {
+    padding: 28px 36px 32px;
+    background: var(--bg);
+}
+
+/* The embedded recap: tighter than the full page, same component. */
+.recapPane article {
+    gap: 22px;
+}
+
+.recapPane h3 {
+    font-size: 2rem;
+}
+
+.recapPane header {
+    padding-bottom: 18px;
+}
+
+.recapPane article > p {
+    font-size: 1.375rem;
+}
+
+.toastRegion {
+    position: absolute;
+    left: 50%;
+    bottom: 20px;
+    z-index: 2;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.toast {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: var(--text);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 12px 28px -12px rgb(0 0 0 / 40%);
+    animation: toast-in 300ms var(--ease-out);
+}
+
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+}
+
+/* ---------- Bento: four fragments and the history list ---------- */
+
+.bento {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-areas:
+        "chat host history"
+        "screen reconnect history";
+    gap: 16px;
+}
+
+.chatCard { grid-area: chat; }
+.hostCard { grid-area: host; }
+.screenCard { grid-area: screen; }
+.reconnectCard { grid-area: reconnect; }
+.historyCard { grid-area: history; }
+
+.small {
+    transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .small:hover {
+        box-shadow: var(--card-shadow-hover);
+        transform: translateY(-2px);
+    }
+}
+
+.small:focus-within {
+    box-shadow: var(--card-shadow-hover);
+}
+
+.focusable {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: inherit;
+}
+
+.focusable:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.fragment {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 188px;
+    padding: 16px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--hairline);
+    background: var(--bg);
+}
+
+.body {
+    margin: 0;
+    padding: 16px 18px 20px;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+/* ---------- Chat ---------- */
+
+.chat {
+    display: grid;
+    align-content: end;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.message {
+    display: flex;
+    gap: 8px;
+    font-size: 0.8125rem;
+    transition: transform 400ms var(--ease-out), opacity 400ms var(--ease-out);
+}
+
+.message strong {
+    font-weight: 600;
+}
+
+.message p {
+    margin: 2px 0 0;
+    padding: 6px 10px;
+    border: 1px solid var(--hairline);
+    border-radius: 4px 12px 12px 12px;
+    background: var(--surface);
+    line-height: 1.4;
+}
+
+.incoming {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    opacity: 0;
+    transform: translateY(16px);
+}
+
+.small:hover .incoming,
+.small:focus-within .incoming {
+    opacity: 1;
+    transform: none;
+}
+
+.small:hover .message:not(.incoming),
+.small:focus-within .message:not(.incoming) {
+    transform: translateY(-64px);
+}
+
+.small:hover .message:first-child,
+.small:focus-within .message:first-child {
+    opacity: 0;
+}
+
+/* ---------- Host controls ---------- */
+
+.host {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+}
+
+.roster {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    background: var(--surface);
+    list-style: none;
+}
+
+.roster li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    padding: 0 10px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.roster li + li {
+    border-top: 1px solid var(--hairline);
+}
+
+.roster li span:nth-child(2) {
+    flex: 1;
+}
+
+.roster em {
+    color: var(--text-muted);
+    font-style: normal;
+    font-weight: 400;
+}
+
+.remove {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    color: var(--danger);
+    transition: background-color 200ms ease-out;
+}
+
+.small:hover .remove,
+.small:focus-within .remove {
+    background: var(--danger-soft, rgb(196 50 10 / 8%));
+}
+
+.confirm {
+    display: grid;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 12px;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: 0 12px 24px -12px rgb(0 0 0 / 20%);
+    font-size: 0.8125rem;
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    transform-origin: 90% 0;
+    transition: opacity 250ms var(--ease-out), transform 250ms var(--ease-out);
+}
+
+.small:hover .confirm,
+.small:focus-within .confirm {
+    opacity: 1;
+    transform: none;
+    transition-delay: 150ms;
+}
+
+.confirm strong {
+    font-weight: 550;
+}
+
+.confirmActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.ghost,
+.danger {
+    display: inline-grid;
+    place-items: center;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 7px;
+    font-weight: 550;
+}
+
+.ghost {
+    background: var(--surface-2);
+}
+
+.danger {
+    background: var(--danger);
+    color: #fff;
+}
+
+/* ---------- Screen share: two faces at rest; on hover the shared screen takes the stage ---------- */
+
+.screen {
+    position: relative;
+    display: grid;
+    gap: 10px;
+    justify-items: center;
+    width: 100%;
+    max-width: 300px;
+}
+
+.strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    width: 100%;
+    padding: 6px;
+    border-radius: 12px;
+    background: var(--room-bg);
+    transition: opacity 300ms var(--ease-out);
+}
+
+.mini {
+    border-radius: 6px;
+}
+
+.mini > div {
+    display: none;
+}
+
+.shared {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: 0 16px 32px -16px rgb(0 0 0 / 30%);
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+    transition: opacity 350ms var(--ease-out), transform 350ms var(--ease-out);
+}
+
+.small:hover .shared,
+.small:focus-within .shared {
+    opacity: 1;
+    transform: none;
+}
+
+.small:hover .strip,
+.small:focus-within .strip {
+    opacity: 0.4;
+}
+
+.slideBar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--hairline);
+    color: var(--accent-text);
+    font-size: 0.8125rem;
+    font-weight: 550;
+}
+
+.slide {
+    display: grid;
+    gap: 5px;
+    padding: 10px 12px 12px;
+    font-size: 0.8125rem;
+}
+
+.slide strong {
+    font-weight: 600;
+}
+
+.slide span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.slide i {
+    width: 11px;
+    height: 11px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 3px;
+}
+
+.slide i.done {
+    border-color: var(--success);
+    background: var(--success);
+}
+
+.shareButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 0.8125rem;
+    font-weight: 550;
+    transition: background-color 200ms ease-out, color 200ms ease-out;
+}
+
+.small:hover .shareButton,
+.small:focus-within .shareButton {
+    border-color: transparent;
+    background: var(--accent-text);
+    color: #fff;
+}
+
+/* ---------- Reconnect ---------- */
+
+.reconnect {
+    display: grid;
+    justify-items: center;
+    gap: 18px;
+}
+
+.pill {
+    display: grid;
+    height: 36px;
+    min-width: 200px;
+    padding: 0 14px;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    font-size: 0.8125rem;
+    font-weight: 550;
+}
+
+.pill > span {
+    display: inline-flex;
+    grid-area: 1 / 1;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.liveDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.stateLost {
+    color: #9a5b00;
+    opacity: 0;
+}
+
+.stateBack {
+    color: var(--success);
+    opacity: 0;
+}
+
+.bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 24px;
+}
+
+.bars span {
+    width: 6px;
+    border-radius: 2px;
+    background: var(--success);
+}
+
+.bars span:nth-child(1) { height: 30%; }
+.bars span:nth-child(2) { height: 50%; }
+.bars span:nth-child(3) { height: 70%; }
+.bars span:nth-child(4) { height: 85%; }
+.bars span:nth-child(5) { height: 100%; }
+
+.small:hover .stateLive,
+.small:focus-within .stateLive {
+    animation: state-live 2.4s var(--ease-out) forwards;
+}
+
+.small:hover .stateLost,
+.small:focus-within .stateLost {
+    animation: state-lost 2.4s var(--ease-out) forwards;
+}
+
+.small:hover .stateBack,
+.small:focus-within .stateBack {
+    animation: state-back 2.4s var(--ease-out) forwards;
+}
+
+.small:hover .bars span,
+.small:focus-within .bars span {
+    animation: signal 2.4s var(--ease-out) forwards;
+}
+
+@keyframes state-live {
+    0%, 8% { opacity: 1; }
+    14%, 100% { opacity: 0; }
+}
+
+@keyframes state-lost {
+    0%, 10% { opacity: 0; }
+    16%, 58% { opacity: 1; }
+    64%, 100% { opacity: 0; }
+}
+
+@keyframes state-back {
+    0%, 60% { opacity: 0; }
+    68%, 100% { opacity: 1; }
+}
+
+@keyframes signal {
+    0%, 10% { opacity: 1; background: var(--success); }
+    16%, 58% { opacity: 0.25; background: #9a5b00; }
+    66%, 100% { opacity: 1; background: var(--success); }
+}
+
+/* ---------- Meeting history ---------- */
+
+.historyCard .fragment {
+    flex: 1;
+    height: auto;
+    align-items: start;
+    min-height: 188px;
+}
+
+.history {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.history li {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.historyTop {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.8125rem;
+}
+
+.historyCode {
+    font-family: var(--font-mono);
+    font-weight: 500;
+}
+
+.historyWhen {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.history p {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+/* ---------- Narrow ---------- */
+
+@media (max-width: 1100px) {
+    .recapLayout {
+        grid-template-columns: 1fr;
+    }
+
+    .recapText {
+        padding: 24px 20px 8px;
+        border-right: 0;
+    }
+
+    .markdown {
+        display: none;
+    }
+
+    .recapPane {
+        padding: 20px 20px 28px;
+    }
+
+    .bento {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "chat host"
+            "screen reconnect"
+            "history history";
+    }
+}
+
+@media (max-width: 760px) {
+    .headerMeta {
+        display: none;
+    }
+
+    .recapPane {
+        padding: 16px 14px 24px;
+    }
+
+    .recapPane h3 {
+        font-size: 1.75rem;
+    }
+
+    .recapPane article > p {
+        font-size: 1.1875rem;
+    }
+
+    .bento {
+        grid-template-columns: 1fr;
+        grid-template-areas: "chat" "host" "screen" "reconnect" "history";
+    }
+
+    .fragment {
+        height: 156px;
+    }
+
+    .chatCard .fragment {
+        height: 196px;
+    }
+
+    /* Two past meetings are enough to read the idea on a phone. */
+    .history li:nth-child(n + 3) {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .product *,
+    .small {
+        transition: none !important;
+        animation: none !important;
+    }
+}

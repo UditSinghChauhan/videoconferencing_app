@@ -1,33 +1,57 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { GithubIcon } from "../../../components/GithubIcon";
+import { ButtonLink } from "../../../components/Button";
 import { Logo } from "../../../components/Logo";
-import { REPOSITORY_URL } from "../../../lib/env";
 import styles from "./LandingNav.module.css";
-import { useNavTheme } from "./useNavTheme";
 
 interface LandingNavProps {
     signedIn: boolean;
     links: { href: string; label: string }[];
 }
 
-/** Paper at the top, translucent with a hairline once scrolled, dark tokens over dark sections. */
+/** Scrolled past 24 px: the bar lifts into a floating rounded panel. */
+function useScrolled(threshold = 24) {
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        let raf = 0;
+        const update = () => {
+            raf = 0;
+            setScrolled(window.scrollY > threshold);
+        };
+        const schedule = () => {
+            if (!raf) raf = window.requestAnimationFrame(update);
+        };
+        update();
+        window.addEventListener("scroll", schedule, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", schedule);
+            if (raf) window.cancelAnimationFrame(raf);
+        };
+    }, [threshold]);
+
+    return scrolled;
+}
+
+/**
+ * Transparent at the top of the page; after 24 px of scroll it becomes a
+ * floating bar (inset 12 px, white at 85 % with a blur, hairline and shadow)
+ * so headings never show through it. Three section links, Sign in, and the
+ * one accent action.
+ */
 export function LandingNav({ signedIn, links }: LandingNavProps) {
-    const { scrolled, dark } = useNavTheme();
+    const scrolled = useScrolled();
 
     return (
-        <header className={styles.nav} data-scrolled={scrolled || undefined} data-theme={dark ? "dark" : "light"}>
-            <div className={styles.inner}>
+        <header className={styles.nav} data-scrolled={scrolled || undefined}>
+            <div className={styles.bar}>
                 <Logo />
                 <nav className={styles.links} aria-label="Sections">
-                    {links.map((link) => link.href.startsWith("/")
-                        ? <Link key={link.href} to={link.href}>{link.label}</Link>
-                        : <a key={link.href} href={link.href}>{link.label}</a>)}
+                    {links.map((link) => <a key={link.href} href={link.href}>{link.label}</a>)}
                 </nav>
                 <div className={styles.actions}>
-                    {signedIn ? <Link to="/home">Your meetings</Link> : <Link to="/auth">Sign in</Link>}
-                    <a href={REPOSITORY_URL} target="_blank" rel="noreferrer" className={styles.github}>
-                        <GithubIcon /> <span>GitHub</span>
-                    </a>
+                    {signedIn ? <Link to="/home" className={styles.signIn}>Your meetings</Link> : <Link to="/auth" className={styles.signIn}>Sign in</Link>}
+                    <ButtonLink to="/demo" size="sm" variant="accent">Try the demo</ButtonLink>
                 </div>
             </div>
         </header>

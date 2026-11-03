@@ -1,0 +1,309 @@
+/* The hero composition. Product text is 13–14 px at every width. */
+.stage {
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    margin-top: 56px;
+    padding-bottom: 32px;
+    text-align: left;
+}
+
+/* ---------- The app window: light chrome, dark call ---------- */
+
+.window {
+    width: min(820px, 86%);
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 32px 64px -32px rgb(0 0 0 / 28%);
+}
+
+.chrome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--hairline);
+    font-size: 0.8125rem;
+}
+
+.room {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.code {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.01em;
+}
+
+.live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 550;
+}
+
+.dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgb(232 89 12 / 16%);
+}
+
+.timer {
+    margin-left: 4px;
+    color: var(--text-muted);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+}
+
+.call {
+    padding: 10px;
+    background: var(--room-bg);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    transition: opacity 500ms var(--ease), transform 600ms var(--ease);
+}
+
+.tile {
+    border-radius: 10px;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 2px 2px;
+    transition: opacity 500ms var(--ease);
+}
+
+.control {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--room-raised);
+    color: var(--room-text);
+}
+
+.spacer {
+    flex: 1;
+}
+
+.end {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: var(--room-danger);
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    transition: transform 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+/* End is pressed: a short press, then the call steps back while the notes arrive. */
+.stage[data-phase="end"] .end {
+    transform: scale(0.94);
+    box-shadow: 0 0 0 4px rgb(207 58 63 / 30%);
+}
+
+.stage[data-phase="recap"] .grid,
+.stage[data-phase="recap"] .controls {
+    opacity: 0.45;
+}
+
+.stage[data-phase="recap"] .grid {
+    transform: scale(0.985);
+}
+
+/* ---------- The recap card, overlapping the window's lower right edge ---------- */
+
+.recap {
+    position: absolute;
+    right: 0;
+    bottom: 24px;
+    width: 400px;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%), 0 28px 56px -24px rgb(0 0 0 / 30%);
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 500ms var(--ease), transform 500ms var(--ease);
+}
+
+.stage[data-phase="recap"] .recap {
+    opacity: 1;
+    transform: none;
+}
+
+.recapHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--hairline);
+    font-size: 0.8125rem;
+    font-weight: 550;
+}
+
+.recapMeta {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.recapBody {
+    padding: 16px;
+}
+
+.summary {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: -0.005em;
+}
+
+.itemsLabel {
+    margin: 14px 0 6px;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+.items {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.items li {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    font-size: 0.8125rem;
+}
+
+.box {
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 4px;
+}
+
+.task {
+    font-weight: 500;
+}
+
+.due {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* The lines write in: the summary unmasks left to right, then each item rises. */
+.summary,
+.itemsLabel,
+.items li {
+    transition: opacity 400ms var(--ease), transform 400ms var(--ease), clip-path 700ms var(--ease);
+}
+
+.stage:not([data-phase="recap"]) .summary {
+    clip-path: inset(0 100% 0 0);
+}
+
+.stage:not([data-phase="recap"]) .itemsLabel,
+.stage:not([data-phase="recap"]) .items li {
+    opacity: 0;
+    transform: translateY(6px);
+}
+
+.stage[data-phase="recap"] .summary {
+    clip-path: inset(0 0 0 0);
+    transition-delay: 150ms;
+}
+
+.stage[data-phase="recap"] .itemsLabel { transition-delay: 600ms; }
+.stage[data-phase="recap"] .items li:nth-child(1) { transition-delay: 700ms; }
+.stage[data-phase="recap"] .items li:nth-child(2) { transition-delay: 800ms; }
+
+/* Reset leaves quickly, so the loop never looks stuck. */
+.stage[data-phase="reset"] .recap {
+    transition-duration: 300ms;
+}
+
+/* ---------- Phones: a phone-width call card with the recap overlapping below ---------- */
+
+@media (max-width: 760px) {
+    .stage {
+        margin-top: 36px;
+        padding-bottom: 0;
+    }
+
+    .window {
+        width: 100%;
+    }
+
+    .call {
+        padding: 6px;
+    }
+
+    .grid {
+        gap: 6px;
+    }
+
+    .tile {
+        border-radius: 8px;
+    }
+
+    .wide {
+        display: none;
+    }
+
+    .recap {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        width: auto;
+        margin: -28px 10px 0;
+    }
+
+    .items li {
+        grid-template-columns: auto 1fr auto;
+    }
+
+    .due {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .grid,
+    .controls,
+    .end,
+    .recap,
+    .summary,
+    .itemsLabel,
+    .items li {
+        transition: none;
+    }
+}

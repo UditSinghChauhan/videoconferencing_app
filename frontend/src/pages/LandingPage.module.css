@@ -1,63 +1,139 @@
-/* Landing page. Values and section rules: DESIGN.md, "Landing page". */
-
-/* Warm paper with a faint grain (a 3 KB tile, under 4 % opacity). */
+/*
+ * Landing page, v3 (docs/LANDING_V3.md). Light only: the page re-declares the
+ * light tokens, so the app's dark theme never reaches it, and every component
+ * inside (buttons, the recap, avatars) reads these values.
+ */
 .page {
+    --bg: #fbfaf8;
+    --surface: #ffffff;
+    --surface-2: #f4f2ee;
+    --border: #eceae6;
+    --border-strong: #d9d6cf;
+    --hairline: #eceae6;
+    --text: #17171a;
+    --text-muted: #6b6a70;
+    --accent: #e8590c;
+    --accent-text: #b4440a;
+    --accent-soft: rgba(232, 89, 12, 0.1);
+    --primary: #17171a;
+    --primary-hover: #2c2c31;
+    --on-primary: #ffffff;
+    --cta: #b4440a;
+    --cta-hover: #9a3a08;
+    --on-cta: #ffffff;
+    --danger: #c4320a;
+    --success: #12805c;
+    --success-soft: rgba(18, 128, 92, 0.1);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 4%);
+    --shadow-md: 0 1px 2px rgb(0 0 0 / 4%), 0 12px 32px -16px rgb(0 0 0 / 12%);
+    --shadow-lg: 0 1px 2px rgb(0 0 0 / 4%), 0 24px 48px -20px rgb(0 0 0 / 18%);
+
+    /* Landing system */
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 12px 32px -16px rgb(0 0 0 / 12%);
+    --card-shadow-hover: 0 1px 2px rgb(0 0 0 / 5%), 0 20px 40px -18px rgb(0 0 0 / 18%);
+    --card-radius: 16px;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --frame: 1200px;
+    --gutter: 24px;
+
+    color-scheme: light;
+    min-height: 100vh;
     overflow-x: clip;
-    background: var(--bg) url("/landing/grain.webp") repeat;
-    background-size: 180px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 17px;
 }
 
 .page [id] {
-    scroll-margin-top: 80px;
+    scroll-margin-top: 88px;
 }
 
-/* ---------- Shared type ---------- */
-
-.sectionTitle {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--text-4xl);
-    font-weight: 400;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    text-wrap: balance;
+.page ::selection {
+    background: rgba(232, 89, 12, 0.18);
 }
 
-.sectionLede {
-    max-width: 60ch;
-    margin: var(--space-4) 0 0;
-    color: var(--text);
-    font-size: var(--text-md);
-    line-height: 1.55;
-}
+/* ---------- Rails: two hairlines at the container edges, full page height ---------- */
 
-.intro {
-    max-width: 720px;
-    margin-bottom: var(--space-12);
-}
-
-.section {
-    max-width: var(--content-width);
+.frame {
+    position: relative;
+    /* Contains the hero card's top margin, so the rails start at the top of the page. */
+    display: flow-root;
+    max-width: var(--frame);
     margin: 0 auto;
-    padding: var(--space-32) var(--space-10) 0;
+    border-inline: 1px solid var(--hairline);
+}
+
+/* A hairline across the whole page, with "+" marks where it crosses the rails. */
+.divider {
+    position: relative;
+    height: 0;
+}
+
+.divider::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 100vw;
+    border-top: 1px solid var(--hairline);
+    transform: translateX(-50%);
+}
+
+.plus {
+    position: absolute;
+    top: -6px;
+    width: 11px;
+    height: 11px;
+}
+
+.plus:first-child {
+    left: -6px;
+}
+
+.plus:last-child {
+    right: -6px;
+}
+
+.plus::before,
+.plus::after {
+    content: "";
+    position: absolute;
+    background: #b8b4ac;
+}
+
+.plus::before {
+    top: 5px;
+    left: 0;
+    width: 11px;
+    height: 1px;
+}
+
+.plus::after {
+    top: 0;
+    left: 5px;
+    width: 1px;
+    height: 11px;
 }
 
 /* ---------- Hero ---------- */
 
-.hero {
+.heroCard {
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: var(--space-16) var(--space-10) 0;
+    margin: 88px 16px 48px;
+    padding: 72px var(--gutter) 40px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--card-radius);
+    background: var(--surface);
+    box-shadow: var(--card-shadow);
     text-align: center;
 }
 
 .headline {
-    margin: var(--space-4) 0 0;
+    margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(3rem, 1.9rem + 4.7vw, 5rem);
+    font-size: clamp(3rem, 1.6rem + 4vw, 5.25rem);
     font-weight: 400;
     letter-spacing: -0.02em;
     line-height: 1;
@@ -69,408 +145,277 @@
     font-style: italic;
 }
 
-.lede {
-    max-width: 34ch;
-    margin: var(--space-6) 0 0;
-    color: var(--text);
-    font-size: var(--text-lg);
-    line-height: 1.5;
+.sub {
+    max-width: 34rem;
+    margin: 20px 0 0;
+    color: var(--text-muted);
+    font-size: 1.0625rem;
+    line-height: 1.55;
     text-wrap: pretty;
 }
 
-.heroActions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-3);
-    margin-top: var(--space-8);
-}
-
-.heroNote {
-    margin: var(--space-4) 0 0;
-    color: var(--text-muted);
-    font-size: var(--text-sm);
-}
-
-.heroNote a {
-    color: var(--text);
-    text-underline-offset: 3px;
-}
-
-.heroFigure {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0;
-}
-
-.heroFigure figcaption {
-    max-width: 60ch;
-    margin: var(--space-6) auto 0;
-    color: var(--text-muted);
-    font-size: var(--text-sm);
-    line-height: 1.45;
-}
-
-
-
-
-
-
-
-
-
-/* ---------- Engineering (the one dark surface) ---------- */
-
-.engineering {
-    margin-top: var(--space-32);
-    padding: var(--space-32) 0;
-    background: var(--room-bg);
-    color: var(--room-text);
-}
-
-.engineeringInner {
-    max-width: var(--content-width);
-    margin: 0 auto;
-    padding: 0 var(--space-10);
-}
-
-.engineeringLede {
-    max-width: 60ch;
-    margin: var(--space-5) 0 0;
-    color: var(--room-text);
-    font-size: var(--text-md);
-    line-height: 1.55;
-}
-
-.notes {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 var(--space-12);
-    margin: var(--space-16) 0 0;
-    padding: 0;
-    list-style: none;
-}
-
-.notes li {
-    padding: var(--space-6) 0;
-}
-
-.notes h3 {
-    margin: 0;
-    font-size: var(--text-md);
-    font-weight: 600;
-}
-
-.notes p {
-    margin: var(--space-2) 0 0;
-    color: var(--room-text);
-    font-size: var(--text-base);
-    line-height: 1.55;
-}
-
-.notes a {
-    display: inline-block;
-    margin-top: var(--space-3);
-    color: #ff9a5c;
-    font-size: var(--text-sm);
-    text-underline-offset: 3px;
-}
-
-.notes code {
-    font-family: var(--font-mono);
-}
-
-.engineeringActions {
+.actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-6);
-    margin-top: var(--space-12);
+    justify-content: center;
+    gap: 12px 28px;
+    margin-top: 32px;
 }
 
-.outlineDark {
+.textLink,
+.ctaLink {
     display: inline-flex;
     align-items: center;
-    height: 48px;
-    padding: 0 var(--space-6);
-    border: 1px solid var(--room-muted);
-    border-radius: var(--radius-md);
-    color: var(--room-text);
-    font-size: var(--text-md);
+    gap: 6px;
+    min-height: 44px;
+    color: var(--text);
+    font-size: 1rem;
     font-weight: 550;
     text-decoration: none;
-    transition: background-color var(--duration-fast) var(--ease);
 }
 
-.outlineDark:hover {
-    background: var(--room-raised);
+.textLink svg,
+.ctaLink svg {
+    transition: transform 200ms var(--ease-out);
 }
 
-.linkDark {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-height: 44px;
-    color: var(--room-text);
-    font-size: var(--text-md);
-    text-underline-offset: 3px;
+.textLink:hover svg,
+.ctaLink:hover svg {
+    transform: translateX(3px);
 }
 
-.engineering :focus-visible {
-    outline-color: #ff9a5c;
-}
-
-/* ---------- Decisions ---------- */
-
-.decisions {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-5);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-/* One card per decision: the decision set in serif, then why, what it costs, and when it would change. */
-.decision {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-5);
-    padding: var(--space-8);
-    border-radius: 20px;
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
-}
-
-.decision h3 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--text-2xl);
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    line-height: 1.12;
-    text-wrap: balance;
-}
-
-.decisionBlock p {
-    margin: 0;
-    font-size: var(--text-base);
-    line-height: 1.55;
-}
-
-.decisionBlock .decisionLabel {
-    margin-bottom: var(--space-1);
-    color: var(--accent-text);
-    font-size: var(--text-sm);
-    font-weight: 600;
-}
-
-.wouldChange {
-    margin: auto 0 0;
-    padding-top: var(--space-4);
-    border-top: 1px solid var(--border);
+.note {
+    margin: 12px 0 0;
     color: var(--text-muted);
-    font-size: var(--text-sm);
+    font-size: 0.8125rem;
+}
+
+/* ---------- Benefit strip: three hairline cells ---------- */
+
+.benefits {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.benefit {
+    padding: 36px 32px;
+}
+
+.benefit + .benefit {
+    border-left: 1px solid var(--hairline);
+}
+
+.benefit h3 {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 550;
+    letter-spacing: -0.01em;
+}
+
+.benefit p {
+    margin: 6px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
     line-height: 1.5;
 }
 
-.wouldChange strong {
-    color: var(--text);
-    font-weight: 600;
+/* ---------- Sections ---------- */
+
+.section {
+    padding: 112px var(--gutter);
 }
 
-/* ---------- Verified ---------- */
-
-.inlineLink {
-    color: var(--text);
-    font-weight: 550;
-    text-underline-offset: 3px;
-}
-
-/* ---------- Closing ---------- */
-
-.closing {
+.head {
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: var(--content-width);
-    margin: 0 auto;
-    padding: var(--space-32) var(--space-10);
+    margin: 0 auto 56px;
     text-align: center;
 }
 
-
-
-.closingTitle {
+.label {
     margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--text-4xl);
-    font-weight: 400;
+    padding: 4px 10px;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.title {
+    max-width: 22ch;
+    margin: 16px 0 0;
+    font-size: clamp(1.75rem, 1.2rem + 1.2vw, 2.25rem);
+    font-weight: 500;
     letter-spacing: -0.02em;
-    line-height: 1.1;
+    line-height: 1.15;
     text-wrap: balance;
 }
 
-/* ---------- Footer ---------- */
+.lede {
+    max-width: 34rem;
+    margin: 12px 0 0;
+    color: var(--text-muted);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+}
+
+/* ---------- Final CTA: the page's single dark band ---------- */
+
+.ctaWrap {
+    padding: 64px 16px;
+}
+
+.cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 88px var(--gutter);
+    border-radius: 24px;
+    background: #17171a;
+    color: #f3f2ef;
+    text-align: center;
+}
+
+.cta h2 {
+    max-width: 20ch;
+    margin: 0;
+    font-size: clamp(1.875rem, 1.2rem + 1.6vw, 2.5rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    text-wrap: balance;
+}
+
+.cta p {
+    max-width: 30rem;
+    margin: 14px 0 0;
+    color: #b9b8bd;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+}
+
+.cta .actions {
+    margin-top: 32px;
+}
+
+.ctaLink {
+    color: #f3f2ef;
+}
+
+.cta :focus-visible {
+    outline-color: #ff9a5c;
+}
+
+/* ---------- Footer, on the light canvas ---------- */
 
 .footer {
-    background: var(--surface-2);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px 32px;
+    align-items: start;
+    padding: 48px var(--gutter) 40px;
+    border-top: 1px solid var(--hairline);
 }
 
-.footerInner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-4) var(--space-8);
-    max-width: var(--content-width);
-    margin: 0 auto;
-    padding: var(--space-8) var(--space-10);
+.footerBrand p {
+    margin: 12px 0 0;
     color: var(--text-muted);
-    font-size: var(--text-sm);
-}
-
-.footerInner p {
-    margin: 0;
-}
-
-.footerInner a {
-    color: var(--text);
-    text-underline-offset: 3px;
+    font-size: 0.9375rem;
 }
 
 .footerLinks {
     display: flex;
-    gap: var(--space-6);
-    margin-left: auto;
+    flex-wrap: wrap;
+    gap: 4px 24px;
 }
 
-.footerLinks a {
+.footerLinks a,
+.credit a {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
+    color: var(--text);
+    font-size: 0.9375rem;
+    text-decoration: none;
 }
 
-/* ---------- 768 px and below ---------- */
+.footerLinks a:hover,
+.credit a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
 
-@media (max-width: 1023px) {
-    .decisions {
+.credit {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--hairline);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.credit a {
+    min-height: 0;
+    color: var(--text);
+    font-size: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--border-strong);
+    text-underline-offset: 3px;
+}
+
+/* ---------- Narrow screens: the rails sit 12 px in from the edges ---------- */
+
+@media (max-width: 1240px) {
+    .frame {
+        margin-inline: 12px;
+    }
+}
+
+@media (max-width: 760px) {
+    .page {
+        --gutter: 16px;
+    }
+
+    .heroCard {
+        margin: 76px 8px 24px;
+        padding: 48px 16px 40px;
+    }
+
+    .benefits {
         grid-template-columns: 1fr;
     }
 
-    .navInner,
-    .hero,
-    .section,
-    .engineeringInner,
-    .closing,
-    .footerInner {
-        padding-left: var(--space-8);
-        padding-right: var(--space-8);
+    .benefit {
+        padding: 20px;
+    }
+
+    .benefit + .benefit {
+        border-left: 0;
+        border-top: 1px solid var(--hairline);
     }
 
     .section {
-        padding-top: var(--space-24);
+        padding: 56px var(--gutter);
     }
 
-    .engineering {
-        margin-top: var(--space-24);
-        padding: var(--space-24) 0;
+    .head {
+        margin-bottom: 36px;
     }
 
-    .closing {
-        padding-top: var(--space-24);
-        padding-bottom: var(--space-24);
+    .ctaWrap {
+        padding: 24px 8px;
     }
 
-
-
-
-}
-
-@media (max-width: 767px) {
-    .navLinks {
-        display: none;
-    }
-}
-
-/* ---------- Under 640 px ---------- */
-
-@media (max-width: 639px) {
-    .navInner,
-    .hero,
-    .section,
-    .engineeringInner,
-    .closing,
-    .footerInner {
-        padding-left: var(--space-5);
-        padding-right: var(--space-5);
+    .cta {
+        padding: 48px 20px;
+        border-radius: 20px;
     }
 
-    .navActions {
-        gap: var(--space-4);
-    }
-
-    .navGithub span {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-    }
-
-    .hero {
-        padding-top: var(--space-10);
-    }
-
-    .heroActions {
-        flex-direction: column;
-        align-self: stretch;
-    }
-
-    .heroActions > * {
-        width: 100%;
-    }
-
-    .heroFigure {
-        margin-top: var(--space-10);
-    }
-
-    .section {
-        padding-top: var(--space-16);
-    }
-
-    .sectionTitle,
-    .closingTitle {
-        font-size: var(--text-3xl);
-    }
-
-    .intro {
-        margin-bottom: var(--space-8);
-    }
-
-
-
-
-
-
-
-
-    .engineering {
-        margin-top: var(--space-16);
-        padding: var(--space-16) 0;
-    }
-
-    .notes {
+    .footer {
         grid-template-columns: 1fr;
-        margin-top: var(--space-10);
-    }
-
-
-    .closing {
-        padding-top: var(--space-16);
-        padding-bottom: var(--space-16);
-    }
-
-    .footerLinks {
-        margin-left: 0;
     }
 }

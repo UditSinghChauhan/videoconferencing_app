@@ -6,7 +6,6 @@ const PAGES = [
     { name: "sign in", path: "/auth" },
     { name: "sign up", path: "/auth?mode=signup" },
     { name: "demo lobby", path: "/demo" },
-    { name: "design notes", path: "/design-notes" },
     { name: "not found", path: "/does-not-exist" }
 ];
 

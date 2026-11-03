@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Check, ClipboardCopy, Users } from "lucide-react";
 import { Avatar } from "../../components/Avatar";
 import { Button } from "../../components/Button";
@@ -17,19 +17,27 @@ interface RecapViewProps {
     transcriptOpen?: boolean;
     /** Build the recap in line by line, right after the host ends the call. */
     reveal?: boolean;
+    /** Level of the title; section headings sit one below. The landing page embeds the recap under its own h2. */
+    headingLevel?: 1 | 2 | 3;
+    /** Leave out the note on how recaps are written. */
+    hideFootnote?: boolean;
+    /** Called after Copy as Markdown, with whether it worked. */
+    onCopy?: (copied: boolean) => void;
+    /** Draws a person's avatar; defaults to initials on their hue. */
+    renderAvatar?: (name: string) => ReactNode;
 }
 
 type CopyState = "idle" | "copied" | "failed";
 
 /** An owner or speaker: avatar plus first name. "Everyone" gets a group mark instead of initials. */
-export function PersonChip({ name }: { name: string }) {
+export function PersonChip({ name, avatar }: { name: string; avatar?: ReactNode }) {
     const everyone = name === "Everyone";
     return (
         <span className={styles.person}>
             {everyone ? (
                 <span className={styles.everyone} aria-hidden="true"><Users size={12} /></span>
             ) : (
-                <Avatar name={name} size={20} />
+                avatar ?? <Avatar name={name} size={20} />
             )}
             <span>{everyone ? "Everyone" : name}</span>
         </span>
@@ -37,17 +45,23 @@ export function PersonChip({ name }: { name: string }) {
 }
 
 /** The recap of an ended meeting. Shared by the recap page and the public demo. */
-export function RecapView({ recap, notice, footnote, transcriptOpen = false, reveal = false }: RecapViewProps) {
+export function RecapView({ recap, notice, footnote, transcriptOpen = false, reveal = false, headingLevel = 1, hideFootnote = false, onCopy, renderAvatar }: RecapViewProps) {
     const [copy, setCopy] = useState<CopyState>("idle");
     const { summary } = recap;
+    const Title = `h${headingLevel}` as "h1" | "h2" | "h3";
+    const Heading = `h${headingLevel + 1}` as "h2" | "h3" | "h4";
+    // Unique ids, so two recaps on one page never share a heading id.
+    const uid = useId();
 
     const copyRecap = async () => {
         try {
             await navigator.clipboard.writeText(recapToMarkdown(recap));
             setCopy("copied");
+            onCopy?.(true);
         } catch (error) {
             console.warn("Copying the recap failed", error);
             setCopy("failed");
+            onCopy?.(false);
         }
         window.setTimeout(() => setCopy("idle"), 2000);
     };
@@ -63,7 +77,7 @@ export function RecapView({ recap, notice, footnote, transcriptOpen = false, rev
             <header className={styles.header}>
                 {notice ? <p className={styles.notice} role="status">{notice}</p> : null}
                 <p className={styles.code}>{recap.meetingId}</p>
-                <h1 className={styles.title}>Meeting recap</h1>
+                <Title className={styles.title}>Meeting recap</Title>
                 <dl className={styles.facts}>
                     {recap.createdAt ? (<div><dt>Date</dt><dd>{formatDateTime(recap.createdAt)}</dd></div>) : null}
                     {duration ? (<div><dt>Duration</dt><dd>{duration}</dd></div>) : null}
@@ -92,14 +106,14 @@ export function RecapView({ recap, notice, footnote, transcriptOpen = false, rev
             ) : null}
 
             {actionItems.length ? (
-                <section className={styles.section} aria-labelledby="action-items">
-                    <h2 id="action-items">Action items</h2>
+                <section className={styles.section} aria-labelledby={`${uid}-action-items`}>
+                    <Heading id={`${uid}-action-items`}>Action items</Heading>
                     <ul className={styles.actions}>
                         {actionItems.map((item, index) => (
                             <li key={`${index}-${item.task}`}>
                                 <span className={styles.box} aria-hidden="true" />
                                 <span className={styles.task}>{item.task}</span>
-                                <PersonChip name={item.owner} />
+                                <PersonChip name={item.owner} avatar={renderAvatar?.(item.owner)} />
                                 {item.due ? <span className={styles.due}>{item.due}</span> : null}
                             </li>
                         ))}
@@ -108,13 +122,13 @@ export function RecapView({ recap, notice, footnote, transcriptOpen = false, rev
             ) : null}
 
             {summary.keyPoints.length ? (
-                <section className={styles.section} aria-labelledby="key-points">
-                    <h2 id="key-points">Key points</h2>
+                <section className={styles.section} aria-labelledby={`${uid}-key-points`}>
+                    <Heading id={`${uid}-key-points`}>Key points</Heading>
                     <ul className={styles.points}>
                         {summary.keyPoints.map((point, index) => (
                             <li key={`${index}-${point.text}`}>
                                 <p>{point.text}</p>
-                                {point.speaker ? <PersonChip name={point.speaker} /> : null}
+                                {point.speaker ? <PersonChip name={point.speaker} avatar={renderAvatar?.(point.speaker)} /> : null}
                             </li>
                         ))}
                     </ul>
@@ -122,8 +136,8 @@ export function RecapView({ recap, notice, footnote, transcriptOpen = false, rev
             ) : null}
 
             {summary.keywords.length ? (
-                <section className={styles.section} aria-labelledby="topics">
-                    <h2 id="topics">Topics</h2>
+                <section className={styles.section} aria-labelledby={`${uid}-topics`}>
+                    <Heading id={`${uid}-topics`}>Topics</Heading>
                     <ul className={styles.chips}>
                         {summary.keywords.map((keyword) => <li key={keyword}>{keyword}</li>)}
                     </ul>
@@ -145,9 +159,9 @@ export function RecapView({ recap, notice, footnote, transcriptOpen = false, rev
                 </details>
             ) : null}
 
-            <p className={styles.footnote}>
+            {hideFootnote ? null : <p className={styles.footnote}>
                 {footnote ?? "Recaps are written on the server from the chat by fixed rules: commitments become action items, recurring phrases become topics. No audio is recorded and no external AI service is used."}
-            </p>
+            </p>}
         </article>
     );
 }

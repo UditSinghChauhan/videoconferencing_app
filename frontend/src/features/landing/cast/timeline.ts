@@ -14,10 +14,7 @@ export interface SpeakerTimeline {
 }
 
 /**
- * Who speaks when in the 12 s cast loop. The same segments drive the mouth in
- * /__cast recordings and the voiced parts of each person's fake-microphone
- * WAV (scripts/render-cast.mjs), so Bridge's real speaking ring agrees with
- * the face on screen.
+ * Who speaks when in the 12 s cast loop on the /__cast review page.
  */
 export const CAST_TIMELINE: SpeakerTimeline = {
     duration: 12,

@@ -71,7 +71,9 @@
     line-height: 1.35;
 }
 
-.section h2 {
+.section h2,
+.section h3,
+.section h4 {
     margin-bottom: var(--space-3);
     font-size: var(--text-md);
 }
@@ -269,14 +271,23 @@
 }
 
 @media (max-width: 600px) {
+    /* Task on the first line; owner and due date share the second. */
     .actions li {
-        grid-template-columns: auto 1fr;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 10px;
     }
 
-    .actions .person,
+    .actions .task {
+        flex: 1 1 calc(100% - 30px);
+    }
+
+    .actions .person {
+        margin-left: 28px;
+    }
+
     .actions .due {
-        grid-column: 2;
-        justify-self: start;
+        min-width: 0;
         text-align: left;
     }
 
