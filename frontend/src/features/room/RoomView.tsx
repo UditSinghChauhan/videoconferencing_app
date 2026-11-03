@@ -57,6 +57,7 @@ export function RoomView(props: RoomViewProps) {
     const [panel, setPanel] = useState<Panel>(null);
     const [seenCount, setSeenCount] = useState(0);
     const [confirmLeave, setConfirmLeave] = useState(false);
+    const [confirmRemove, setConfirmRemove] = useState<PersonModel | null>(null);
     const [leaving, setLeaving] = useState(false);
     const [copied, setCopied] = useState(false);
     const elapsed = useElapsed(props.startedAt);
@@ -169,7 +170,7 @@ export function RoomView(props: RoomViewProps) {
                         inviteLink={props.inviteLink}
                         canRemove={isHost}
                         removingId={props.removingId ?? null}
-                        onRemove={props.onRemovePerson}
+                        onRemove={setConfirmRemove}
                         onClose={() => setPanel(null)}
                     />
                 ) : null}
@@ -193,6 +194,31 @@ export function RoomView(props: RoomViewProps) {
                     onLeave={() => (isHost ? setConfirmLeave(true) : void leave())}
                 />
             </footer>
+
+            <Dialog
+                open={confirmRemove !== null}
+                tone="dark"
+                title={confirmRemove ? `Remove ${confirmRemove.name} from the call?` : "Remove from the call?"}
+                description="They will be disconnected straight away. They can come back only if someone sends them the link again."
+                onClose={() => setConfirmRemove(null)}
+                actions={
+                    <>
+                        <Button variant="ghost" onClick={() => setConfirmRemove(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="danger"
+                            data-testid="confirm-remove-participant"
+                            onClick={() => {
+                                if (confirmRemove) props.onRemovePerson(confirmRemove);
+                                setConfirmRemove(null);
+                            }}
+                        >
+                            Remove
+                        </Button>
+                    </>
+                }
+            />
 
             <Dialog
                 open={confirmLeave}

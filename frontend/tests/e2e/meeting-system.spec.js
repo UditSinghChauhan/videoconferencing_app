@@ -109,6 +109,7 @@ test.describe("Bridge meeting lifecycle", () => {
         // Only the host can remove people.
         await host.page.getByRole("button", { name: /People/ }).click();
         await host.page.getByRole("button", { name: "Remove Gabe Guest from the call" }).click();
+        await host.page.getByTestId("confirm-remove-participant").click();
         await expect(guest.page.getByRole("heading", { name: "You were removed from this meeting" })).toBeVisible();
         await expect(tiles(host.page)).toHaveCount(1);
 
@@ -215,6 +216,7 @@ test.describe("Bridge meeting lifecycle", () => {
         await page.getByRole("button", { name: /People/ }).click();
         for (const name of ["Maya Patel", "Jordan Lee", "Aarav Mehta"]) {
             await page.getByRole("button", { name: `Remove ${name} from the call` }).click();
+            await page.getByTestId("confirm-remove-participant").click();
         }
         await expect(tiles(page)).toHaveCount(1);
         await page.getByRole("button", { name: "Close people" }).click();
