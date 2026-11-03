@@ -37,6 +37,8 @@ export interface RoomViewProps {
     onRemovePerson: (person: PersonModel) => void;
     /** Host: ends the meeting for everyone. Participant: leaves. */
     onLeave: () => Promise<void> | void;
+    /** A quiet nudge shown above End. */
+    leaveHint?: string | null;
     /** The call has ended: the room folds away before the recap opens. */
     ending?: boolean;
 }
@@ -187,6 +189,7 @@ export function RoomView(props: RoomViewProps) {
                     unread={unread}
                     participantCount={props.people.length}
                     leaveLabel={isHost ? "End" : "Leave"}
+                    leaveHint={props.leaveHint}
                     onToggleMic={media.toggleMic}
                     onToggleCamera={media.toggleCamera}
                     onToggleScreen={media.toggleScreenShare}

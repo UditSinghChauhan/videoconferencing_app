@@ -106,11 +106,56 @@
     transition: filter var(--duration-fast) var(--ease);
 }
 
+.endGroup {
+    position: relative;
+}
+
+/* A quiet nudge beside the controls: room surface, no arrow, nothing that competes with the call. */
+.hint {
+    margin-right: var(--space-2);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--room-raised);
+    box-shadow: inset 0 0 0 1px var(--room-border);
+    color: var(--room-text);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    pointer-events: none;
+    transition: opacity 250ms cubic-bezier(0.23, 1, 0.32, 1), transform 250ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.hint:empty {
+    display: none;
+}
+
+.hint[data-shown] {
+    opacity: 1;
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hint {
+        transform: none;
+        transition: none;
+    }
+}
+
 .leave:hover {
     filter: brightness(1.1);
 }
 
 @media (max-width: 640px) {
+    /* No room beside the buttons on phones: the hint floats above End instead. */
+    .hint {
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 8px);
+        margin: 0;
+    }
+
     .desktopOnly {
         display: none;
     }

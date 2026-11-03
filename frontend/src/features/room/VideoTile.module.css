@@ -56,6 +56,18 @@
     background: radial-gradient(circle at 50% 45%, var(--room-raised), var(--room-tile) 70%);
 }
 
+/* The demo's illustrated teammates fill the tile like a camera feed. */
+.illustration {
+    position: absolute;
+    inset: 0;
+}
+
+.illustration > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
 .connecting {
     position: absolute;
     top: var(--space-3);
