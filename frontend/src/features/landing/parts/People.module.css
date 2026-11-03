@@ -7,6 +7,11 @@
     box-shadow: 0 0 0 1.5px var(--surface, #fff);
 }
 
+/* In a stack every circle wears a 2 px white ring, so the overlap reads as a cut, not a smudge. */
+.stack > .face {
+    box-shadow: 0 0 0 2px #fff;
+}
+
 .face > svg {
     display: block;
     width: 100%;
@@ -42,11 +47,33 @@
     display: inline-flex;
 }
 
-.stack > .face + .face {
-    margin-left: -6px;
+/*
+ * The first person sits on top and each next circle tucks 6 px under the one
+ * before it; the initials in a tucked circle move into its visible part, so
+ * every pair of letters stays whole.
+ */
+.stack > .face {
+    position: relative;
+    box-sizing: border-box;
 }
 
-/* Monograms overlap less, so every pair of initials stays readable. */
-.stack > .monogram + .monogram {
-    margin-left: -3px;
+.stack > .face:nth-child(1) { z-index: 3; }
+.stack > .face:nth-child(2) { z-index: 2; }
+.stack > .face:nth-child(3) { z-index: 1; }
+
+.stack > .face + .face {
+    margin-left: -6px;
+    padding-left: 7px;
+}
+
+/* The rest of the team as a count, on the chip surface. */
+.more {
+    display: inline-grid;
+    place-items: center;
+    background: var(--surface-2, #efede8);
+    color: var(--text, #17171a);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    line-height: 1;
 }
