@@ -122,7 +122,7 @@ test.describe("Bridge meeting lifecycle", () => {
         await expect(host.page.getByRole("heading", { name: "Action items" })).toBeVisible();
         await expect(host.page.getByTestId("recap")).toContainText("Follow up with QA");
         await expect(host.page.getByTestId("recap")).toContainText("Hannah Host");
-        await expect(host.page.getByText("Ship the release Thursday", { exact: false }).first()).toBeVisible();
+        await expect(host.page.getByTestId("recap")).toContainText("Agreed to ship the release on Thursday");
         await expect(host.page.getByText(/Chat transcript · 2 messages/)).toBeVisible();
 
         // Both see it in history; the guest can open the recap too.

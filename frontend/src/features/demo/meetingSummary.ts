@@ -279,6 +279,9 @@ const parseCommitment = (clause: string, { speaker, label, resolveName, keywords
     const will = text.match(/^([A-Za-z]+(?:\s[A-Z][a-z]+)?)(?:\s+will|'ll|\s+is going to|'m going to|\s+am going to)\s+(.+)$/);
     const lets = text.match(/^let's\s+(.+)$/i);
     const labelled = label && /^(next steps?|action items?|actions?|todo|to do)$/i.test(label) ? text.match(/^we\s+(.+)$/i) : null;
+    // "Ship the release Thursday": an imperative with a day is a team commitment.
+    const firstWord = (text.split(/\s+/)[0] ?? "").toLowerCase();
+    const imperative = VERBS.has(firstWord) && DUE.test(text) && wordCount(text) >= 3;
 
     if (owns) {
         owner = resolveName(owns[1] ?? "");
@@ -290,6 +293,9 @@ const parseCommitment = (clause: string, { speaker, label, resolveName, keywords
     } else if (lets) {
         owner = EVERYONE;
         task = lets[1] ?? null;
+    } else if (imperative) {
+        owner = EVERYONE;
+        task = text;
     } else if (labelled) {
         owner = EVERYONE;
         task = labelled[1] ?? null;

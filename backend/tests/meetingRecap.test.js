@@ -137,3 +137,18 @@ test("without a team outcome, the first person's commitment leads the summary", 
     assert.equal(conclusion, "Jordan will pin the browser version in the checkout test by tomorrow; the flaky checkout test failed twice overnight.");
     assert.ok(!keywords.some((keyword) => /twice|overnight/.test(keyword)), `adverbs are not topics: ${keywords}`);
 });
+
+test("an imperative with a day is a team commitment", () => {
+    const summary = generateMeetingSummary({
+        activityLogs: [
+            chat("Gabe Guest", "Ship the release Thursday, I will follow up with QA."),
+            chat("Hannah Host", "Deadline Thursday, Gabe owns the QA follow up.")
+        ]
+    });
+    assert.deepEqual(summary.actionItems, [
+        { owner: "Everyone", task: "Ship the release", due: "Thursday" },
+        { owner: "Gabe Guest", task: "Follow up with QA" },
+        { owner: "Gabe Guest", task: "Own the QA follow up" }
+    ]);
+    assert.match(summary.conclusion, /^Agreed to ship the release on Thursday/);
+});
