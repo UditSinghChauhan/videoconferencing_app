@@ -72,94 +72,90 @@
 }
 
 .section h2 {
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-3);
     font-size: var(--text-md);
 }
 
-.subheading {
-    margin: var(--space-6) 0 var(--space-3);
-    font-size: var(--text-sm);
-    color: var(--text-muted);
-}
-
+/* Action items: a checklist with the owner as an avatar chip and the due date on the right. */
+.actions,
 .points {
     display: grid;
-    gap: var(--space-3);
     margin: 0;
     padding: 0;
     list-style: none;
-    counter-reset: point;
-}
-
-.points li {
-    position: relative;
-    padding: var(--space-4) var(--space-5) var(--space-4) var(--space-12);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     background: var(--surface);
-    counter-increment: point;
 }
 
-.points li::before {
-    content: counter(point);
-    position: absolute;
-    left: var(--space-4);
-    top: var(--space-4);
+.actions li {
     display: grid;
-    place-items: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--accent-soft);
-    color: var(--accent-text);
-    font-size: var(--text-xs);
-    font-weight: 700;
-}
-
-.columns {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: var(--space-8);
-}
-
-.timeline {
-    margin: 0;
-    padding: 0 0 0 var(--space-4);
-    list-style: none;
-    border-left: 2px solid var(--border);
-}
-
-.timeline li {
-    position: relative;
-    padding: 0 0 var(--space-4) var(--space-3);
-    font-size: var(--text-sm);
-}
-
-.timeline li::before {
-    content: "";
-    position: absolute;
-    left: calc(var(--space-4) * -1 - 6px);
-    top: 7px;
-    width: 10px;
-    height: 10px;
-    border: 2px solid var(--bg);
-    border-radius: 50%;
-    background: var(--text-muted);
-}
-
-.people {
-    display: grid;
-    gap: var(--space-2);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.people li {
-    display: flex;
+    grid-template-columns: auto 1fr auto auto;
     align-items: center;
     gap: var(--space-3);
+    min-height: 52px;
+    padding: var(--space-3) var(--space-4);
+}
+
+.actions li + li,
+.points li + li {
+    border-top: 1px solid var(--border);
+}
+
+.box {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 5px;
+}
+
+.task {
+    font-size: var(--text-base);
+    font-weight: 500;
+}
+
+.due {
+    min-width: 72px;
+    color: var(--text-muted);
     font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.person {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px 2px 2px;
+    border-radius: var(--radius-full);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+}
+
+.everyone {
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--text);
+    color: var(--surface);
+}
+
+.points li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    padding: var(--space-4);
+}
+
+.points p {
+    flex: 1 1 320px;
+    font-size: var(--text-base);
 }
 
 .chips {
@@ -273,6 +269,17 @@
 }
 
 @media (max-width: 600px) {
+    .actions li {
+        grid-template-columns: auto 1fr;
+    }
+
+    .actions .person,
+    .actions .due {
+        grid-column: 2;
+        justify-self: start;
+        text-align: left;
+    }
+
     .transcript li {
         grid-template-columns: 1fr;
         gap: 0;
@@ -284,6 +291,7 @@
 /* Right after a call ends, the recap builds in: sections rise in order, then key points one by one. */
 .recap[data-reveal] > *,
 .recap[data-reveal] .points li,
+.recap[data-reveal] .actions li,
 .recap[data-reveal] .chips li {
     animation: recap-rise 640ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -296,6 +304,10 @@
 .recap[data-reveal] .points li:nth-child(1) { animation-delay: 380ms; }
 .recap[data-reveal] .points li:nth-child(2) { animation-delay: 560ms; }
 .recap[data-reveal] .points li:nth-child(3) { animation-delay: 740ms; }
+.recap[data-reveal] .actions li:nth-child(1) { animation-delay: 300ms; }
+.recap[data-reveal] .actions li:nth-child(2) { animation-delay: 380ms; }
+.recap[data-reveal] .actions li:nth-child(3) { animation-delay: 460ms; }
+.recap[data-reveal] .actions li:nth-child(n + 4) { animation-delay: 540ms; }
 .recap[data-reveal] .chips li { animation-name: recap-pop; animation-duration: 480ms; }
 .recap[data-reveal] .chips li:nth-child(1) { animation-delay: 700ms; }
 .recap[data-reveal] .chips li:nth-child(2) { animation-delay: 770ms; }
@@ -320,6 +332,7 @@
 @media (prefers-reduced-motion: reduce) {
     .recap[data-reveal] > *,
     .recap[data-reveal] .points li,
+    .recap[data-reveal] .actions li,
     .recap[data-reveal] .chips li {
         animation: none;
     }

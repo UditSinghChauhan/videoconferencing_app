@@ -31,7 +31,14 @@ const fixtures: Record<string, ActivityEntry[]> = {
         { type: "ended", username: "Maya Patel", content: "ended the meeting" }
     ],
     // The landing captures' stand-up: topics must come out as noun phrases on both sides.
-    "landing stand-up": standUp
+    "landing stand-up": standUp,
+    // Commitments: owners, "will", "let's", due dates and a team outcome.
+    commitments: ([
+        ["Maya Patel", "Jordan will draft the launch email by Friday."],
+        ["Jordan Lee", "Sure. Let's freeze the scope tomorrow."],
+        ["Aarav Mehta", "PR is up, I'll drop the link in the channel."],
+        ["Sofia Rossi", "Next step: we ship the release Thursday, and that deadline is firm."]
+    ] as const).map(([username, content]): ActivityEntry => ({ type: "chat", username, content }))
 };
 
 test("the demo recap's topics are noun phrases", () => {

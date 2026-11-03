@@ -160,18 +160,156 @@ const getTopKeywords = (texts, participants = []) => {
         .map((entry) => entry.label);
 };
 
-const buildConclusion = ({ chatMessages, keywords, participants }) => {
-    if (!chatMessages.length) {
-        return participants.length
-            ? `Meeting ended with ${participants.length} participant${participants.length > 1 ? "s" : ""}, but there were no chat highlights to summarize.`
-            : "Meeting ended without enough activity to generate a detailed conclusion.";
+// ---------------------------------------------------------------------------
+// Statements, action items and the one-sentence summary. Still deterministic:
+// sentences are split into clauses, commitment patterns ("owns", "I'll",
+// "will", "let's", "Next step:") become action items, and the summary is
+// assembled from the agreed outcome and the most discussed topic.
+// ---------------------------------------------------------------------------
+
+/** Bumped when the recap's shape changes; older stored recaps are rebuilt on read. */
+const SUMMARY_VERSION = 2;
+const MAX_KEY_POINTS = 3;
+const EVERYONE = "Everyone";
+
+/** Chat labels people type in front of a line. "Agenda" is the plan, not a point. */
+const LABEL = /^(agenda|decision|decisions|next steps?|action items?|actions?|todo|to do|update|fyi|note|outcome)\s*:\s*/i;
+const OUTCOME_LABELS = new Set(["decision", "decisions", "next step", "next steps", "outcome"]);
+
+const DAY = "today|tonight|tomorrow|eod|end of (?:the )?day|this week|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|lunch|noon";
+const DUE = new RegExp(`\\s*\\b(?:(by|on|before|until)\\s+)?(${DAY})\\b`, "i");
+const TRAILING_FILLER = /\s+(?:after that|after the call|later|asap|as well|too)$/i;
+
+const SUBJECT_PRONOUNS = new Set(["i", "we", "you", "they", "he", "she", "it"]);
+
+const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+const stripEnd = (text) => text.replace(/[\s,;:.!?]+$/, "").trim();
+const wordCount = (text) => text.split(/\s+/).filter(Boolean).length;
+
+const formatDue = (preposition, when) => {
+    const value = when.toLowerCase() === "eod" ? "end of day" : when.toLowerCase();
+    return capitalize(preposition?.toLowerCase() === "before" ? `before ${value}` : value);
+};
+
+/** "Thursday" -> "on Thursday", "Today" -> "today", "Before lunch" -> "before lunch". */
+const dueInSentence = (due) => {
+    const lower = due.toLowerCase();
+    return /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/.test(lower) ? `on ${due}` : lower;
+};
+
+/** Takes the due date out of a task: "send the copy by Wednesday" -> ["send the copy", "Wednesday"]. */
+const extractDue = (text) => {
+    const match = text.match(DUE);
+    if (!match) return { text, due: undefined };
+    const rest = `${text.slice(0, match.index)}${text.slice(match.index + match[0].length)}`.replace(/\s{2,}/g, " ");
+    return { text: rest.trim(), due: formatDue(match[1], match[2]) };
+};
+
+const splitSentences = (text) => text.split(/(?<=[.!?])\s+/).map((part) => part.trim()).filter(Boolean);
+
+/** Clauses inside one sentence: commas, semicolons and "and" before a new subject. */
+const splitClauses = (sentence) => sentence
+    .split(/\s*[,;]\s*(?:and\s+|then\s+)?|\s+and\s+(?=(?:I|I'll|we|let's|[A-Z][a-z]+\s+(?:owns|will))\b)/)
+    .map((part) => stripEnd(part))
+    .filter(Boolean);
+
+const toTask = (text) => {
+    const cleaned = stripEnd(text).replace(TRAILING_FILLER, "");
+    return cleaned ? capitalize(cleaned) : "";
+};
+
+/** "the fix" -> "the onboarding fix" when a topic ends with that word. */
+const expandObject = (object, keywords) => {
+    const match = object.match(/^(the|our)\s+([a-z-]+)$/i);
+    if (!match) return object;
+    const topic = keywords.find((keyword) => keyword.split(" ").length > 1 && lemma(keyword.split(" ").pop()) === lemma(match[2].toLowerCase()));
+    return topic ? `${match[1].toLowerCase()} ${topic}` : object;
+};
+
+/**
+ * One clause as an action item, or null.
+ * Patterns: "<Name> owns <x>", "<Name|I|we> will|'ll <task>", "let's <task>",
+ * and anything after "Next step:" / "Action:" / "TODO:" that starts with "we".
+ */
+const parseCommitment = (clause, { speaker, label, resolveName, keywords }) => {
+    const text = clause.replace(/[’]/g, "'");
+    let owner = null;
+    let task = null;
+
+    const owns = text.match(/^([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)\s+(?:owns|will own|is owning|takes)\s+(.+)$/);
+    const will = text.match(/^([A-Za-z]+(?:\s[A-Z][a-z]+)?)(?:\s+will|'ll|\s+is going to|'m going to|\s+am going to)\s+(.+)$/);
+    const lets = text.match(/^let's\s+(.+)$/i);
+    const labelled = label && /^(next steps?|action items?|actions?|todo|to do)$/i.test(label) ? text.match(/^we\s+(.+)$/i) : null;
+
+    if (owns) {
+        owner = resolveName(owns[1]);
+        task = owner ? `own ${expandObject(owns[2], keywords)}` : null;
+    } else if (will) {
+        const subject = will[1].toLowerCase();
+        owner = subject === "i" ? speaker : subject === "we" ? EVERYONE : SUBJECT_PRONOUNS.has(subject) ? null : resolveName(will[1]);
+        task = owner ? will[2] : null;
+    } else if (lets) {
+        owner = EVERYONE;
+        task = lets[1];
+    } else if (labelled) {
+        owner = EVERYONE;
+        task = labelled[1];
     }
 
-    if (!keywords.length) {
-        return `Discussion involved ${participants.join(", ") || "the meeting participants"} and covered several topics without one dominant theme.`;
+    if (!owner || !task) return null;
+
+    const { text: withoutDue, due } = extractDue(task);
+    const finalTask = toTask(withoutDue);
+    if (wordCount(finalTask) < 2) return null;
+
+    return due ? { owner, task: finalTask, due } : { owner, task: finalTask };
+};
+
+/** Same owner and the same last word ("the copy"): keep the first, adding a due date it lacked. */
+const dedupeActions = (items) => {
+    const result = [];
+    for (const item of items) {
+        const head = lemma(item.task.toLowerCase().split(" ").pop());
+        const twin = result.find((other) => other.owner === item.owner && lemma(other.task.toLowerCase().split(" ").pop()) === head);
+        if (!twin) {
+            result.push(item);
+        } else if (!twin.due && item.due) {
+            twin.due = item.due;
+        }
+    }
+    return result;
+};
+
+const lowerFirst = (sentence, names) => {
+    const first = sentence.split(/\s+/)[0] ?? "";
+    const keepCase = first === "I" || first.startsWith("I'") || /^[A-Z]{2,}/.test(first) || names.has(first.toLowerCase());
+    return keepCase ? sentence : sentence.charAt(0).toLowerCase() + sentence.slice(1);
+};
+
+const buildConclusion = ({ chatCount, participantCount, outcome, keyPoints, keywords, names }) => {
+    if (!chatCount) {
+        return participantCount
+            ? `${participantCount} ${participantCount === 1 ? "person" : "people"} joined, but nothing was written in the chat, so there is nothing to summarise.`
+            : "Meeting ended without enough activity to write a summary.";
     }
 
-    return `The meeting focused mainly on ${keywords.slice(0, 3).join(", ")} and involved ${participants.join(", ") || "the meeting participants"}.`;
+    const topics = keywords.slice(0, 2);
+    // The supporting clause: the strongest third-person statement about a top topic.
+    const support = keyPoints.find((point) =>
+        topics.some((topic) => point.text.toLowerCase().includes(topic.toLowerCase()))
+        && !/^(I|I'm|I'll|I've|We|We're)\b/.test(point.text)
+        && (!outcome || !point.text.toLowerCase().includes(outcome.task.toLowerCase())));
+
+    if (outcome) {
+        const agreed = `Agreed to ${lowerFirst(outcome.task, names)}${outcome.due ? ` ${dueInSentence(outcome.due)}` : ""}`;
+        return support ? `${agreed}; ${lowerFirst(stripEnd(support.text), names)}.` : `${agreed}.`;
+    }
+
+    if (topics.length) {
+        return `Talked through ${topics.map((topic) => `the ${topic}`).join(" and ")}.`;
+    }
+
+    return support ? `${capitalize(stripEnd(support.text))}.` : "A short call with a few messages and no clear topic.";
 };
 
 const generateMeetingSummary = (meeting) => {
@@ -192,31 +330,74 @@ const generateMeetingSummary = (meeting) => {
         )
     ];
 
-    const candidateSentences = chatMessages
-        .map((entry) => `${entry.username}: ${entry.content}`)
-        .filter((sentence) => sentence.length > 0);
+    const names = new Set(participantsInvolved.flatMap((name) => name.toLowerCase().split(/\s+/)));
+    const resolveName = (word) => {
+        const lower = word.toLowerCase();
+        return participantsInvolved.find((name) => name.toLowerCase() === lower || name.toLowerCase().split(/\s+/)[0] === lower) ?? null;
+    };
 
-    const keyPoints = candidateSentences
-        .map((sentence) => ({ sentence, score: scoreSentence(sentence) }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3)
-        .map((entry) => entry.sentence);
+    const keywords = getTopKeywords(chatMessages.map((entry) => entry.content), participantsInvolved);
+
+    const actions = [];
+    const statements = [];
+    let outcome = null;
+    let order = 0;
+
+    for (const message of chatMessages) {
+        for (const rawSentence of splitSentences(message.content)) {
+            const labelMatch = rawSentence.match(LABEL);
+            const label = labelMatch ? labelMatch[1].toLowerCase() : null;
+            const sentence = labelMatch ? rawSentence.slice(labelMatch[0].length) : rawSentence;
+            const kept = [];
+
+            for (const clause of splitClauses(sentence)) {
+                const action = parseCommitment(clause, { speaker: message.username, label, resolveName, keywords });
+                if (action) {
+                    actions.push(action);
+                    // The agreed outcome: a team commitment, or the first one under "Decision:" / "Next step:".
+                    if (!outcome && (action.owner === EVERYONE || (label && OUTCOME_LABELS.has(label) && action.due))) outcome = action;
+                } else {
+                    kept.push(clause);
+                }
+            }
+
+            // A sentence with no commitment in it is a statement. The rest of a
+            // commitment sentence ("…, and that deadline is firm") leans on it, so it goes too.
+            if (label === "agenda" || kept.length !== splitClauses(sentence).length) continue;
+            const text = stripEnd(sentence);
+            if (wordCount(text) < 4) continue;
+            const ending = /[!?]$/.test(sentence) ? sentence.slice(-1) : ".";
+            statements.push({ speaker: message.username, text: `${capitalize(text)}${ending}`, order: order++ });
+        }
+    }
+
+    const keyPoints = statements
+        .map((entry) => ({ ...entry, score: scoreSentence(entry.text) }))
+        .sort((a, b) => b.score - a.score || a.order - b.order)
+        .slice(0, MAX_KEY_POINTS)
+        .map(({ speaker, text }) => ({ speaker, text }));
+
+    const actionItems = dedupeActions(actions);
 
     const highlights = activityLogs
         .filter((entry) => entry.type !== "chat")
         .slice(-3)
         .map((entry) => `${entry.username || "System"} ${entry.content}`.trim());
 
-    const keywords = getTopKeywords(chatMessages.map((entry) => entry.content), participantsInvolved);
     const conclusion = buildConclusion({
-        chatMessages,
+        chatCount: chatMessages.length,
+        participantCount: participantsInvolved.length,
+        outcome,
+        keyPoints,
         keywords,
-        participants: participantsInvolved
+        names
     });
 
     return {
+        version: SUMMARY_VERSION,
         generatedAt: new Date(),
         keyPoints,
+        actionItems,
         highlights,
         keywords,
         participantsInvolved,
@@ -224,4 +405,4 @@ const generateMeetingSummary = (meeting) => {
     };
 };
 
-export { generateMeetingSummary };
+export { generateMeetingSummary, SUMMARY_VERSION };

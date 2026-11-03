@@ -53,7 +53,7 @@ test("sentences containing decision words rank above small talk", () => {
         }
     ]));
 
-    assert.match(summary.keyPoints[0], /We must decide the release plan/);
+    assert.match(summary.keyPoints[0].text, /We must decide the release plan/);
 });
 
 test("at most three key points are returned", () => {
@@ -76,7 +76,7 @@ test("non-chat activity is reported as highlights rather than key points", () =>
 
     assert.equal(summary.highlights.length, 1);
     assert.match(summary.highlights[0], /alice joined the meeting/);
-    assert.ok(summary.keyPoints.every((point) => !point.includes("joined the meeting")));
+    assert.ok(summary.keyPoints.every((point) => !point.text.includes("joined the meeting")));
 });
 
 test("blank chat messages are ignored", () => {
@@ -85,8 +85,7 @@ test("blank chat messages are ignored", () => {
         { type: "chat", username: "bob", content: "actual message content here" }
     ]));
 
-    assert.equal(summary.keyPoints.length, 1);
-    assert.match(summary.keyPoints[0], /bob: actual message content here/);
+    assert.deepEqual(summary.keyPoints, [{ speaker: "bob", text: "Actual message content here." }]);
 });
 
 test("the summary is deterministic for identical input", () => {

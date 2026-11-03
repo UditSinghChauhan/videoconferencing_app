@@ -117,7 +117,10 @@ test.describe("Bridge meeting lifecycle", () => {
         await host.page.getByTestId("confirm-end-meeting").click();
         await expect(host.page).toHaveURL(new RegExp(`/meetings/${meetingId}$`));
         await expect(host.page.getByRole("heading", { name: "Meeting recap" })).toBeVisible();
-        await expect(host.page.getByRole("heading", { name: "Key points" })).toBeVisible();
+        // Commitments in the chat become action items with an owner, and the host shows by display name.
+        await expect(host.page.getByRole("heading", { name: "Action items" })).toBeVisible();
+        await expect(host.page.getByTestId("recap")).toContainText("Follow up with QA");
+        await expect(host.page.getByTestId("recap")).toContainText("Hannah Host");
         await expect(host.page.getByText("Ship the release Thursday", { exact: false }).first()).toBeVisible();
         await expect(host.page.getByText(/Chat transcript · 2 messages/)).toBeVisible();
 
