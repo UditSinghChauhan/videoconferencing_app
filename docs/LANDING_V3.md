@@ -69,3 +69,46 @@ Each visual idea appears once: the 2×2 call grid is drawn only in the hero.
 - `keyPoints`: `{ speaker, text }` statements without the "Name:" prefix (the UI shows the speaker as an avatar chip). Older string key points still render.
 - `actionItems`: `{ owner, task, due? }` from ownership and commitment lines (owns, I'll, will, next step, deadline, by &lt;day&gt;).
 - The recap shows the host's display name, never the internal handle.
+
+## Results (measured 2026-11-03, production build)
+
+| | Before (v2) | After (v3) |
+|---|---|---|
+| Page height at 1440 × 900 | 11,969 px | **5,707 px** |
+| Page height at 768 × 1024 | not captured | 6,957 px |
+| Page height at 390 × 844 | 15,723 px | **7,837 px** |
+| Times the 2×2 call grid is drawn | 6 | 1 |
+| Dark surfaces | browser bars, room frames, Engineering band | the call window, one CTA card |
+| Nav items | 7 links + Sign in + GitHub | 3 links + Sign in + Try the demo |
+| Lighthouse mobile (perf / a11y / best practices / SEO) | 96 / 100 / 100 / 100 (v2 notes) | **97–98 / 100 / 100 / 100**, LCP 2.0–2.2 s, CLS 0 |
+
+Heights come from `document.documentElement.scrollHeight` after scrolling the page once (`docs/screenshots/landing-v3/*/heights.json`). Lighthouse 12.6 ran three times against `vite preview`; the range is shown.
+
+Screenshots: `docs/screenshots/landing-v3/before/` (1440 and 390, one file per v2 section) and `docs/screenshots/landing-v3/after/` (1440, 768 and 390, one file per v3 section, `NN-first-screen.png` pairs with the before file of the same width). `after/scroll-1440.mp4` is a 41 s recording: one full hero loop, then a scroll to the footer.
+
+## What was removed and where it went
+
+| Removed | Where its content is now |
+|---|---|
+| "Faces in, notes out" pinned chapter (`chapter/`) | The idea lives in the hero loop; the code is deleted |
+| Facts panel: 0.4 s / 0 bytes / 8 flows (`facts/`) | `docs/CASE_STUDY.md`, "Facts that were on the landing page" |
+| Walkthrough with screenshot crops (`Walkthrough.tsx`, `public/landing/step-*`) | Replaced by the How it works vignettes |
+| Outcomes bento (`bento/`) | Replaced by the Features section |
+| Engineering band and `ArchitectureFigure` | `docs/CASE_STUDY.md`, "Engineering" and "Architecture" |
+| Decisions | `docs/CASE_STUDY.md`, "Decisions" |
+| Verified terminal (`verified/`, `e2e-run.json`, `scripts/e2e-durations.mjs`) | `docs/CASE_STUDY.md`, "Verified"; the tests themselves are unchanged |
+| Closing grid-to-recap loop (`closing/`) | Replaced by the dark CTA card |
+| `/design-notes` route, its nav and footer links | `docs/CASE_STUDY.md`; its images moved to `docs/case-study/` |
+| Paper grain (`public/landing/grain.webp`) | Deleted |
+| Black browser-chrome bars (`AppFrame`) and the hero video (`HeroRecording`, `public/landing/hero*`) | Replaced by the light-chrome DOM window |
+| Capture pipeline for those recordings (`scripts/capture-landing.mjs`, `scripts/render-cast.mjs`) | Deleted; `scripts/capture-showcase.mjs` now renders the OG image and cover from the v3 hero |
+| The cast's gesture hand | Deleted (it floated free of the body at small sizes) |
+| Landing dark mode | The landing page is light only; the app keeps its themes |
+
+## Deviations from the brief, and why
+
+- **Benefit "Join from a link: no install, no account for guests"** became "Open it in the browser. Nothing to install." Real meetings require an account (`/room/:id` is behind `RequireAuth`); only the demo needs none. The FAQ says so plainly.
+- **Lobby "mic level"**: the lobby has no level meter. The vignette shows what the lobby does: the speaking ring on the self-preview and the device checks turning on.
+- **"Mini recap with a check-marked action item"**: action items are not checkable in the app, so the check marks delivery ("In 4 people's history") instead of completion.
+- **Host controls "remove with a confirm"**: the app removed people without asking. The confirm dialog was built in the room first (`RoomView.tsx`), and the e2e tests click it.
+- **Reveal** is CSS plus one IntersectionObserver rather than `motion/react`: it keeps the animation library out of the first paint (Lighthouse 93 → 97–98). `motion/react` drives the deferred sections (in-view triggers, the copy toast).
